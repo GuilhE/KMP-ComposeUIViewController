@@ -14,9 +14,11 @@ kotlin {
     jvmToolchain(11)
     explicitApi()
 
-    val iosArm64 = iosArm64()
-    val iosX64 = iosX64()
-    val iosSimulatorArm64 = iosSimulatorArm64()
+    jvm()
+
+//    val iosX64 = iosX64()
+//    val iosArm64 = iosArm64()
+//    val iosSimulatorArm64 = iosSimulatorArm64()
 
     sourceSets {
         all {
@@ -24,27 +26,30 @@ kotlin {
         }
         val commonMain by getting {
             dependencies {
-//                configurations["ksp"].dependencies.add(implementation("com.github.guilhe:compose-uiviewcontroller-ksp:1.0.0"))
-//                implementation("com.github.guilhe:compose-uiviewcontroller-ksp:1.0.0")
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.ui)
+
+                configurations["ksp"].dependencies.add(implementation("com.github.guilhe:compose-uiviewcontroller-ksp:1.0.0"))
+                implementation("com.github.guilhe:compose-uiviewcontroller-ksp:1.0.0")
             }
         }
-        val commonTest by getting {
+
+        val jvmMain by getting {
             dependencies {
-                implementation(libs.test.kotlin)
+                implementation(compose.preview)
             }
         }
-        val iosMain by creating {
-            dependsOn(commonMain)
-        }
-        val iosTest by creating {
-            dependsOn(commonTest)
-        }
-        listOf(iosArm64, iosX64, iosSimulatorArm64).forEach {
-            it.binaries.framework {
-                baseName = "UIViewControllerSampleShared"
-            }
-            getByName("${it.targetName}Main") { dependsOn(iosMain) }
-            getByName("${it.targetName}Test") { dependsOn(iosTest) }
-        }
+
+//        val iosMain by creating {
+//            dependsOn(commonMain)
+//        }
+//        listOf(iosX64, iosArm64, iosSimulatorArm64).forEach {
+//            it.binaries.framework {
+//                baseName = "UIViewControllerSampleShared"
+//            }
+//            getByName("${it.targetName}Main") { dependsOn(iosMain) }
+//        }
     }
 }

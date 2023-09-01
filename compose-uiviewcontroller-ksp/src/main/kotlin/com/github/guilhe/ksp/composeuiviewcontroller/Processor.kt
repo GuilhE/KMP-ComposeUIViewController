@@ -52,22 +52,22 @@ public class Processor(private val codeGenerator: CodeGenerator, private val log
                     val code = """
                        package $packageName
                         
-                       import androidx.compose.runtime.collectAsState
                        import androidx.compose.runtime.mutableStateOf
                        import androidx.compose.ui.window.ComposeUIViewController
                        import platform.UIKit.UIViewController
                        import $packageName.${composable.name()}
+                       import $packageName.${stateParameter.type}
                        
-                       object ${composable.name()}UIViewController {
+                       public object ${composable.name()}UIViewController {
                            private val $stateParameterName = mutableStateOf(${stateParameter.type}())
 
-                           fun make(${makeParameters.joinToString()}): UIViewController {
+                           public fun make(${makeParameters.joinToString()}): UIViewController {
                                return ComposeUIViewController {
                                    ${composable.name()}(${parameters.toComposableParameters(stateParameterName)})
                                }
                            }
 
-                           fun update($stateParameterName: ${stateParameter.type}) {
+                           public fun update($stateParameterName: ${stateParameter.type}) {
                                this.$stateParameterName.value = $stateParameterName
                            }
                        }
@@ -81,6 +81,8 @@ public class Processor(private val codeGenerator: CodeGenerator, private val log
                             packageName = packageName,
                             fileName = "${composable.name()}UIViewController",
                         ).write(code.toByteArray())
+
+                    logger.info("\n${composable.name()}UIViewController created!")
                 }
             }
         }
