@@ -29,11 +29,11 @@ public class Processor(
                     }
 
                     when {
-                        stateParameters.size > 1 -> throw IllegalStateException(
+                        stateParameters.size > 1 -> throw IllegalArgumentException(
                             "The composable ${composable.qualifiedName!!.getShortName()} has more than one parameter annotated with @${ComposeUIViewControllerState::class.simpleName.toString()}."
                         )
 
-                        stateParameters.isEmpty() -> throw IllegalStateException(
+                        stateParameters.isEmpty() -> throw IllegalArgumentException(
                             "The composable ${composable.qualifiedName!!.getShortName()} is annotated with @${ComposeUIViewController::class.simpleName.toString()} but it's missing the ui state parameter annotated with @${ComposeUIViewControllerState::class.simpleName.toString()}."
                         )
                     }
@@ -43,7 +43,7 @@ public class Processor(
                     val makeParameters = parameters.filterNot { it.type == stateParameter.type }.filterFunctions()
 
                     if (parameters.size != makeParameters.size + 1) {
-                        throw IllegalStateException("Only 1 @${ComposeUIViewControllerState::class.simpleName.toString()} and N high-order function parameters (excluding @Composable content: () -> Unit) are allowed.")
+                        throw IllegalArgumentException("Only 1 @${ComposeUIViewControllerState::class.simpleName.toString()} and N high-order function parameters (excluding @Composable content: () -> Unit) are allowed.")
                     }
 
                     val generatedCode = """
@@ -70,7 +70,7 @@ public class Processor(
                        }
                    """.trimIndent()
 
-                    logger.info(generatedCode)
+                    logger.info("\n"+generatedCode)
 
                     codeGenerator
                         .createNewFile(
