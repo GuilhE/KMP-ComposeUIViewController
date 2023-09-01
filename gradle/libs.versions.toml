@@ -1,0 +1,20 @@
+[versions]
+
+kotlin = "1.9.10"
+ksp = "1.9.10-1.0.13"
+compileTesting = "1.5.0"
+junit = "4.13.2"
+
+[plugins]
+
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+
+[libraries]
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+
+test-junit = { module = "junit:junit", version.ref = "junit" }
+test-kotlinCompile = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "compileTesting" }
+test-kotlinCompileKsp = { module = "com.github.tschuchortdev:kotlin-compile-testing-ksp", version.ref = "compileTesting" }
+test-kotlin = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
