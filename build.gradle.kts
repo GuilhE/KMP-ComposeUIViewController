@@ -11,6 +11,6 @@ buildscript {
 }
 
 allprojects {
-    group = "com.github.guilhe.ksp"
+    group = "com.github.guilhe"
     version = "1.0.0"
 }
