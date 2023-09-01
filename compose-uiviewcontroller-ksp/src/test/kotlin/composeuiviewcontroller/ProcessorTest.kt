@@ -36,7 +36,10 @@ class ProcessorTest {
             package com.mycomposable.test
                                            
             @Composable
-            fun MyScreen(state: ViewState) { }
+            fun ScreenA(state: ViewState) { }
+            
+            @Composable
+            fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -44,7 +47,7 @@ class ProcessorTest {
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         assertTrue(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.nameWithoutExtension == "MyScreenUIViewController" }
+                .filter { it.nameWithoutExtension == "ScreenAUIViewController" || it.nameWithoutExtension == "ScreenBUIViewController" }
                 .toList()
                 .isEmpty()
         )
@@ -60,7 +63,7 @@ class ProcessorTest {
          
             @ComposeUIViewController
             @Composable
-            fun MyScreen(state: ViewState) { }
+            fun Screen(state: ViewState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -69,7 +72,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Composable MyScreen properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate MyScreenUIViewController file`() {
+    fun `No more than one @ComposeUIViewControllerState is allowed`() {
         val code = """
             package com.mycomposable.test
             import com.github.guilhe.ksp.composeuiviewcontroller.ComposeUIViewController
@@ -77,13 +80,60 @@ class ProcessorTest {
             
             @ComposeUIViewController
             @Composable
-            fun MyScreen(
-                    modifier: Modifier,
+            fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+    }
+
+    @Test
+    fun `Only 1 @ComposeUIViewControllerState and N function parameters (excluding @Composable) are allowed`() {
+        val file1 = """
+            package com.mycomposable.test
+            import com.github.guilhe.ksp.composeuiviewcontroller.ComposeUIViewController
+            import com.github.guilhe.ksp.composeuiviewcontroller.ComposeUIViewController
+            
+            @ComposeUIViewController
+            @Composable
+            fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
                     callBackA: () -> Unit,
                     callBackB: () -> Unit,
-                    content: @Composable () -> Unit
+                    @Composable content: () -> Unit
             ) { }
+        """.trimIndent()
+        val file2 = """
+            package com.mycomposable.test
+            import com.github.guilhe.ksp.composeuiviewcontroller.ComposeUIViewController
+            import com.github.guilhe.ksp.composeuiviewcontroller.ComposeUIViewController
+            
+            @ComposeUIViewController
+            @Composable
+            fun Screen(
+                    modifier: Modifier,
+                    @ComposeUIViewControllerState state: ViewState,
+                    callBackA: () -> Unit,
+                    callBackB: () -> Unit
+            ) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("File1.kt", file1), kotlin("File2.kt", file2))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+    }
+
+    @Test
+    fun `Composable Screen properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate ScreenUIViewController file`() {
+        val code = """
+            package com.mycomposable.test
+            import com.github.guilhe.ksp.composeuiviewcontroller.ComposeUIViewController
+            import com.github.guilhe.ksp.composeuiviewcontroller.ComposeUIViewController
+            
+            @ComposeUIViewController
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -91,7 +141,7 @@ class ProcessorTest {
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         assertTrue(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.nameWithoutExtension == "MyScreenUIViewController" }
+                .filter { it.nameWithoutExtension == "ScreenUIViewController" }
                 .toList()
                 .isNotEmpty()
         )
@@ -141,24 +191,15 @@ class ProcessorTest {
             
             @ComposeUIViewController
             @Composable
-            fun MyScreenA(@ComposeUIViewControllerState state: ViewState) { }
+            fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
 
             @ComposeUIViewController
             @Composable
-            fun MyScreenB(
-                    modifier: Modifier,
-                    @ComposeUIViewControllerState uiState: ViewState                    
-            ) { }
+            fun ScreenB(@ComposeUIViewControllerState uiState: ViewState, callBackA: () -> Unit) { }
 
             @ComposeUIViewController
             @Composable
-            fun MyScreenC(
-                    modifier: Modifier,
-                    @ComposeUIViewControllerState screenState: ViewState,
-                    callBackA: () -> Unit,
-                    callBackB: () -> Unit,
-                    content: @Composable () -> Unit
-            ) { }
+            fun ScreenC(@ComposeUIViewControllerState screenState: ViewState, callBackB: () -> Unit) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -166,7 +207,7 @@ class ProcessorTest {
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.nameWithoutExtension == "MyScreenAUIViewController" || it.nameWithoutExtension == "MyScreenBUIViewController" || it.nameWithoutExtension == "MyScreenCUIViewController" }
+                .filter { it.nameWithoutExtension == "ScreenAUIViewController" || it.nameWithoutExtension == "ScreenBUIViewController" || it.nameWithoutExtension == "ScreenCUIViewController" }
                 .toList()
                 .size,
             3

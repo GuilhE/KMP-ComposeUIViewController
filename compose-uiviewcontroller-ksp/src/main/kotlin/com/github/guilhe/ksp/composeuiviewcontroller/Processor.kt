@@ -22,20 +22,30 @@ public class Processor(
             symbol.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>()) {
-                    val parameters = composable.parameters
-                    val stateParameter = parameters
-                        .find { p ->
-                            p.annotations.firstOrNull {
-                                it.shortName.getShortName() == ComposeUIViewControllerState::class.simpleName.toString()
-                            } != null
-                        }
-                        ?: throw IllegalStateException(
-                            "The composable ${composable.qualifiedName!!.getShortName()} is annotated with @${ComposeUIViewController::class.simpleName.toString()} but it's missing the ui state parameter annotated with @${ComposeUIViewControllerState::class.simpleName.toString()}."
+                    val parameters: List<KSValueParameter> = composable.parameters
+                    val stateParameters = parameters.filter { p ->
+                        p.annotations.filter { it.shortName.getShortName() == ComposeUIViewControllerState::class.simpleName.toString() }.toList()
+                            .isNotEmpty()
+                    }
+
+                    when {
+                        stateParameters.size > 1 -> throw IllegalStateException(
+                            "The composable ${composable.qualifiedName!!.getShortName()} has more than one parameter annotated with @${ComposeUIViewControllerState::class.simpleName.toString()}."
                         )
 
+                        stateParameters.isEmpty() -> throw IllegalStateException(
+                            "The composable ${composable.qualifiedName!!.getShortName()} is annotated with @${ComposeUIViewController::class.simpleName.toString()} but it's missing the ui state parameter annotated with @${ComposeUIViewControllerState::class.simpleName.toString()}."
+                        )
+                    }
+
+                    val stateParameter = stateParameters.first()
                     val stateParameterName = stateParameter.name!!.getShortName()
                     val makeParameters = parameters.filterNot { it.type == stateParameter.type }.filterFunctions()
-                    val updateParameters = "$stateParameterName: ${stateParameter.type}"
+
+                    if (parameters.size != makeParameters.size + 1) {
+                        throw IllegalStateException("Only 1 @${ComposeUIViewControllerState::class.simpleName.toString()} and N high-order function parameters (excluding @Composable content: () -> Unit) are allowed.")
+                    }
+
                     val generatedCode = """
                        package $packageName
                         
@@ -48,13 +58,13 @@ public class Processor(
                        object ${composable.qualifiedName!!.getShortName()}UIViewController {
                            private val $stateParameterName = mutableStateOf(${stateParameter.type}())
 
-                           fun make($makeParameters): UIViewController {
+                           fun make(${makeParameters.joinToString()}): UIViewController {
                                return ComposeUIViewController {
                                    ${composable.qualifiedName!!.getShortName()}(${parameters.joinToString(", ") { if (it.name!!.getShortName() == stateParameterName) "${it.name!!.getShortName()}.value" else it.name!!.getShortName() }})
                                }
                            }
 
-                           fun update($updateParameters) {
+                           fun update($stateParameterName: ${stateParameter.type}) {
                                this.$stateParameterName.value = $stateParameterName
                            }
                        }
@@ -74,9 +84,11 @@ public class Processor(
         return emptyList()
     }
 
-    private fun List<KSValueParameter>.filterFunctions(): String {
-        return filter { parameter ->
-            parameter.type.resolve().isFunctionType && parameter.type.annotations.none { it.shortName.getShortName() == "Composable" }
-        }.joinToString(", ") { "${it.name!!.getShortName()}: ${it.type}" }
+    private fun List<KSValueParameter>.filterFunctions(): List<KSValueParameter> {
+        return filter { p -> p.type.resolve().isFunctionType && p.annotations.none { it.shortName.getShortName() == "Composable" } }
+    }
+
+    private fun List<KSValueParameter>.joinToString(): String {
+        return joinToString(", ") { "${it.name!!.getShortName()}: ${it.type}" }
     }
 }
