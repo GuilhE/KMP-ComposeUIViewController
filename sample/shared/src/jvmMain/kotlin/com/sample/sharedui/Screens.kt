@@ -1,8 +1,9 @@
-package com.github.guilhe.ksp.sample.composables
+package com.sample.sharedui
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.sample.sharedui.Gradient
 
 @Composable
 @Preview

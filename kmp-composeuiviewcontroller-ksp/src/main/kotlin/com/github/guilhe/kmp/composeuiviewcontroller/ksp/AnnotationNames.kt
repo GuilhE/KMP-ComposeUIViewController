@@ -1,4 +1,4 @@
-package com.github.guilhe.kmp.composeuiviewcontroller.ksp
+package com.sample.sharedui.kmp.composeuiviewcontroller.ksp
 
 private const val packageName = "com.github.guilhe.kmp.composeuiviewcontroller"
 

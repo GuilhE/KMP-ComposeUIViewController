@@ -9,9 +9,6 @@ compose {
 }
 
 kotlin {
-    jvmToolchain(11)
-    explicitApi()
-
     jvm()
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
@@ -22,7 +19,7 @@ kotlin {
             languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
         }
 
-        val composeSource by creating {
+        val commonMain by getting {
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
@@ -31,19 +28,13 @@ kotlin {
             }
         }
 
-        val commonMain by getting {
-            dependsOn(composeSource)
-        }
-
         val jvmMain by getting {
-            dependsOn(commonMain)
             dependencies {
                 implementation(compose.preview)
             }
         }
 
         val iosMain by creating {
-            dependsOn(composeSource)
             dependsOn(commonMain)
             dependencies {
                 implementation("com.github.guilhe:kmp-composeuiviewcontroller-annotations:1.0.0")
@@ -51,7 +42,9 @@ kotlin {
         }
         listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
             target.binaries.framework { baseName = "SharedComposables" }
-            getByName("${target.targetName}Main") { dependsOn(iosMain) }
+            getByName("${target.targetName}Main") {
+                dependsOn(iosMain)
+            }
 
             val kspConfigName = "ksp${target.name.replaceFirstChar { it.uppercaseChar() }}"
             dependencies.add(kspConfigName, "com.github.guilhe:kmp-composeuiviewcontroller-ksp:1.0.0")

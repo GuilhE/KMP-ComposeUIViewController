@@ -1,4 +1,4 @@
-package com.github.guilhe.ksp.sample.composables
+package com.sample.sharedui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

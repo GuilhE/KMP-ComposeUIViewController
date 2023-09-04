@@ -1,4 +1,4 @@
-package com.github.guilhe.kmp.composeuiviewcontroller.ksp
+package com.sample.sharedui.kmp.composeuiviewcontroller.ksp
 
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -15,7 +15,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
         if (!candidates.iterator().hasNext()) {
-            logger.info("No @${composeUIViewControllerAnnotationName.split(".").last()} found!")
+            logger.info("No @${composeUIViewControllerAnnotationName.name()} found!")
             return emptyList()
         }
 
@@ -27,7 +27,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                     val parameters: List<KSValueParameter> = composable.parameters
                     val stateParameters = parameters.filter {
                         it.annotations
-                            .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.split(".").last() }
+                            .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name() }
                             .toList()
                             .isNotEmpty()
                     }
@@ -35,12 +35,12 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                     when {
                         stateParameters.size > 1 -> throw IllegalArgumentException(
                             "The composable ${composable.name()} has more than one parameter annotated " +
-                                    "with @${composeUIViewControllerStateAnnotationName.split(".").last()}."
+                                    "with @${composeUIViewControllerStateAnnotationName.name()}."
                         )
 
                         stateParameters.isEmpty() -> throw IllegalArgumentException(
                             "The composable ${composable.name()} is annotated with @${composeUIViewControllerAnnotationName.split(".").last()}" +
-                                    "but it's missing the ui state parameter annotated with @${composeUIViewControllerStateAnnotationName.split(".").last()}"
+                                    "but it's missing the ui state parameter annotated with @${composeUIViewControllerStateAnnotationName.name()}"
                         )
                     }
 
@@ -50,7 +50,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
 
                     if (parameters.size != makeParameters.size + 1) {
                         throw IllegalArgumentException(
-                            "Only 1 @$composeUIViewControllerStateAnnotationName and " +
+                            "Only 1 @${composeUIViewControllerStateAnnotationName.name()} and " +
                                     "N high-order function parameters (excluding @Composable content: () -> Unit) are allowed."
                         )
                     }
@@ -79,7 +79,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                        }
                    """.trimIndent()
 
-                    logger.info("\n$code")
+//                    logger.info("\n$code")
 
                     codeGenerator
                         .createNewFile(
@@ -88,12 +88,14 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                             fileName = "${composable.name()}UIViewController",
                         ).write(code.toByteArray())
 
-                    logger.info("\n${composable.name()}UIViewController created!")
+                    logger.info("${composable.name()}UIViewController created!")
                 }
             }
         }
         return emptyList()
     }
+
+    private fun String.name() = split(".").last()
 
     private fun List<KSValueParameter>.toComposableParameters(stateParameterName: String): String =
         joinToString(", ") { if (it.name() == stateParameterName) "${it.name()}.value" else it.name() }
