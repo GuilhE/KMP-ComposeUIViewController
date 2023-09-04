@@ -1,15 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
-    id("com.android.library")
     id("org.jetbrains.compose") version "1.5.0"
-}
-
-version = "1.0"
-
-android {
-    namespace = "com.github.guilhe.ksp.sample"
-    compileSdk = 34
 }
 
 compose {
@@ -20,7 +12,7 @@ kotlin {
     jvmToolchain(11)
     explicitApi()
 
-    androidTarget()
+    jvm()
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
     val iosSimulatorArm64 = iosSimulatorArm64()
@@ -39,30 +31,30 @@ kotlin {
             }
         }
 
-        val androidMain by getting {
+        val commonMain by getting {
+            dependsOn(composeSource)
+        }
+
+        val jvmMain by getting {
+            dependsOn(commonMain)
             dependencies {
                 implementation(compose.preview)
             }
         }
 
-        val commonMain by getting {
-            dependsOn(composeSource)
-            dependencies {
-//                configurations["ksp"].dependencies.add(implementation("com.github.guilhe:kmp-composeuiviewcontroller-ksp:1.0.0"))
-            }
-        }
-
         val iosMain by creating {
             dependsOn(composeSource)
+            dependsOn(commonMain)
             dependencies {
                 implementation("com.github.guilhe:kmp-composeuiviewcontroller-annotations:1.0.0")
             }
         }
-        listOf(iosX64, iosArm64, iosSimulatorArm64).forEach {
-            it.binaries.framework {
-                baseName = "UIViewControllerSampleShared"
-            }
-            getByName("${it.targetName}Main") { dependsOn(iosMain) }
+        listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
+            target.binaries.framework { baseName = "SharedComposables" }
+            getByName("${target.targetName}Main") { dependsOn(iosMain) }
+
+            val kspConfigName = "ksp${target.name.replaceFirstChar { it.uppercaseChar() }}"
+            dependencies.add(kspConfigName, "com.github.guilhe:kmp-composeuiviewcontroller-ksp:1.0.0")
         }
     }
 }
