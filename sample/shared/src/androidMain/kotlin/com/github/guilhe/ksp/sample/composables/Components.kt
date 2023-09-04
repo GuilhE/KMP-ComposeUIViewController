@@ -7,6 +7,7 @@ package com.github.guilhe.ksp.sample.composables
 //import androidx.compose.ui.Modifier
 //import androidx.compose.ui.graphics.Brush
 //import androidx.compose.ui.graphics.Color
+//import androidx.compose.ui.tooling.preview.Preview
 //import $composeUIViewControllerAnnotationName
 //import $composeUIViewControllerAnnotationNameState
 //
@@ -14,7 +15,8 @@ package com.github.guilhe.ksp.sample.composables
 //
 //@ComposeUIViewController
 //@Composable
-//public fun SampleScreen(@ComposeUIViewControllerState state: ScreenState) {
+//@Preview
+//public fun SampleScreen(@ComposeUIViewControllerState state: ScreenState = ScreenState()) {
 //    Box(
 //        modifier = Modifier
 //            .fillMaxSize()

@@ -2,6 +2,7 @@
 
 kotlin = "1.9.10"
 ksp = "1.9.10-1.0.13"
+androidTools = "8.1.0"
 compileTesting = "1.5.0"
 junit = "4.13.2"
 
@@ -12,6 +13,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 
 [libraries]
+gradle-android-tools = { group = "com.android.tools.build", name = "gradle", version.ref = "androidTools" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 
 test-junit = { module = "junit:junit", version.ref = "junit" }
