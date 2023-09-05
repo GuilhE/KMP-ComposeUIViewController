@@ -13,9 +13,9 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Compatibility
 
-| Version        |    Kotlin   |    KSP     |
-|----------------|-:----------:|:----------:|
-| **_latest_**   |  **1.9.10** | **1.0.13** |
+| Version        |   Kotlin    |    KSP     |
+|----------------|:-----------:|:----------:|
+| **_latest_**   | **1.9.10**  | **1.0.13** |
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
