@@ -23,7 +23,7 @@ kotlin {
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
-                implementation(compose.material)
+                implementation(compose.material3)
                 implementation(compose.ui)
             }
         }
@@ -41,7 +41,9 @@ kotlin {
             }
         }
         listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
-            target.binaries.framework { baseName = "SharedComposables" }
+            target.binaries.framework {
+                baseName = "SharedComposables"
+            }
             getByName("${target.targetName}Main") {
                 dependsOn(iosMain)
             }
