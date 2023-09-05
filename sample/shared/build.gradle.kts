@@ -33,7 +33,7 @@ kotlin {
         val iosMain by creating {
             dependsOn(commonMain)
             dependencies {
-                implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:1.0.0")
+                implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:1.0.0-APLHA-1")
             }
         }
         listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
@@ -45,7 +45,7 @@ kotlin {
             }
 
             val kspConfigName = "ksp${target.name.replaceFirstChar { it.uppercaseChar() }}"
-            dependencies.add(kspConfigName, "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:1.0.0")
+            dependencies.add(kspConfigName, "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:1.0.0-APLHA-1")
             all {
                 //https://kotlinlang.org/docs/ksp-quickstart.html#make-ide-aware-of-generated-code
                 kotlin.srcDir("build/generated/ksp/${target.targetName}/${target.targetName}Main/kotlin")

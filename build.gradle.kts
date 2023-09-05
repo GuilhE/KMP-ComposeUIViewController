@@ -13,4 +13,8 @@ buildscript {
 allprojects {
     group = "com.github.guilhe.kmp"
     version = "1.0.0-APLHA-1"
+
+//    repositories {
+//        mavenCentral()
+//    }
 }

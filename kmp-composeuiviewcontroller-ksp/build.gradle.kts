@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    `kmp-composeuiviewcontroller-publish`
 }
 
 dependencies {
@@ -24,5 +25,13 @@ java {
 tasks.compileKotlin.configure {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjvm-default=all")
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
     }
 }
