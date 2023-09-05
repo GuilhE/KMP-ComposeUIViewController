@@ -25,7 +25,7 @@ It's important to note that this addresses the [current](https://github.com/JetB
 First we need to import the ksp plugin:
 ```kotlin
 plugins {
-    id("com.google.devtools.ksp") version "1.9.10-1.0.13"
+    id("com.google.devtools.ksp") version "${Koltin}-${KSP}"
 }
 ```
 Then configure our **iosMain** target to import `kmp-composeuiviewcontroller-annotations`:
