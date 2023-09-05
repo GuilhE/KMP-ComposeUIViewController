@@ -4,7 +4,9 @@ KSP library for generating ComposeUIViewController when using ComposeMultiplatfo
 
 ## Motivation
 
-When employing Compose Multiplatform for iOS, if the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).  
+When employing Compose Multiplatform for iOS, if the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here:  
+[Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).  
+
 As your project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you, at least for the Compose side, for the time being.
 
 Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
@@ -56,14 +58,14 @@ all {
 }
 ```
 Now we can take advantage of two annotations:
-- `@ComposeUIViewController`: it will mark our composable function as a desired ComposeUIViewController that will be used by the **iosApp**;
+- `@ComposeUIViewController`: it will mark our `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
 - `@ComposeUIViewControllerState`: it will specify our composable state variable.
 
 #### Considerations
 - `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
 - `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
 - The state variable of your choosing must implement default values in it's initialization;
-- Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding @Composable) are allowed in `@ComposeUIViewController` functions.
+- Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 Example:
 ```kotlin
@@ -111,7 +113,7 @@ private struct ScreenRepresentable: UIViewControllerRepresentable {
 }
 ```
 
-For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcworkspace` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose iosApp in run configurations.
+For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcworkspace` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
 
 ## LICENSE
 
