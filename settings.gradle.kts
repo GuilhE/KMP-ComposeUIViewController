@@ -19,4 +19,5 @@ dependencyResolutionManagement {
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "ComposeUIViewController"
-include(":compose-uiviewcontroller-ksp")
+include(":kmp-composeuiviewcontroller-ksp")
+include(":kmp-composeuiviewcontroller-annotations")
