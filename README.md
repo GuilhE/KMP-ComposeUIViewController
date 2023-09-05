@@ -46,7 +46,7 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
     dependencies.add(kspConfigName, "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERISON}")
 }
 ```
-You can find a full setup example in the sample's shared module's build.gradle.kts [file](sample/shared/build.gradle.kts)
+You can find a full setup example [here](sample/shared/build.gradle.kts).
 
 **Tip:** if you would like to make the IDE aware of the generated code (not mandatory), after the previous ksp configuration, add this:
 ```kotlin
@@ -56,14 +56,14 @@ all {
 }
 ```
 Now we can take advantage of two annotations:
-- `@ComposeUIViewController`: it will mark our composable function as a desired ComposeUIViewController that will be used by the **iosApp**
-- `@ComposeUIViewControllerState`: it will mark our composable state varible as a desired ComposeUIViewController that will be used by the **iosApp**
+- `@ComposeUIViewController`: it will mark our composable function as a desired ComposeUIViewController that will be used by the **iosApp**;
+- `@ComposeUIViewControllerState`: it will specify our composable state variable.
 
 #### Considerations
-- `@ComposeUIViewController` will always require a unique variable state marked with @ComposeUIViewControllerState;
+- `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
 - `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
 - The state variable of your choosing must implement default values in it's initialization;
-- Only 1 `@ComposeUIViewControllerState` and N function parameters (excluding @Composable) are allowed in `@ComposeUIViewController` functions.
+- Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding @Composable) are allowed in `@ComposeUIViewController` functions.
 
 Example:
 ```kotlin
@@ -73,7 +73,7 @@ data class ViewState(val status: String = "default")
 @Composable
 fun Screen(@ComposeUIViewControllerState uiState: ViewState, callback: () -> Unit) { }
 ```
-will produce a `ScreenUIViewController:
+will produce a `ScreenUIViewController`:
 ```kotlin
 public object ScreenUIViewController {
     private val uiState = mutableStateOf(ViewState())
@@ -94,7 +94,7 @@ Please find all the use-cases in the [ProcessorTest.kt](kmp-composeuiviewcontrol
 
 ### iOSApp
 
-Now that our UIViewControllers are created we just need to call it:
+Now that our UIViewControllers are created we just need to use them:
 ```swift
 private struct ScreenRepresentable: UIViewControllerRepresentable {
     
@@ -111,7 +111,7 @@ private struct ScreenRepresentable: UIViewControllerRepresentable {
 }
 ```
 
-For a working sample run **iosApp** by opening iosApp/iosApp.xcworkspace in Xcode and run standard configuration or use KMM plugin for Android Studio and choose iosApp in run configurations.
+For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcworkspace` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose iosApp in run configurations.
 
 ## LICENSE
 
