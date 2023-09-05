@@ -96,11 +96,17 @@ Please find all the use-cases in the [ProcessorTest.kt](kmp-composeuiviewcontrol
 
 ### iOSApp
 
-Now that our UIViewControllers are created we just need to use them:
+Now that our `UIViewController`s are created we just need to use them:
 ```swift
-private struct ScreenRepresentable: UIViewControllerRepresentable {
-    
-    @Binding var state: ScreenState
+struct SharedView: View {
+    @State private var composableState: ViewState = ViewState()        
+    var body: some View {
+        ScreenRepresentable(state: $composableState, action: {})
+    }
+}
+
+private struct ScreenRepresentable: UIViewControllerRepresentable {    
+    @Binding var state: ViewState
     let action: () -> Void
     
     func makeUIViewController(context: Context) -> UIViewController {
