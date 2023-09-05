@@ -26,7 +26,7 @@ dependencyResolutionManagement {
 includeBuild("..") {
     dependencySubstitution {
         listOf("annotations", "compiler", "compiler-embeddable", "core", "ksp").forEach {
-            substitute(module("com.github.guilhe:kmp-composeuiviewcontroller-$it"))
+            substitute(module("com.github.guilhe.kmp:kmp-composeuiviewcontroller-$it"))
                 .using(project(":kmp-composeuiviewcontroller-$it"))
         }
     }

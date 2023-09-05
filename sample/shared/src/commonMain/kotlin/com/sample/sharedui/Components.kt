@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 @Composable
-public fun Gradient(colors: List<Color>) {
+fun Gradient(colors: List<Color>) {
     Box(
         modifier = Modifier
             .fillMaxSize()

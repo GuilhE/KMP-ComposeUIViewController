@@ -1,7 +1,6 @@
 @file:Suppress("unused")
 package com.sample.sharedui
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Button
@@ -24,7 +23,7 @@ fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: 
             Gradient(it.colors)
         }
         Button(onClick = { randomize() }) {
-            Text(text = "Shuffle!")
+            Text(text = "Shuffle")
         }
     }
 }

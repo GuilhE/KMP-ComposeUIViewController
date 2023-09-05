@@ -6,6 +6,6 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 @Preview
-public fun GradientScreen() {
+fun GradientScreen() {
     Gradient(listOf(Color.Red, Color.Blue))
 }

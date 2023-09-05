@@ -62,8 +62,6 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                        import androidx.compose.runtime.mutableStateOf
                        import androidx.compose.ui.window.ComposeUIViewController
                        import platform.UIKit.UIViewController
-                       import $packageName.${composable.name()}
-                       import $packageName.${stateParameter.type}
                        
                        public object ${composable.name()}UIViewController {
                            private val $stateParameterName = mutableStateOf(${stateParameter.type}())

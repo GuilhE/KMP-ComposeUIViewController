@@ -11,6 +11,6 @@ buildscript {
 }
 
 allprojects {
-    group = "com.github.guilhe"
-    version = "1.0.0"
+    group = "com.github.guilhe.kmp"
+    version = "1.0.0-APLHA-1"
 }
