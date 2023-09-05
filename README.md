@@ -1,6 +1,6 @@
 # KMP-ComposeUIViewController
 
-KSP library for generating ComposeUIViewController when using ComposeMultiplatform for iOS.
+KSP library for generating `ComposeUIViewController`s when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
 ## Motivation
 
