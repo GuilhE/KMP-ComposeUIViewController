@@ -9,7 +9,7 @@ dependencies {
     testImplementation(libs.test.kotlin)
     testImplementation(libs.test.kotlinCompile)
     testImplementation(libs.test.kotlinCompileKsp)
-    testImplementation(projects.kmpComposeuiviewcontrollerAnnotations)
+    testImplementation(project(":kmp-composeuiviewcontroller-annotations"))
 }
 
 kotlin {
