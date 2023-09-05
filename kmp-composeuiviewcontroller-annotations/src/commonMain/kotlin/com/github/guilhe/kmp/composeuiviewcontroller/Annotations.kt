@@ -1,4 +1,4 @@
-package com.sample.sharedui.kmp.composeuiviewcontroller
+package com.github.guilhe.kmp.composeuiviewcontroller
 
 import kotlin.experimental.ExperimentalObjCRefinement
 import kotlin.native.HidesFromObjC

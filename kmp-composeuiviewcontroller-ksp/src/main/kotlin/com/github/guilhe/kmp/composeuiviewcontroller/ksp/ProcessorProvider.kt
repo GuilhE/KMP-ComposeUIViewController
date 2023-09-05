@@ -1,4 +1,4 @@
-package com.sample.sharedui.kmp.composeuiviewcontroller.ksp
+package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment

@@ -1,4 +1,4 @@
-package com.sample.sharedui.kmp.composeuiviewcontroller.ksp
+package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -56,6 +56,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                     }
 
                     val code = """
+                       @file:Suppress("unused")
                        package $packageName
                         
                        import androidx.compose.runtime.mutableStateOf
