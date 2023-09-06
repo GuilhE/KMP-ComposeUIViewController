@@ -7,17 +7,12 @@ struct SharedView: View {
         endColor: convertUIColorToKotlinLong(UIColor.blue)
     )
     
-    private let colors: NSArray = [
-        UIColor.red,
-        UIColor.green,
-        UIColor.blue,
-        UIColor.yellow
-    ]
+    private let colors: [UIColor] = [.red, .green, .blue, .yellow]
     
     var body: some View {
         GradientScreenRepresentable(state: $screenState, action: {
             let randomIndexes = (0..<colors.count).shuffled().prefix(2)
-            let randomColors: [UIColor] = randomIndexes.map { colors[$0] as! UIColor }
+            let randomColors = randomIndexes.map { colors[$0] }
             screenState = ScreenState(
                 startColor: convertUIColorToKotlinLong(randomColors[0]),
                 endColor: convertUIColorToKotlinLong(randomColors[1])
