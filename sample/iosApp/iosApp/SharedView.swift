@@ -10,7 +10,7 @@ struct SharedView: View {
     private let colors: [UIColor] = [.red, .green, .blue, .yellow]
     
     var body: some View {
-        GradientScreenRepresentable(state: $screenState, action: {
+        GradientScreenRepresentable(state: $screenState, randomize: {
             let randomIndexes = (0..<colors.count).shuffled().prefix(2)
             let randomColors = randomIndexes.map { colors[$0] }
             screenState = ScreenState(
@@ -22,19 +22,19 @@ struct SharedView: View {
     }
 }
 
-private struct GradientScreenRepresentable: UIViewControllerRepresentable {
+/*private struct GradientScreenRepresentable: UIViewControllerRepresentable {
     
     @Binding var state: ScreenState
-    let action: () -> Void
+    let randomize: () -> Void
     
     func makeUIViewController(context: Context) -> UIViewController {
-        return GradientScreenUIViewController().make(randomize: action)
+        return GradientScreenUIViewController().make(randomize: randomize)
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         GradientScreenUIViewController().update(state: state)
     }
-}
+}*/
 
 private func convertUIColorToKotlinLong(_ color: UIColor) -> Int64 {
     var red: CGFloat = 0

@@ -55,43 +55,93 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                         )
                     }
 
-                    val code = """
-                       @file:Suppress("unused")
-                       package $packageName
-                        
-                       import androidx.compose.runtime.mutableStateOf
-                       import androidx.compose.ui.window.ComposeUIViewController
-                       import platform.UIKit.UIViewController
-                       
-                       public object ${composable.name()}UIViewController {
-                           private val $stateParameterName = mutableStateOf(${stateParameter.type}())
-
-                           public fun make(${makeParameters.joinToString()}): UIViewController {
-                               return ComposeUIViewController {
-                                   ${composable.name()}(${parameters.toComposableParameters(stateParameterName)})
-                               }
-                           }
-
-                           public fun update($stateParameterName: ${stateParameter.type}) {
-                               this.$stateParameterName.value = $stateParameterName
-                           }
-                       }
-                   """.trimIndent()
-
-//                    logger.info("\n$code")
-
-                    codeGenerator
-                        .createNewFile(
-                            dependencies = Dependencies(true),
-                            packageName = "",
-                            fileName = "${composable.name()}UIViewController",
-                        ).write(code.toByteArray())
-
-                    logger.info("${composable.name()}UIViewController created!")
+                    createKotlinFile(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
+                        logger.info("${composable.name()}UIViewController created!")
+                    }
+                    createSwiftFile(composable, stateParameterName, stateParameter, makeParameters).also {
+                        logger.info("${composable.name()}Representable created!")
+                    }
                 }
             }
         }
         return emptyList()
+    }
+
+    private fun createKotlinFile(
+        packageName: String,
+        composable: KSFunctionDeclaration,
+        stateParameterName: String,
+        stateParameter: KSValueParameter,
+        makeParameters: List<KSValueParameter>,
+        parameters: List<KSValueParameter>
+    ): String {
+        val code = """
+            @file:Suppress("unused")
+            package $packageName
+             
+            import androidx.compose.runtime.mutableStateOf
+            import androidx.compose.ui.window.ComposeUIViewController
+            import platform.UIKit.UIViewController
+            
+            public object ${composable.name()}UIViewController {
+                private val $stateParameterName = mutableStateOf(${stateParameter.type}())
+                
+                public fun make(${makeParameters.joinToString()}): UIViewController {
+                    return ComposeUIViewController {
+                        ${composable.name()}(${parameters.toComposableParameters(stateParameterName)})
+                    }
+                }
+                
+                public fun update($stateParameterName: ${stateParameter.type}) {
+                    this.$stateParameterName.value = $stateParameterName
+                }
+            }
+        """.trimIndent()
+        codeGenerator
+            .createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = "${composable.name()}UIViewController",
+            ).write(code.toByteArray())
+        return code
+    }
+
+    private fun createSwiftFile(
+        composable: KSFunctionDeclaration,
+        stateParameterName: String,
+        stateParameter: KSValueParameter,
+        makeParameters: List<KSValueParameter>,
+    ): String {
+        val letParameters = makeParameters.joinToString("\n") {
+            "let ${it.name()}: ${it.type}".replace("Unit","Void")
+        }
+        val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
+
+        val code = """
+            import SwiftUI
+            import SharedComposables
+            
+            public struct ${composable.name()}Representable: UIViewControllerRepresentable {
+                @Binding var $stateParameterName: ${stateParameter.type}
+                $letParameters
+                
+                func makeUIViewController(context: Context) -> UIViewController {
+                    return ${composable.name()}UIViewController().make($makeParametersParsed)
+                }
+                
+                func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    ${composable.name()}UIViewController().update($stateParameterName: $stateParameterName)
+                }
+            }
+        """.trimIndent()
+        codeGenerator
+            .createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = "${composable.name()}UIViewControllerRepresentable",
+                extensionName = "swift"
+            ).write(code.toByteArray())
+        return code
     }
 
     private fun String.name() = split(".").last()

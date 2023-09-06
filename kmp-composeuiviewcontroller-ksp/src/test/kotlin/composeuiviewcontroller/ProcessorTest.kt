@@ -205,7 +205,7 @@ class ProcessorTest {
 
             @ComposeUIViewController
             @Composable
-            fun ScreenC(@ComposeUIViewControllerState screenState: ViewState, callBackB: () -> Unit) { }
+            fun ScreenC(@ComposeUIViewControllerState screenState: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
