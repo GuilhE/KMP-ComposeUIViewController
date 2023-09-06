@@ -15,7 +15,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 | Version        |   Kotlin    |    KSP     |
 |----------------|:-----------:|:----------:|
-| [![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp%20AND%20kmp-composeuiviewcontroller-ksp)  | **1.9.10**  | **1.0.13** |
+| [![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp)  | **1.9.10**  | **1.0.13** |
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
@@ -25,7 +25,7 @@ It's important to note that this addresses the [current](https://github.com/JetB
 First we need to import the ksp plugin:
 ```kotlin
 plugins {
-    id("com.google.devtools.ksp") version "${Koltin}-${KSP}"
+    id("com.google.devtools.ksp") version "${Kotlin}-${KSP}"
 }
 ```
 Then configure our **iosMain** target to import `kmp-composeuiviewcontroller-annotations`:
