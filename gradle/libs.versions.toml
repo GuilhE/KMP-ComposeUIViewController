@@ -5,6 +5,7 @@ ksp = "1.9.10-1.0.13"
 androidTools = "8.1.0"
 compileTesting = "1.5.0"
 junit = "4.13.2"
+composeuiviewcontroller = "1.0.0-ALPHA-1"
 
 [plugins]
 
@@ -14,8 +15,9 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 
 [libraries]
 gradle-android-tools = { group = "com.android.tools.build", name = "gradle", version.ref = "androidTools" }
-
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+composeuiviewcontroller-ksp = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp", version.ref = "composeuiviewcontroller" }
+composeuiviewcontroller-annotations = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations", version.ref = "composeuiviewcontroller" }
 
 test-junit = { module = "junit:junit", version.ref = "junit" }
 test-kotlinCompile = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "compileTesting" }
