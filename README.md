@@ -15,7 +15,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 | Version        |   Kotlin    |    KSP     |    Compose Multiplatform     |
 |----------------|:-----------:|:----------:|:----------------------------:|
-|[![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp)  | **1.9.10**  | **1.0.13** |             alpha            |
+|1.0.0-ALPHA-1 [![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp)  | **1.9.10**  | **1.0.13** |             alpha            |
 |1.0.0-APLHA-1 (🤦🏽‍♂️ stupid typo...)  |1.9.10| 1.0.13 |             alpha            |
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
@@ -49,9 +49,6 @@ kotlin {
 and also the `kmp-composeuiviewcontroller-ksp`:
 ```kotlin
 listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
-    target.binaries.framework {
-        baseName = "SharedComposables"
-    }
     getByName("${target.targetName}Main") {
         dependsOn(iosMain)
     }
