@@ -48,6 +48,9 @@ kotlin {
 and also the `kmp-composeuiviewcontroller-ksp`:
 ```kotlin
 listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
+    target.binaries.framework {
+        baseName = "SharedComposables"
+    }
     getByName("${target.targetName}Main") {
         dependsOn(iosMain)
     }
@@ -106,6 +109,9 @@ Please find all the use-cases in the [ProcessorTest.kt](kmp-composeuiviewcontrol
 
 Now that our `UIViewController`s are created we just need to use them:
 ```swift
+import SwiftUI
+import SharedComposables
+
 struct SharedView: View {
     @State private var composableState: ViewState = ViewState()        
     var body: some View {
