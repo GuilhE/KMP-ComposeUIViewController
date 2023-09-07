@@ -67,7 +67,25 @@ class ProcessorTest {
 
             data class ViewState(val status: String = "default")
          
-            @ComposeUIViewController
+            @ComposeUIViewController("")
+            @Composable
+            fun Screen(state: ViewState) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+    }
+
+    @Test
+    fun `Empty frameworkName in @ComposeUIViewController throws IllegalStateException`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+
+            data class ViewState(val status: String = "default")
+         
+            @ComposeUIViewController("")
             @Composable
             fun Screen(state: ViewState) { }
         """.trimIndent()
@@ -84,7 +102,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
         """.trimIndent()
@@ -101,7 +119,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
@@ -115,7 +133,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun Screen(
                     modifier: Modifier,
@@ -137,7 +155,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -160,7 +178,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -170,7 +188,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -195,15 +213,15 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
 
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun ScreenB(@ComposeUIViewControllerState uiState: ViewState, callBackA: () -> Unit) { }
 
-            @ComposeUIViewController
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun ScreenC(@ComposeUIViewControllerState screenState: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
         """.trimIndent()

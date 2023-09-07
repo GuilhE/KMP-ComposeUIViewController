@@ -21,6 +21,11 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
+            val frameworkName: String = node.annotations.find { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }?.arguments?.firstOrNull()?.value as String
+            if (frameworkName == "") {
+                throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} has no value for frameworkName")
+            }
+
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>()) {
@@ -58,7 +63,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                     createKotlinFile(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
                         logger.info("${composable.name()}UIViewController created!")
                     }
-                    createSwiftFile(composable, stateParameterName, stateParameter, makeParameters).also {
+                    createSwiftFile(frameworkName, composable, stateParameterName, stateParameter, makeParameters).also {
                         logger.info("${composable.name()}Representable created!")
                     }
                 }
@@ -107,19 +112,20 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
     }
 
     private fun createSwiftFile(
+        frameworkName: String,
         composable: KSFunctionDeclaration,
         stateParameterName: String,
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
     ): String {
         val letParameters = makeParameters.joinToString("\n") {
-            "let ${it.name()}: ${it.type}".replace("Unit","Void")
+            "let ${it.name()}: ${it.type}".replace("Unit", "Void")
         }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
 
         val code = """
             import SwiftUI
-            import SharedComposables
+            import $frameworkName
             
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
                 @Binding var $stateParameterName: ${stateParameter.type}
