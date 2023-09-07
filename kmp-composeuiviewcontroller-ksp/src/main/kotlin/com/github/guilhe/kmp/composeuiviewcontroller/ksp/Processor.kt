@@ -21,9 +21,14 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
-            val frameworkName: String = node.annotations.find { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }?.arguments?.firstOrNull()?.value as String
-            if (frameworkName == "") {
-                throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} has no value for frameworkName")
+            val frameworkName: String? = node.annotations
+                .find { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+                ?.arguments
+                ?.firstOrNull { it.name?.asString() == composeUIViewControllerAnnotationParameterName }
+                ?.value as? String
+
+            if (frameworkName.isNullOrEmpty()) {
+                throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} has no value for $composeUIViewControllerAnnotationParameterName")
             }
 
             node.containingFile?.let { file ->

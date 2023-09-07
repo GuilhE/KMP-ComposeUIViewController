@@ -73,6 +73,7 @@ Now we can take advantage of two annotations:
 
 #### Considerations
 - `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
+- `@ComposeUIViewController` has a `frameworkName: String` parameter that must used to specify the shared library framework's base name;
 - `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
 - The state variable of your choosing must implement default values in it's initialization;
 - Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
@@ -83,9 +84,9 @@ For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-
 ```kotlin
 data class ViewState(val status: String = "default")
 
-@ComposeUIViewController
+@ComposeUIViewController("SharedUI")
 @Composable
-fun ComposeView(@ComposeUIViewControllerState uiState: ViewState, callback: () -> Unit) { }
+fun ComposeView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
 ```
 will produce a `ComposeViewUIViewController`:
 ```kotlin
@@ -98,13 +99,16 @@ public object ComposeViewUIViewController {
         }
     }
 
-    public fun update(uiState: ViewState) {
+    public fun update(viewState: ViewState) {
         this.viewState.value = uiState
     }
 }
 ```
 and also a `ComposeViewRepresentable`:
 ```swift
+import SwiftUI
+import SharedUI
+
 public struct ComposeViewRepresentable: UIViewControllerRepresentable {
     @Binding var viewState: ScreenState
     let callback: () -> Void
@@ -132,7 +136,7 @@ find {module}/build/generated/ksp/ -type f -name '*.swift' -exec rsync -a --chec
 where:
 - {module}: is the name of the multiplatform module containing the composables;
 - {destination}: destination path in the iOS project;
-- {folder}: group created in step 1.
+- {folder}: group name created in step 1.
 
 default:
 ```bash
