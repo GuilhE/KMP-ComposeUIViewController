@@ -13,11 +13,11 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Compatibility
 
-| Version                                                                                                                                                                         |   Kotlin   |    KSP     | Compose Multiplatform |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------:|:----------:|:---------------------:|
-| [![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp) | **1.9.10** | **1.0.13** |         alpha         |
-| 1.0.0-ALPHA-1                                                                                                                                                                   |   1.9.10   |   1.0.13   |         alpha         |
-| 1.0.0-APLHA-1 (🤦🏽‍️ typo...)                                                                                                                                                  |   1.9.10   |   1.0.13   |         alpha         |
+| Version                                                                                                                                                                         |   Kotlin   |    KSP     | Compose Multiplatform | Xcode  |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------:|:----------:|:---------------------:|:------:|
+| [![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp) | **1.9.10** | **1.0.13** |         alpha         | 14.3.1 | 
+| 1.0.0-ALPHA-1                                                                                                                                                                   |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
+| 1.0.0-APLHA-1 (🤦🏽‍️ typo...)                                                                                                                                                  |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
