@@ -176,6 +176,10 @@ note: [ksp] No @ComposeUIViewController found!
 ```
 It's an example of a happy path 🙌🏼
 
+## Stability
+
+Occasionally, the Xcode preview may experience interruptions, but running the app through Xcode or Android Studio has remained reliable.
+
 
 ## LICENSE
 
