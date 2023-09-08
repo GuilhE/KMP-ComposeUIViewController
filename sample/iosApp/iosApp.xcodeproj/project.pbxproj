@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
-		11F40B3345AEF446585FC565 /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE5D2EB7EFB3CBDA54226F3 /* GradientScreenUIViewControllerRepresentable.swift */; };
 		5C6CA85F2AAA9A6F00872505 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		5C6CA8602AAA9A7400872505 /* SharedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* SharedView.swift */; };
+		92EBFDD0FD9807580C05FE52 /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1270CEA96F1EA683650E03AD /* GradientScreenUIViewControllerRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,11 +30,11 @@
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		1270CEA96F1EA683650E03AD /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = SharedRepresentables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* SharedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		DFE5D2EB7EFB3CBDA54226F3 /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = SharedRepresentables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +56,14 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		3948CB9857751C85BD18BA2A /* SharedRepresentables */ = {
+			isa = PBXGroup;
+			children = (
+				1270CEA96F1EA683650E03AD /* GradientScreenUIViewControllerRepresentable.swift */,
+			);
+			name = SharedRepresentables;
+			sourceTree = "<group>";
+		};
 		5CC0B14C1731C6B381E3D00A /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
@@ -69,7 +77,7 @@
 				7555FF7D242A565900829871 /* iosApp */,
 				7555FF7C242A565900829871 /* Products */,
 				7555FFB0242A642200829871 /* Frameworks */,
-				B506F1AC106EBF02DF4E67FD /* SharedRepresentables */,
+				3948CB9857751C85BD18BA2A /* SharedRepresentables */,
 			);
 			sourceTree = "<group>";
 		};
@@ -99,14 +107,6 @@
 			children = (
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		B506F1AC106EBF02DF4E67FD /* SharedRepresentables */ = {
-			isa = PBXGroup;
-			children = (
-				DFE5D2EB7EFB3CBDA54226F3 /* GradientScreenUIViewControllerRepresentable.swift */,
-			);
-			name = SharedRepresentables;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -205,7 +205,7 @@
 			files = (
 				5C6CA8602AAA9A7400872505 /* SharedView.swift in Sources */,
 				5C6CA85F2AAA9A6F00872505 /* iOSApp.swift in Sources */,
-				11F40B3345AEF446585FC565 /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
+				92EBFDD0FD9807580C05FE52 /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -29,9 +29,9 @@ if ! gem spec xcodeproj > /dev/null 2>&1; then
   gem install xcodeproj
 fi
 
-echo "> Copying generated files to iosApp..."
+echo "> Copying generated files to iosApp."
 find shared/build/generated/ksp/ -type f -name '*.swift' -exec rsync -a --checksum {} iosApp/SharedRepresentables/ \;
-echo "> Adding files references to xcodeproj..."
+echo "> Adding references to xcodeproj."
 cd iosApp || exit
 ruby -e "$ruby_script" "iosApp.xcodeproj" "iosApp"
 echo "> Done."

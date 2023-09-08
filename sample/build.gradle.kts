@@ -15,3 +15,9 @@ allprojects {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
+
+tasks.findByName("kspKotlinIosSimulatorArm64")?.finalizedBy("runBashScript")
+tasks.register<Exec>("runBashScript") {
+    workingDir(layout.projectDirectory)
+    commandLine("bash", "-c", "./exportToXcode.sh")
+}
