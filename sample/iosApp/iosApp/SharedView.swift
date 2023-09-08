@@ -21,22 +21,8 @@ struct SharedView: View {
         .ignoresSafeArea()
     }
 }
-
-/*private struct GradientScreenRepresentable: UIViewControllerRepresentable {
-    
-    @Binding var state: ScreenState
-    let randomize: () -> Void
-    
-    func makeUIViewController(context: Context) -> UIViewController {
-        return GradientScreenUIViewController().make(randomize: randomize)
-    }
-    
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        GradientScreenUIViewController().update(state: state)
-    }
-}*/
-
-private func convertUIColorToKotlinLong(_ color: UIColor) -> Int64 {
+ 
+ private func convertUIColorToKotlinLong(_ color: UIColor) -> Int64 {
     var red: CGFloat = 0
     var green: CGFloat = 0
     var blue: CGFloat = 0

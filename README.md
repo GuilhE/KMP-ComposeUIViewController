@@ -125,26 +125,10 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
 
 ### iOSApp
 
-Final configuration step is to make the iOS project aware of the `UIViewControllerRepresentable` files. To do so we must:
+Final configuration step is to make the iOS project aware of the `UIViewControllerRepresentable` files:
 
-1. Create a group in the root of your project, ex: iosApp/**SharedRepresentables**;
-2. Create a new `Run Script Phase` on XCode for our `target` and add the following script:
-```bash
-cd "$SRCROOT/.."
-find {module}/build/generated/ksp/ -type f -name '*.swift' -exec rsync -a --checksum {} {destination}/{folder}/ \;
-```
-where:
-- {module}: is the name of the multiplatform module containing the composables;
-- {destination}: destination path in the iOS project;
-- {folder}: group name created in step 1.
-
-default:
-```bash
-cd "$SRCROOT/.."
-find shared/build/generated/ksp/ -type f -name '*.swift' -exec rsync -a --checksum {} iosApp/iosApp/SharedRepresentables/ \;
-```
-3. Make XCode recognize the files by ...
-
+1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
+2. Build the project.
 
 Now that the `UIViewControllerRepresentable` files are included in the iOS project, we just need to use them:
 ```swift

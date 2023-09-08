@@ -136,11 +136,11 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                 @Binding var $stateParameterName: ${stateParameter.type}
                 $letParameters
                 
-                func makeUIViewController(context: Context) -> UIViewController {
+                public func makeUIViewController(context: Context) -> UIViewController {
                     return ${composable.name()}UIViewController().make($makeParametersParsed)
                 }
                 
-                func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
                     ${composable.name()}UIViewController().update($stateParameterName: $stateParameterName)
                 }
             }
