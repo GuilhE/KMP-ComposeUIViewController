@@ -21,8 +21,8 @@ struct SharedView: View {
         .ignoresSafeArea()
     }
 }
- 
- private func convertUIColorToKotlinLong(_ color: UIColor) -> Int64 {
+
+private func convertUIColorToKotlinLong(_ color: UIColor) -> Int64 {
     var red: CGFloat = 0
     var green: CGFloat = 0
     var blue: CGFloat = 0

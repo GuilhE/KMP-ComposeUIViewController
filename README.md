@@ -87,7 +87,7 @@ Now we can take advantage of two annotations:
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
-#### Outputs:
+#### Code generation
 ```kotlin
 data class ViewState(val status: String = "default")
 
@@ -160,6 +160,22 @@ struct SharedView: View {
 Pretty simple right? 😊  
 
 For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcworkspace` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+
+## Outputs
+```bash
+> Task :shared:kspKotlinIosSimulatorArm64
+note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
+note: [ksp] GradientScreenUIViewController created!
+note: [ksp] GradientScreenRepresentable created!
+note: [ksp] No @ComposeUIViewController found!
+
+> Task :addFilesToXcodeproj
+> Copying generated files to iosApp.
+> Adding references to xcodeproj.
+> Done.
+```
+It's an example of a happy path 🙌🏼
+
 
 ## LICENSE
 
