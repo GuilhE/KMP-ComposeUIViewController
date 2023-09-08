@@ -62,7 +62,7 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
 
     val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
     dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
-    tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy("addFilesToXcodeproj") }
+    tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
 }
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
