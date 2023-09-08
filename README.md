@@ -21,9 +21,15 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
-## How does it work
+## Configurations
 
-### KMP module
+Steps to follow:
+
+1. [KMP shared module](#kmp-shared-module)
+2. [KMP project](#kmp-project)
+3. [iOSApp](#iosapp)
+
+### KMP shared module
 First we need to import the ksp plugin:
 ```kotlin
 plugins {
@@ -54,8 +60,9 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
         dependsOn(iosMain)
     }
 
-    val kspConfigName = "ksp${target.name.replaceFirstChar { it.uppercaseChar() }}"
-    dependencies.add(kspConfigName, "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERISON}")
+    val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
+    dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
+    tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy("addFilesToXcodeproj") }
 }
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
@@ -123,14 +130,25 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
 }
 ```
 
-### iOSApp
+### KMP project
 
-Final configuration step is to make the iOS project aware of the `UIViewControllerRepresentable` files:
+Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
 
 1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
-2. Build the project.
+2. Copy the [exportToXcode.sh](./exportToXcode.sh) file to your project's root and run `chmod +x ./exportToXcode.sh`
+3. Copy the following gradle task to your project's root `build.gradle.kts`:
+```kotlin
+tasks.register<Exec>("addFilesToXcodeproj") {
+    workingDir(layout.projectDirectory)
+    commandLine("bash", "-c", "./exportToXcode.sh")
+}
+```
 
-Now that the `UIViewControllerRepresentable` files are included in the iOS project, we just need to use them:
+**note:** if you change the default names of **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly.
+
+### iOSApp
+
+Now that the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj`, they are ready to be used:
 ```swift
 struct SharedView: View {
     @State private var state: ViewState = ViewState(status: "default")        

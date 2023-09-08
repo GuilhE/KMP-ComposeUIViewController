@@ -1,5 +1,3 @@
-import java.io.ByteArrayOutputStream
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
@@ -46,8 +44,10 @@ kotlin {
                 dependsOn(iosMain)
             }
 
-            val kspConfigName = "ksp${target.name.replaceFirstChar { it.uppercaseChar() }}"
-            dependencies.add(kspConfigName, libs.composeuiviewcontroller.ksp)
+            val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
+            dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
+            tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
+
             all {
                 //https://kotlinlang.org/docs/ksp-quickstart.html#make-ide-aware-of-generated-code
                 kotlin.srcDir("build/generated/ksp/${target.targetName}/${target.targetName}Main/kotlin")

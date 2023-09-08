@@ -16,8 +16,7 @@ allprojects {
     }
 }
 
-tasks.findByName("kspKotlinIosSimulatorArm64")?.finalizedBy("runBashScript")
-tasks.register<Exec>("runBashScript") {
+tasks.register<Exec>("addFilesToXcodeproj") {
     workingDir(layout.projectDirectory)
     commandLine("bash", "-c", "./exportToXcode.sh")
 }
