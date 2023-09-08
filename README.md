@@ -121,11 +121,11 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
     let callback: () -> Void
     
     func makeUIViewController(context: Context) -> UIViewController {
-        return ScreenUIViewController().make(callback: callback)
+        return ComposeViewUIViewController().make(callback: callback)
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        ScreenUIViewController().update(viewState: viewState)
+        ComposeViewUIViewController().update(viewState: viewState)
     }
 }
 ```
