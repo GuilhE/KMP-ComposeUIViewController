@@ -15,3 +15,8 @@ allprojects {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
+
+tasks.register<Exec>("addFilesToXcodeproj") {
+    workingDir(layout.projectDirectory)
+    commandLine("bash", "-c", "./exportToXcode.sh")
+}

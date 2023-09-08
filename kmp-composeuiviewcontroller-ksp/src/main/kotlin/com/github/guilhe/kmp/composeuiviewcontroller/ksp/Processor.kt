@@ -21,6 +21,16 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
+            val frameworkName: String? = node.annotations
+                .find { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+                ?.arguments
+                ?.firstOrNull { it.name?.asString() == composeUIViewControllerAnnotationParameterName }
+                ?.value as? String
+
+            if (frameworkName.isNullOrEmpty()) {
+                throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} has no value for $composeUIViewControllerAnnotationParameterName")
+            }
+
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>()) {
@@ -55,43 +65,94 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                         )
                     }
 
-                    val code = """
-                       @file:Suppress("unused")
-                       package $packageName
-                        
-                       import androidx.compose.runtime.mutableStateOf
-                       import androidx.compose.ui.window.ComposeUIViewController
-                       import platform.UIKit.UIViewController
-                       
-                       public object ${composable.name()}UIViewController {
-                           private val $stateParameterName = mutableStateOf(${stateParameter.type}())
-
-                           public fun make(${makeParameters.joinToString()}): UIViewController {
-                               return ComposeUIViewController {
-                                   ${composable.name()}(${parameters.toComposableParameters(stateParameterName)})
-                               }
-                           }
-
-                           public fun update($stateParameterName: ${stateParameter.type}) {
-                               this.$stateParameterName.value = $stateParameterName
-                           }
-                       }
-                   """.trimIndent()
-
-//                    logger.info("\n$code")
-
-                    codeGenerator
-                        .createNewFile(
-                            dependencies = Dependencies(true),
-                            packageName = "",
-                            fileName = "${composable.name()}UIViewController",
-                        ).write(code.toByteArray())
-
-                    logger.info("${composable.name()}UIViewController created!")
+                    createKotlinFile(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
+                        logger.info("${composable.name()}UIViewController created!")
+                    }
+                    createSwiftFile(frameworkName, composable, stateParameterName, stateParameter, makeParameters).also {
+                        logger.info("${composable.name()}Representable created!")
+                    }
                 }
             }
         }
         return emptyList()
+    }
+
+    private fun createKotlinFile(
+        packageName: String,
+        composable: KSFunctionDeclaration,
+        stateParameterName: String,
+        stateParameter: KSValueParameter,
+        makeParameters: List<KSValueParameter>,
+        parameters: List<KSValueParameter>
+    ): String {
+        val code = """
+            @file:Suppress("unused")
+            package $packageName
+             
+            import androidx.compose.runtime.mutableStateOf
+            import androidx.compose.ui.window.ComposeUIViewController
+            import platform.UIKit.UIViewController
+            
+            public object ${composable.name()}UIViewController {
+                private val $stateParameterName = mutableStateOf(${stateParameter.type}())
+                
+                public fun make(${makeParameters.joinToString()}): UIViewController {
+                    return ComposeUIViewController {
+                        ${composable.name()}(${parameters.toComposableParameters(stateParameterName)})
+                    }
+                }
+                
+                public fun update($stateParameterName: ${stateParameter.type}) {
+                    this.$stateParameterName.value = $stateParameterName
+                }
+            }
+        """.trimIndent()
+        codeGenerator
+            .createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = "${composable.name()}UIViewController",
+            ).write(code.toByteArray())
+        return code
+    }
+
+    private fun createSwiftFile(
+        frameworkName: String,
+        composable: KSFunctionDeclaration,
+        stateParameterName: String,
+        stateParameter: KSValueParameter,
+        makeParameters: List<KSValueParameter>,
+    ): String {
+        val letParameters = makeParameters.joinToString("\n") {
+            "let ${it.name()}: ${it.type}".replace("Unit", "Void")
+        }
+        val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
+
+        val code = """
+            import SwiftUI
+            import $frameworkName
+            
+            public struct ${composable.name()}Representable: UIViewControllerRepresentable {
+                @Binding var $stateParameterName: ${stateParameter.type}
+                $letParameters
+                
+                public func makeUIViewController(context: Context) -> UIViewController {
+                    return ${composable.name()}UIViewController().make($makeParametersParsed)
+                }
+                
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    ${composable.name()}UIViewController().update($stateParameterName: $stateParameterName)
+                }
+            }
+        """.trimIndent()
+        codeGenerator
+            .createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = "${composable.name()}UIViewControllerRepresentable",
+                extensionName = "swift"
+            ).write(code.toByteArray())
+        return code
     }
 
     private fun String.name() = split(".").last()

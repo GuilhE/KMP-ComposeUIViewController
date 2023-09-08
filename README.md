@@ -1,6 +1,6 @@
 # KMP-ComposeUIViewController
 
-KSP library for generating `ComposeUIViewController`s when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
+KSP library for generating `ComposeUIViewController` and `ComposeUIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
 ## Motivation
 
@@ -13,16 +13,23 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Compatibility
 
-| Version        |   Kotlin    |    KSP     |    Compose Multiplatform     |
-|----------------|:-----------:|:----------:|:----------------------------:|
-|1.0.0-ALPHA-1   | **1.9.10**  | **1.0.13** |             alpha            |
-|1.0.0-APLHA-1 (🤦🏽‍♂️ stupid typo...)  |1.9.10| 1.0.13 |             alpha            |
+| Version                        |   Kotlin   |    KSP     | Compose Multiplatform |
+|--------------------------------|:----------:|:----------:|:---------------------:|
+| 1.1.0-ALPHA                    | **1.9.10** | **1.0.13** |         alpha         |
+| 1.0.0-ALPHA-1                  |   1.9.10   |   1.0.13   |         alpha         |
+| 1.0.0-APLHA-1 (🤦🏽‍️ typo...) |   1.9.10   |   1.0.13   |         alpha         |
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
-## How does it work
+## Configurations
 
-### KMP module
+Steps to follow:
+
+1. [KMP shared module](#kmp-shared-module)
+2. [KMP project](#kmp-project)
+3. [iOSApp](#iosapp)
+
+### KMP shared module
 First we need to import the ksp plugin:
 ```kotlin
 plugins {
@@ -53,8 +60,9 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
         dependsOn(iosMain)
     }
 
-    val kspConfigName = "ksp${target.name.replaceFirstChar { it.uppercaseChar() }}"
-    dependencies.add(kspConfigName, "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERISON}")
+    val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
+    dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
+    tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy("addFilesToXcodeproj") }
 }
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
@@ -72,66 +80,102 @@ Now we can take advantage of two annotations:
 
 #### Considerations
 - `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
+- `@ComposeUIViewController` has a `frameworkName: String` parameter that must used to specify the shared library framework's base name;
 - `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
 - The state variable of your choosing must implement default values in it's initialization;
 - Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
-Example:
+For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
+
+#### Code generation
 ```kotlin
 data class ViewState(val status: String = "default")
 
-@ComposeUIViewController
+@ComposeUIViewController("SharedUI")
 @Composable
-fun Screen(@ComposeUIViewControllerState uiState: ViewState, callback: () -> Unit) { }
+fun ComposeView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
 ```
-will produce a `ScreenUIViewController`:
+will produce a `ComposeViewUIViewController`:
 ```kotlin
-public object ScreenUIViewController {
-    private val uiState = mutableStateOf(ViewState())
+public object ComposeViewUIViewController {
+    private val viewState = mutableStateOf(ViewState())
 
     public fun make(callback: () -> Unit): UIViewController {
         return ComposeUIViewController {
-            Screen(uiState.value, callback)
+            ComposeView(viewState.value, callback)
         }
     }
 
-    public fun update(uiState: ViewState) {
-        this.uiState.value = uiState
+    public fun update(viewState: ViewState) {
+        this.viewState.value = uiState
     }
 }
 ```
-
-Please find all the use-cases in the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
-
-### iOSApp
-
-Now that our `UIViewController`s are created we just need to use them:
+and also a `ComposeViewRepresentable`:
 ```swift
 import SwiftUI
-import SharedComposables
+import SharedUI
 
-struct SharedView: View {
-    @State private var composableState: ViewState = ViewState()        
-    var body: some View {
-        ScreenRepresentable(state: $composableState, action: {})
-    }
-}
-
-private struct ScreenRepresentable: UIViewControllerRepresentable {    
-    @Binding var state: ViewState
-    let action: () -> Void
+public struct ComposeViewRepresentable: UIViewControllerRepresentable {
+    @Binding var viewState: ScreenState
+    let callback: () -> Void
     
     func makeUIViewController(context: Context) -> UIViewController {
-        return ScreenUIViewController().make(callback: action)
+        return ScreenUIViewController().make(callback: callback)
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        ScreenUIViewController().update(state: state)
+        ScreenUIViewController().update(viewState: viewState)
     }
 }
 ```
 
+### KMP project
+
+Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
+
+1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
+2. Copy the [exportToXcode.sh](./exportToXcode.sh) file to your project's root and run `chmod +x ./exportToXcode.sh`
+3. Copy the following gradle task to your project's root `build.gradle.kts`:
+```kotlin
+tasks.register<Exec>("addFilesToXcodeproj") {
+    workingDir(layout.projectDirectory)
+    commandLine("bash", "-c", "./exportToXcode.sh")
+}
+```
+
+**note:** if you change the default names of **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly.
+
+### iOSApp
+
+Now that the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj`, they are ready to be used:
+```swift
+struct SharedView: View {
+    @State private var state: ViewState = ViewState(status: "default")        
+    var body: some View {
+        ComposeViewRepresentable(viewState: $state, callback: {})
+    }
+}
+```
+Pretty simple right? 😊  
+
 For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcworkspace` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+
+## Outputs
+```bash
+> Task :shared:kspKotlinIosSimulatorArm64
+note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
+note: [ksp] GradientScreenUIViewController created!
+note: [ksp] GradientScreenRepresentable created!
+note: [ksp] No @ComposeUIViewController found!
+
+> Task :addFilesToXcodeproj
+> Copying generated files to iosApp.
+> Adding references to xcodeproj.
+> Done.
+```
+It's an example of a happy path 🙌🏼
+
 
 ## LICENSE
 

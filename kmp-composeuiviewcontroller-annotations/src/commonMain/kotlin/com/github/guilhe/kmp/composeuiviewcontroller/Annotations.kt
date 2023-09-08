@@ -7,7 +7,10 @@ import kotlin.native.HidesFromObjC
 @Retention(AnnotationRetention.BINARY)
 @OptIn(ExperimentalObjCRefinement::class)
 @HidesFromObjC
-public annotation class ComposeUIViewController
+/**
+ * @param frameworkName: shared library framework's base name
+ */
+public annotation class ComposeUIViewController(val frameworkName: String)
 
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION)
 @Retention(AnnotationRetention.SOURCE)
