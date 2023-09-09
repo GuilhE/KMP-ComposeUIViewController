@@ -171,7 +171,7 @@ note: [ksp] GradientScreenRepresentable created!
 > Task :addFilesToXcodeproj
 > Copying generated files to iosApp.
 > Adding references to xcodeproj.
-> GradientScreenRepresentable added!
+> GradientScreenRepresentable.swift added!
 > Done.
 ```
 It's an example of a happy path 🙌🏼
