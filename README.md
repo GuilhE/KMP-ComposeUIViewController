@@ -167,19 +167,22 @@ For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by 
 note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
 note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
-note: [ksp] No @ComposeUIViewController found!
 
 > Task :addFilesToXcodeproj
 > Copying generated files to iosApp.
 > Adding references to xcodeproj.
+> GradientScreenRepresentable added!
 > Done.
 ```
 It's an example of a happy path 🙌🏼
 
 ## Stability
 
-Occasionally, the Xcode preview may experience interruptions, but running the app through Xcode or Android Studio has remained reliable.
-
+Occasionally, the Xcode preview may experience interruptions, but running the app through Xcode or Android Studio has remained reliable.  
+If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
+```kotlin
+//tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
+```
 
 ## LICENSE
 
