@@ -183,7 +183,7 @@ If necessary, disable `swift` files automatically export to Xcode and instead in
 ```kotlin
 //tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
 ```
-You will find the generated files under `{shared-module}build/generated/ksp/`.
+You will find the generated files under `{shared-module}/build/generated/ksp/`.
 
 ## LICENSE
 
