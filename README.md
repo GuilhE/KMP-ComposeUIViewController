@@ -178,7 +178,7 @@ It's an example of a happy path 🙌🏼
 
 ## Stability
 
-Occasionally, the Xcode preview may experience interruptions, but running the app through Xcode or Android Studio has remained reliable.  
+Occasionally, the Xcode may experience interruptions, but running the app through Android Studio has remained reliable.  
 If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
 ```kotlin
 //tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
