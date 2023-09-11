@@ -179,7 +179,7 @@ It's an example of a happy path 🙌🏼
 ## Stability
 
 | Operation              | Status |
-|------------------------|--------|
+|:----------------------:|:------:|
 | Android Studio Run     | 🟢     |
 | Xcode Run              | 🟡     |
 | Xcode Preview          | 🔴     |
