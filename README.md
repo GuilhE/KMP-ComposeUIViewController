@@ -5,7 +5,7 @@ KSP library for generating `ComposeUIViewController` and `UIViewControllerRepres
 ## Motivation
 
 When employing Compose Multiplatform for iOS, if the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here:  
-[Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).  
+[Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
 As your project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
 
@@ -157,7 +157,7 @@ struct SharedView: View {
     }
 }
 ```
-Pretty simple right? 😊  
+Pretty simple right? 😊
 
 For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcworkspace` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
 
@@ -167,19 +167,19 @@ For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by 
 note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
 note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
-note: [ksp] No @ComposeUIViewController found!
 
 > Task :addFilesToXcodeproj
-> Copying generated files to iosApp.
-> Adding references to xcodeproj.
-> Done.
+> Copying files to iosApp/SharedRepresentables/
+> Checking for new references to be added to xcodeproj
+> GradientScreenUIViewControllerRepresentable.swift added!
+> Done
 ```
 It's an example of a happy path 🙌🏼
 
 ## Stability
 
 | Operation              | Status |
-|------------------------|--------|
+|:----------------------:|:------:|
 | Android Studio Run     | 🟢     |
 | Xcode Run              | 🟡     |
 | Xcode Preview          | 🔴     |
