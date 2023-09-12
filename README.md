@@ -167,12 +167,12 @@ For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by 
 note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
 note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
-note: [ksp] No @ComposeUIViewController found!
 
 > Task :addFilesToXcodeproj
-> Copying generated files to iosApp.
-> Adding references to xcodeproj.
-> Done.
+> Copying files to iosApp/SharedRepresentables/
+> Checking for new references to be added to xcodeproj
+> GradientScreenUIViewControllerRepresentable.swift added!
+> Done
 ```
 It's an example of a happy path 🙌🏼
 
