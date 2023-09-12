@@ -152,7 +152,7 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 }
 ```
 
-**note:** if you change the default names of your **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly.
+**note:** if you change the default names of your **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
 ### iOSApp
 
