@@ -65,8 +65,13 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
 }
 ```
 Finish it by adding this `task` configuration in the end of the file:
+- If using XCFramework:
 ```kotlin
 tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
+```
+- If using Cocoapods:
+```kotlin
+tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
 
@@ -194,7 +199,7 @@ If necessary, disable `swift` files automatically export to Xcode and instead in
 ```
 You will find the generated files under `{shared-module}/build/generated/ksp/`.
 
-**Warning:** avoid deleting `iosApp/SharedRepresentables` from Android Studio or Finder whitout first using Xcode to `Remove references`.
+**Warning:** avoid deleting `iosApp/SharedRepresentables` whithout first using Xcode to `Remove references`.
 
 ## LICENSE
 
