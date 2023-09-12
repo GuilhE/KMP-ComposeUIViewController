@@ -46,7 +46,6 @@ kotlin {
 
             val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
             dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
-            tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
 
             all {
                 //https://kotlinlang.org/docs/ksp-quickstart.html#make-ide-aware-of-generated-code
@@ -55,3 +54,5 @@ kotlin {
         }
     }
 }
+
+tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }

@@ -13,11 +13,11 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Compatibility
 
-| Version                                                                                                                                                                         |   Kotlin   |    KSP     | Compose Multiplatform | Xcode  |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------:|:----------:|:---------------------:|:------:|
-| [![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp) | **1.9.10** | **1.0.13** |         alpha         | 14.3.1 | 
-| 1.0.0-ALPHA-1                                                                                                                                                                   |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
-| 1.0.0-APLHA-1 (🤦🏽‍️ typo...)                                                                                                                                                  |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
+|                                                                                     Version                                                                                      |   Kotlin   |    KSP     | Compose Multiplatform | Xcode  |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----------:|:----------:|:---------------------:|:------:|
+| [![Maven Central](https://img.shields.io/maven-central/v/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp.svg)](https://search.maven.org/search?q=g:com.github.guilhe.kmp)  | **1.9.10** | **1.0.13** |         alpha         | 14.3.1 | 
+|                                                                                  1.0.0-ALPHA-1                                                                                   |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
+|                                                                          1.0.0-APLHA-1 (🤦🏽‍️ typo...)                                                                          |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
@@ -178,8 +178,18 @@ It's an example of a happy path 🙌🏼
 
 ## Stability
 
-Occasionally, the Xcode preview may experience interruptions, but running the app through Xcode or Android Studio has remained reliable.
+| Operation              | Status |
+|------------------------|--------|
+| Android Studio Run     | 🟢     |
+| Xcode Run              | 🟡     |
+| Xcode Preview          | 🔴     |
 
+Occasionally, the Xcode may experience interruptions, but running the app through Android Studio has remained reliable.  
+If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
+```kotlin
+//tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
+```
+You will find the generated files under `{shared-module}/build/generated/ksp/`.
 
 ## LICENSE
 
