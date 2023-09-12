@@ -65,8 +65,13 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
 }
 ```
 Finish it by adding this `task` configuration in the end of the file:
+- If using XCFramework:
 ```kotlin
 tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
+```
+- If using Cocoapods:
+```kotlin
+tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
 
@@ -147,7 +152,7 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 }
 ```
 
-**note:** if you change the default names of your **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly.
+**note:** if you change the default names of your **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
 ### iOSApp
 
@@ -162,7 +167,7 @@ struct SharedView: View {
 ```
 Pretty simple right? 😊
 
-For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcworkspace` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
 
 ## Outputs
 ```bash
@@ -190,11 +195,11 @@ It's an example of a happy path 🙌🏼
 Occasionally, the Xcode may experience interruptions or the need of one or two consequent builds, but running the app through Android Studio has remained reliable.  
 If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
 ```kotlin
-//tasks.matching { it.name == "kspKotlin$targetName" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
+//tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
 ```
 You will find the generated files under `{shared-module}/build/generated/ksp/`.
 
-**Warning:** avoid deleting `iosApp/SharedRepresentables` from Android Studio or Finder whitout first using Xcode to `Remove references`.
+**Warning:** avoid deleting `iosApp/SharedRepresentables` whithout first using Xcode to `Remove references`.
 
 ## LICENSE
 
