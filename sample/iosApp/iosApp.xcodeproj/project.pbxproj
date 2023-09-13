@@ -32,9 +32,6 @@
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		568986D1A630FF9963DA0AF2 /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = SharedRepresentables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
-		5C7F69932AA63B2000D709B4 /* ksp */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ksp; path = ../shared/build/generated/ksp; sourceTree = "<group>"; };
-		5C7F69942AA63B2F00D709B4 /* swift */ = {isa = PBXFileReference; lastKnownFileType = folder; name = swift; path = ../shared/build/generated/ksp/iosSimulatorArm64/iosSimulatorArm64Main/swift; sourceTree = "<group>"; };
-		5C7F69952AA63B3D00D709B4 /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = ../shared/build/generated/ksp/iosSimulatorArm64/iosSimulatorArm64Main/swift/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* SharedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -92,9 +89,6 @@
 		7555FFB0242A642200829871 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				5C7F69952AA63B3D00D709B4 /* GradientScreenUIViewControllerRepresentable.swift */,
-				5C7F69942AA63B2F00D709B4 /* swift */,
-				5C7F69932AA63B2000D709B4 /* ksp */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
