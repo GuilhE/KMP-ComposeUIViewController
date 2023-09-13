@@ -50,7 +50,7 @@ publishing {
 
         pom {
             name.set("KMP-ComposeUIViewController")
-            description.set("KSP library for generating ComposeUIViewControllers when using Compose Multiplatform for iOS")
+            description.set("KSP library for generating ComposeUIViewController and UIViewControllerRepresentable files when using Compose Multiplatform for iOS")
             url.set("https://github.com/GuilhE/KMP-ComposeUIViewController")
             licenses {
                 license {
