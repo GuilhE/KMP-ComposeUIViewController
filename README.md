@@ -182,9 +182,12 @@ note: [ksp] GradientScreenRepresentable created!
 > GradientScreenUIViewControllerRepresentable.swift added!
 > Done
 ```
-It's an example of a happy path 🙌🏼
 
-<img alt="outputs" src="/media/outputs.png" width="692"/>
+<p align="center">
+<img alt="outputs" src="/media/outputs.png" height="800"/></br></br>
+It's an example of a happy path 🙌🏼
+</br>
+</p>
 
 ## Stability
 
