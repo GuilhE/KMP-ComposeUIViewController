@@ -184,6 +184,8 @@ note: [ksp] GradientScreenRepresentable created!
 ```
 It's an example of a happy path 🙌🏼
 
+<img alt="outputs" src="/media/outputs.png" width="692"/>
+
 ## Stability
 
 | Operation              | Status |
