@@ -13,11 +13,11 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Compatibility
 
-| Version                                                                                                                                                                                                                       |   Kotlin   |    KSP     | Compose Multiplatform | Xcode  |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------:|:----------:|:---------------------:|:------:|
-| [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | **1.9.10** | **1.0.13** |         alpha         | 14.3.1 | 
-| 1.0.0-ALPHA-1                                                                                                                                                                                                                 |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
-| 1.0.0-APLHA-1 (🤦🏽‍️ typo...)                                                                                                                                                                                                |   1.9.10   |   1.0.13   |         alpha         | 14.3.1 |
+| Version                                                                                                                                                                                                                       |   Kotlin   |    KSP     | Compose Multiplatform |    Xcode     |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------:|:----------:|:---------------------:|:------------:|
+| [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | **1.9.10** | **1.0.13** |         alpha         | 14.3.1, 15.0 | 
+| 1.0.0-ALPHA-1                                                                                                                                                                                                                 |   1.9.10   |   1.0.13   |         alpha         | 14.3.1, 15.0 |
+| 1.0.0-APLHA-1 (🤦🏽‍️ typo...)                                                                                                                                                                                                |   1.9.10   |   1.0.13   |         alpha         | 14.3.1, 15.0 |
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
@@ -61,7 +61,7 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
     }
 
     val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
-    dependencies.add("ksp$targetName", "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERSION}")
+    dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
 }
 ```
 Finish it by adding this `task` configuration in the end of the file:
@@ -75,13 +75,6 @@ tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addF
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
 
-**Tip:** if you would like to make the IDE aware of the generated code (not mandatory), after the previous ksp configuration, add this:
-```kotlin
-all {
-    //https://kotlinlang.org/docs/ksp-quickstart.html#make-ide-aware-of-generated-code
-    kotlin.srcDir("build/generated/ksp/${target.targetName}/${target.targetName}Main/kotlin")
-}
-```
 Now we can take advantage of two annotations:
 - `@ComposeUIViewController`: it will mark our `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
 - `@ComposeUIViewControllerState`: it will specify our composable state variable.
