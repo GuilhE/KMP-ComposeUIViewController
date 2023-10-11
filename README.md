@@ -30,6 +30,7 @@ Steps to follow:
 3. [iOSApp](#iosapp)
 
 ### KMP shared module
+#### Gradle
 First we need to import the ksp plugin:
 ```kotlin
 plugins {
@@ -79,7 +80,7 @@ Now we can take advantage of two annotations:
 - `@ComposeUIViewController`: it will mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
 - `@ComposeUIViewControllerState`: it will specify the composable state variable.
 
-#### Considerations
+#### Rules and considerations
 1. `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
 2. `@ComposeUIViewController` has a `frameworkName` parameter that must used to specify the shared library framework's base name;
 3. `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
