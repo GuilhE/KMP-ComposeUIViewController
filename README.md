@@ -7,7 +7,7 @@ KSP library for generating `ComposeUIViewController` and `UIViewControllerRepres
 When employing Compose Multiplatform for iOS, if the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here:  
 [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
-As your project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
+As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
 
 Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
 
@@ -36,7 +36,7 @@ plugins {
     id("com.google.devtools.ksp") version "${Kotlin}-${KSP}"
 }
 ```
-Then configure our **iosMain** target to import `kmp-composeuiviewcontroller-annotations`:
+Then configure **iosMain** target to import `kmp-composeuiviewcontroller-annotations`:
 ```kotlin
 kotlin {
     val iosX64 = iosX64()
@@ -76,15 +76,15 @@ tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addF
 You can find a full setup example [here](sample/shared/build.gradle.kts).
 
 Now we can take advantage of two annotations:
-- `@ComposeUIViewController`: it will mark our `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
-- `@ComposeUIViewControllerState`: it will specify our composable state variable.
+- `@ComposeUIViewController`: it will mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
+- `@ComposeUIViewControllerState`: it will specify the composable state variable.
 
 #### Considerations
-- `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
-- `@ComposeUIViewController` has a `frameworkName: String` parameter that must used to specify the shared library framework's base name;
-- `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
-- The state variable of your choosing must implement default values in it's initialization;
-- Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
+1. `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
+2. `@ComposeUIViewController` has a `frameworkName` parameter that must used to specify the shared library framework's base name;
+3. `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
+4. The state variable of your choosing must have default values in it's initialization;
+5. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
@@ -136,8 +136,8 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
 Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
 
 1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
-2. Copy the [exportToXcode.sh](./exportToXcode.sh) file to your project's root and run `chmod +x ./exportToXcode.sh`
-3. Copy the following gradle task to your project's root `build.gradle.kts`:
+2. Copy the [exportToXcode.sh](./exportToXcode.sh) file to the project's root and run `chmod +x ./exportToXcode.sh`
+3. Copy the following gradle task to the project's root `build.gradle.kts`:
 ```kotlin
 tasks.register<Exec>("addFilesToXcodeproj") {
     workingDir(layout.projectDirectory)
@@ -145,7 +145,7 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 }
 ```
 
-**note:** if you change the default names of your **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
+**note:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
 ### iOSApp
 
