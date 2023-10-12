@@ -62,7 +62,7 @@ listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
     }
 
     val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
-    dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
+    dependencies.add("ksp$targetName", "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERSION}")
 }
 ```
 Finish it by adding this `task` configuration in the end of the file:
