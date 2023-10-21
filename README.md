@@ -13,7 +13,6 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Compatibility
 
-| Version                                                                                                                                                                                                                       |      Kotlin      |    KSP     | Compose Multiplatform |    Xcode     |
 | Version                                                                                                                                                                                                                       |      Kotlin      |    KSP     | K2  | Compose Multiplatform |    Xcode     |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------:|:----------:|:---:|:---------------------:|:------------:|
 | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | **1.9.20-Beta2** | **1.0.13** | Yes |     1.5.10-beta02     | 14.3.1, 15.0 | 
