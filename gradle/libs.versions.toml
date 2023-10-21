@@ -1,11 +1,11 @@
 [versions]
 
-kotlin = "1.9.10"
-ksp = "1.9.10-1.0.13"
+kotlin = "1.9.20-Beta2"
+ksp = "1.9.20-Beta2-1.0.13"
 androidTools = "8.1.2"
 compileTesting = "1.5.0"
 junit = "4.13.2"
-composeuiviewcontroller = "1.0.0-ALPHA-1"
+composeuiviewcontroller = "1.1.0-ALPHA-1"
 
 [plugins]
 

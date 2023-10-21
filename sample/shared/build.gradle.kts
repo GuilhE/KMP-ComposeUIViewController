@@ -1,11 +1,11 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
-    id("org.jetbrains.compose") version "1.5.0"
+    id("org.jetbrains.compose") version "1.5.10-beta02"
 }
 
 compose {
-    kotlinCompilerPlugin.set("1.5.2-beta01")
+    kotlinCompilerPlugin.set("1.5.2.1-Beta3")
 }
 
 kotlin {
@@ -13,6 +13,8 @@ kotlin {
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
     val iosSimulatorArm64 = iosSimulatorArm64()
+
+    applyDefaultHierarchyTemplate()
 
     sourceSets {
         val commonMain by getting {
@@ -30,7 +32,7 @@ kotlin {
             }
         }
 
-        val iosMain by creating {
+        val iosMain by getting {
             dependsOn(commonMain)
             dependencies {
                 implementation(libs.composeuiviewcontroller.annotations)
@@ -46,6 +48,11 @@ kotlin {
 
             val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
             dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
+
+//            all {
+//                //https://kotlinlang.org/docs/ksp-quickstart.html#make-ide-aware-of-generated-code
+//                kotlin.srcDir("build/generated/ksp/${target.targetName}/${target.targetName}Main/kotlin")
+//            }
         }
     }
 }
