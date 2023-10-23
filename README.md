@@ -43,9 +43,10 @@ kotlin {
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
     val iosSimulatorArm64 = iosSimulatorArm64()
+    applyDefaultHierarchyTemplate()
 
     sourceSets {
-        val iosMain by creating {
+        val iosMain by getting {
             dependsOn(commonMain)
             dependencies {
                 implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:${LASTEST_VERSION}")
