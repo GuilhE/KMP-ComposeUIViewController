@@ -13,11 +13,9 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Compatibility
 
-| Version                                                                                                                                                                                                                       |      Kotlin      |    KSP     | K2  | Compose Multiplatform |    Xcode     |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------:|:----------:|:---:|:---------------------:|:------------:|
-| [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | **1.9.20-Beta2** | **1.0.13** | Yes |     1.5.10-beta02     | 14.3.1, 15.0 | 
-| 1.0.0-ALPHA-1                                                                                                                                                                                                                 |   1.9.20-Beta2   |   1.0.13   | Yes |     1.5.10-beta02     | 14.3.1, 15.0 |
-| 1.0.0-APLHA-1 (🤦🏽‍️ typo...)                                                                                                                                                                                                |   1.9.20-Beta2   |   1.0.13   | Yes |     1.5.10-beta02     | 14.3.1, 15.0 |
+| Version                                                                                                                                                                                                                       |    Kotlin    |  KSP   | K2  | Compose Multiplatform |    Xcode     |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------:|:------:|:---:|:---------------------:|:------------:|
+| [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | 1.9.20-Beta2 | 1.0.13 | Yes |     1.5.10-beta02     | 14.3.1, 15.0 | 
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
@@ -43,10 +41,10 @@ kotlin {
     val iosX64 = iosX64()
     val iosArm64 = iosArm64()
     val iosSimulatorArm64 = iosSimulatorArm64()
-
+    applyDefaultHierarchyTemplate()
+    
     sourceSets {
         val iosMain by creating {
-            dependsOn(commonMain)
             dependencies {
                 implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:${LASTEST_VERSION}")
             }
@@ -57,10 +55,6 @@ kotlin {
 and also the `kmp-composeuiviewcontroller-ksp`:
 ```kotlin
 listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
-    getByName("${target.targetName}Main") {
-        dependsOn(iosMain)
-    }
-
     val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
     dependencies.add("ksp$targetName", "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERSION}")
 }
@@ -194,7 +188,7 @@ It's an example of a happy path 🙌🏼
 Occasionally, the Xcode may experience interruptions or the need of one or two consequent builds, but running the app through Android Studio has remained reliable.  
 If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
 ```kotlin
-//tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
+//...configureEach { finalizedBy(":addFilesToXcodeproj") }
 ```
 You will find the generated files under `{shared-module}/build/generated/ksp/`.
 
