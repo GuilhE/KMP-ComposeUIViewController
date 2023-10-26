@@ -44,7 +44,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
     
     sourceSets {
-        val iosMain by creating {
+        val iosMain by getting {
             dependencies {
                 implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:${LASTEST_VERSION}")
             }
