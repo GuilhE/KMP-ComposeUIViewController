@@ -1,11 +1,11 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
-    id("org.jetbrains.compose") version "1.5.10-beta02"
+    id("org.jetbrains.compose") version "1.5.10-rc01"
 }
 
 compose {
-    kotlinCompilerPlugin.set("1.5.2.1-Beta3")
+    kotlinCompilerPlugin.set("1.5.3-rc01")
 }
 
 kotlin {
