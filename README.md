@@ -173,8 +173,9 @@ note: [ksp] GradientScreenRepresentable created!
 
 <p align="center">
 <img alt="outputs" src="/media/outputs.png" height="800"/></br></br>
-It's an example of a happy path 🙌🏼
-</br>
+It's an example of a happy path 🙌🏼</br></br>
+You can also find another working sample in <b>Expressus App</b>:</br>
+<a href="https://github.com/GuilhE/Expressus"><img alt="Expressus" src="https://raw.githubusercontent.com/GuilhE/Expressus/main/media/icon.png" height="100"/></a>
 </p>
 
 ## Stability
