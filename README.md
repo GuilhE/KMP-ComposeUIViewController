@@ -15,7 +15,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 | Version                                                                                                                                                                                                                       |    Kotlin    |  KSP   | K2  | Compose Multiplatform |    Xcode     |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------:|:------:|:---:|:---------------------:|:------------:|
-| [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | 1.9.20-Beta2 | 1.0.13 | Yes |     1.5.10-beta02     | 14.3.1, 15.0 | 
+| [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | 1.9.20-RC2 | 1.0.13 | Yes |     1.5.10-rc02     | 14.3.1, 15.0 | 
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
