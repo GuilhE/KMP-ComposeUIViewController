@@ -14,6 +14,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 
 [libraries]
+
 gradle-android-tools = { group = "com.android.tools.build", name = "gradle", version.ref = "androidTools" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 composeuiviewcontroller-ksp = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp", version.ref = "composeuiviewcontroller" }
