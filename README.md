@@ -39,23 +39,16 @@ plugins {
 Then configure **iosMain** target to import `kmp-composeuiviewcontroller-annotations`:
 ```kotlin
 kotlin {
-    val iosX64 = iosX64()
-    val iosArm64 = iosArm64()
-    val iosSimulatorArm64 = iosSimulatorArm64()
-    applyDefaultHierarchyTemplate()
-    
     sourceSets {
-        val iosMain by getting {
-            dependencies {
-                implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:${LASTEST_VERSION}")
-            }
+        iosMain.dependencies {
+            implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:${LASTEST_VERSION}")
         }
     }
 }
 ```
 and also the `kmp-composeuiviewcontroller-ksp`:
 ```kotlin
-listOf(iosX64, iosArm64, iosSimulatorArm64).forEach { target ->
+listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
     val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
     dependencies.add("ksp$targetName", "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERSION}")
 }

@@ -1,5 +1,3 @@
-import org.gradle.internal.impldep.org.eclipse.jgit.util.FileUtils.delay
-
 buildscript {
     repositories {
         google()

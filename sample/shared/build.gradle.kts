@@ -10,8 +10,6 @@ compose {
 
 kotlin {
     jvm()
-    applyDefaultHierarchyTemplate()
-
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
