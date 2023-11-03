@@ -70,7 +70,7 @@ Now we can take advantage of two annotations:
 
 #### Rules and considerations
 1. `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
-2. `@ComposeUIViewController` has a `frameworkName` parameter that must used to specify the shared library framework's base name;
+2. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name;
 3. `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
 4. The state variable of your choosing must have default values in it's initialization;
 5. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
