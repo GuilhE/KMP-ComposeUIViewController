@@ -1,6 +1,13 @@
 # Changelog
 ---
 
+## [1.4.2-ALPHA]
+
+- Fixes Processor bug where functions that should be discarded from the analysis were not
+- Sample updated with a use-case with a function parameter with a Kotlin primitive type
+
+---
+
 ## [1.4.1-ALPHA]
 
 Adds `kotlinTypeToSwift` function to reflect https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers
