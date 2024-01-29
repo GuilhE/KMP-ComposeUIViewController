@@ -8,9 +8,15 @@ struct SharedView: View {
     )
     
     private let colors: [UIColor] = [.red, .green, .blue, .yellow]
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd-MM-yyyy HH:mm:ss"
+        return formatter
+    }()
     
     var body: some View {
-        GradientScreenRepresentable(state: $screenState, randomize: {
+        GradientScreenRepresentable(state: $screenState, randomize: { millis in
+            print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(milliseconds: millis)))", terminator: "\n")
             let randomIndexes = (0..<colors.count).shuffled().prefix(2)
             let randomColors = randomIndexes.map { colors[$0] }
             screenState = ScreenState(
@@ -20,6 +26,11 @@ struct SharedView: View {
         })
         .ignoresSafeArea()
     }
+}
+
+private func dateFromMilliseconds(milliseconds: KotlinLong) -> Date {
+    let timeInterval = TimeInterval(truncating: milliseconds) / 1000.0
+    return Date(timeIntervalSince1970: timeInterval)
 }
 
 private func convertUIColorToKotlinLong(_ color: UIColor) -> Int64 {

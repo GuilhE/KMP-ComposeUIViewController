@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.sample.sharedui
 
 import androidx.compose.animation.Crossfade
@@ -10,19 +11,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerState
+import platform.Foundation.NSDate
+import platform.Foundation.timeIntervalSince1970
 
 data class ScreenState(val startColor: Long = 0xFFFF0000, val endColor: Long = 0xFF0000FF) {
     val colors: List<Color> = listOf(Color(startColor), Color(endColor))
 }
 
+
 @ComposeUIViewController("SharedComposables")
 @Composable
-fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: () -> Unit) {
+fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: (Long) -> Unit) {
     Box(contentAlignment = Alignment.Center) {
         Crossfade(targetState = state) {
             Gradient(it.colors)
         }
-        Button(onClick = { randomize() }) {
+        Button(onClick = { randomize(NSDate().timeIntervalSince1970.toLong() * 1000) }) {
             Text(text = "Shuffle")
         }
     }

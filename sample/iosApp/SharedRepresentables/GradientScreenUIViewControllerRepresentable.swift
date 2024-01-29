@@ -3,7 +3,7 @@ import SharedComposables
 
 public struct GradientScreenRepresentable: UIViewControllerRepresentable {
     @Binding var state: ScreenState
-    let randomize: () -> Void
+    let randomize: (KotlinLong) -> Void
     
     public func makeUIViewController(context: Context) -> UIViewController {
         return GradientScreenUIViewController().make(randomize: randomize)
