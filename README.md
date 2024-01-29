@@ -181,9 +181,8 @@ You can also find another working sample in <b>Expressus App</b>:</br>
 | Xcode Preview          |   🟢   |
 
 Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
-```kotlin
-./gradlew addFilesToXcodeproj
-```
+
+`./gradlew addFilesToXcodeproj`
 
 This could be due to gradle caches not being properly invalidated upon file updates.  
 
