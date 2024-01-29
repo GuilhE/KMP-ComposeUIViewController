@@ -180,6 +180,13 @@ You can also find another working sample in <b>Expressus App</b>:</br>
 | Xcode Run              |   🟢   |
 | Xcode Preview          |   🟢   |
 
+If you experiencing `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
+```kotlin
+./gradlew addFilesToXcodeproj
+```
+
+This could be due to gradle caches not being properly invalidated upon file updates.
+
 Occasionally, the Xcode may experience interruptions or the need of one or two consequent builds, but running the app through Android Studio has remained reliable.  
 If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
 ```kotlin
