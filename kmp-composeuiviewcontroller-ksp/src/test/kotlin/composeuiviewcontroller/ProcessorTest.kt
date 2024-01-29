@@ -150,7 +150,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Composable Screen properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate ScreenUIViewController and ScreenUIViewControllerRepresentable files`() {
+    fun `Composable Screens properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate ScreenUIViewController and ScreenUIViewControllerRepresentable files`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -158,7 +158,14 @@ class ProcessorTest {
             
             @ComposeUIViewController("SharedComposables")
             @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+            fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
+            
+            private fun dummy() 
+            
+            @ComposeUIViewController("SharedComposables")
+            @Composable
+            fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
+
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -166,10 +173,11 @@ class ProcessorTest {
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.name == "ScreenUIViewController.kt" || it.name == "ScreenUIViewControllerRepresentable.swift" }
+                .filter { it.name == "ScreenAUIViewController.kt" || it.name == "ScreenAUIViewControllerRepresentable.swift" ||
+                        it.name == "ScreenBUIViewController.kt" || it.name == "ScreenBUIViewControllerRepresentable.swift"}
                 .toList()
                 .size,
-            2
+            4
         )
     }
 

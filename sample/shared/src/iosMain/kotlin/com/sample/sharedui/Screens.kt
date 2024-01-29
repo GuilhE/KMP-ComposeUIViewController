@@ -26,8 +26,10 @@ fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: 
         Crossfade(targetState = state) {
             Gradient(it.colors)
         }
-        Button(onClick = { randomize(NSDate().timeIntervalSince1970.toLong() * 1000) }) {
+        Button(onClick = { randomize(getCurrentMillis()) }) {
             Text(text = "Shuffle")
         }
     }
 }
+
+private fun getCurrentMillis(): Long = NSDate().timeIntervalSince1970.toLong() * 1000

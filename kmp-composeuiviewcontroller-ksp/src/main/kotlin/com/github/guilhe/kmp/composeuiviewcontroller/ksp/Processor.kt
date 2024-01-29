@@ -15,46 +15,21 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
-        if (!candidates.iterator().hasNext()) {
+        if (candidates.none()) {
             logger.info("No @${composeUIViewControllerAnnotationName.name()} found!")
             return emptyList()
         }
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
-            val frameworkName: String? = node.annotations
-                .find { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
-                ?.arguments
-                ?.firstOrNull { it.name?.asString() == composeUIViewControllerAnnotationParameterName }
-                ?.value as? String
-
-            if (frameworkName.isNullOrEmpty()) {
-                throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} has no value for $composeUIViewControllerAnnotationParameterName")
-            }
-
+            val frameworkName: String = getFrameworkNameFromAnnotations(node)
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
-                for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>()) {
+                for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
+                    it.annotations.any { annotation -> annotation.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+                }) {
                     val parameters: List<KSValueParameter> = composable.parameters
-                    val stateParameters = parameters.filter {
-                        it.annotations
-                            .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name() }
-                            .toList()
-                            .isNotEmpty()
-                    }
-
-                    when {
-                        stateParameters.size > 1 -> throw IllegalArgumentException(
-                            "The composable ${composable.name()} has more than one parameter annotated " +
-                                    "with @${composeUIViewControllerStateAnnotationName.name()}."
-                        )
-
-                        stateParameters.isEmpty() -> throw IllegalArgumentException(
-                            "The composable ${composable.name()} is annotated with @${composeUIViewControllerAnnotationName.split(".").last()}" +
-                                    "but it's missing the ui state parameter annotated with @${composeUIViewControllerStateAnnotationName.name()}"
-                        )
-                    }
-
+                    val stateParameters = getStateParameters(parameters, composable)
                     val stateParameter = stateParameters.first()
                     val stateParameterName = stateParameter.name()
                     val makeParameters = parameters.filterNot { it.type == stateParameter.type }.filterFunctions()
@@ -76,6 +51,36 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
             }
         }
         return emptyList()
+    }
+
+    private fun getFrameworkNameFromAnnotations(node: KSAnnotated): String {
+        return node.annotations
+            .firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+            ?.arguments
+            ?.firstOrNull { it.name?.asString() == composeUIViewControllerAnnotationParameterName }
+            ?.value as? String
+            ?: throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} requires a non-null value for $composeUIViewControllerAnnotationParameterName")
+    }
+
+    private fun getStateParameters(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
+        val stateParameters = parameters.filter {
+            it.annotations
+                .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name() }
+                .toList()
+                .isNotEmpty()
+        }
+        when {
+            stateParameters.size > 1 -> throw IllegalArgumentException(
+                "The composable ${composable.name()} has more than one parameter annotated " +
+                        "with @${composeUIViewControllerStateAnnotationName.name()}."
+            )
+
+            stateParameters.isEmpty() -> throw IllegalArgumentException(
+                "The composable ${composable.name()} is annotated with @${composeUIViewControllerAnnotationName.split(".").last()}" +
+                        " but it's missing the ui state parameter annotated with @${composeUIViewControllerStateAnnotationName.name()}"
+            )
+        }
+        return stateParameters
     }
 
     private fun createKotlinFile(
