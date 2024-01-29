@@ -54,12 +54,17 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
     }
 
     private fun getFrameworkNameFromAnnotations(node: KSAnnotated): String {
-        return node.annotations
-            .firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
-            ?.arguments
-            ?.firstOrNull { it.name?.asString() == composeUIViewControllerAnnotationParameterName }
-            ?.value as? String
-            ?: throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} requires a non-null value for $composeUIViewControllerAnnotationParameterName")
+        val annotation = node.annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+        if (annotation != null) {
+            val argument = annotation.arguments.firstOrNull { it.name?.asString() == composeUIViewControllerAnnotationParameterName }
+            if (argument != null) {
+                val value = argument.value
+                if (value is String && value.isNotEmpty()) {
+                    return value
+                }
+            }
+        }
+        throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} requires a non-null and non-empty value for $composeUIViewControllerAnnotationParameterName")
     }
 
     private fun getStateParameters(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {

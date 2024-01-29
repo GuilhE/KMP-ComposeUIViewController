@@ -67,7 +67,7 @@ class ProcessorTest {
 
             data class ViewState(val status: String = "default")
          
-            @ComposeUIViewController("")
+            @ComposeUIViewController("SharedComposables")
             @Composable
             fun Screen(state: ViewState) { }
         """.trimIndent()
@@ -87,7 +87,7 @@ class ProcessorTest {
          
             @ComposeUIViewController("")
             @Composable
-            fun Screen(state: ViewState) { }
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -114,7 +114,7 @@ class ProcessorTest {
 
     @Test
     fun `Only 1 @ComposeUIViewControllerState and N function parameters (excluding @Composable) are allowed`() {
-        val file1 = """
+        val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -124,32 +124,18 @@ class ProcessorTest {
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
                     callBackA: () -> Unit,
-                    callBackB: () -> Unit,
+                    callBackB: (Int) -> Unit,
                     @Composable content: () -> Unit
             ) { }
         """.trimIndent()
-        val file2 = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            @ComposeUIViewController("SharedComposables")
-            @Composable
-            fun Screen(
-                    modifier: Modifier,
-                    @ComposeUIViewControllerState state: ViewState,
-                    callBackA: () -> Unit,
-                    callBackB: () -> Unit
-            ) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("File1.kt", file1), kotlin("File2.kt", file2))
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
     }
 
     @Test
-    fun `Composable Screens properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate ScreenUIViewController and ScreenUIViewControllerRepresentable files`() {
+    fun `Composables properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate respective UIViewController and UIViewControllerRepresentable files`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -182,7 +168,7 @@ class ProcessorTest {
 
     @Test
     fun `Composables from different files are parsed once only once`() {
-        val fileA = """
+        val codeA = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -191,7 +177,7 @@ class ProcessorTest {
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-        val fileB = """
+        val codeB = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -201,7 +187,7 @@ class ProcessorTest {
             fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-        val compilation = prepareCompilation(kotlin("FileA.kt", fileA), kotlin("FileB.kt", fileB))
+        val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB))
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -255,7 +241,7 @@ class ProcessorTest {
 
     @Test
     fun `Function parameter with Kotlin primitive type will map to Swift expected type`() {
-        val file1 = """
+        val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -282,7 +268,7 @@ class ProcessorTest {
                     callBackP: (Boolean) -> Unit
             ) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("File1.kt", file1))
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
 

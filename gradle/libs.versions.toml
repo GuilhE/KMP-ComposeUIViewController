@@ -5,7 +5,7 @@ ksp = "1.9.22-1.0.17"
 androidTools = "8.1.2"
 compileTesting = "1.5.0"
 junit = "4.13.2"
-composeuiviewcontroller = "1.4.2-ALPHA"
+composeuiviewcontroller = "1.4.3-ALPHA"
 
 [plugins]
 

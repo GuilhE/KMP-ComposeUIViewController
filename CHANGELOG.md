@@ -1,6 +1,12 @@
 # Changelog
 ---
 
+## [1.4.3-ALPHA]
+
+- Fixes Processor bug in `getFrameworkNameFromAnnotations()` function that was accepting empty values
+
+---
+
 ## [1.4.2-ALPHA]
 
 - Fixes Processor bug where functions that should be discarded from the analysis were not
