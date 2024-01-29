@@ -16,6 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import kotlin.test.assertNotEquals
 
 class ProcessorTest {
 
@@ -53,7 +54,7 @@ class ProcessorTest {
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         assertTrue(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.nameWithoutExtension == "ScreenAUIViewController" || it.nameWithoutExtension == "ScreenBUIViewController" }
+                .filter { it.extension == "kt" || it.extension == "swift" }
                 .toList()
                 .isEmpty()
         )
@@ -149,7 +150,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Composable Screen properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate ScreenUIViewController file`() {
+    fun `Composable Screen properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate ScreenUIViewController and ScreenUIViewControllerRepresentable files`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -163,11 +164,12 @@ class ProcessorTest {
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
-        assertTrue(
+        assertEquals(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.nameWithoutExtension == "ScreenUIViewController" }
+                .filter { it.name == "ScreenUIViewController.kt" || it.name == "ScreenUIViewControllerRepresentable.swift" }
                 .toList()
-                .isNotEmpty()
+                .size,
+            2
         )
     }
 
@@ -182,7 +184,6 @@ class ProcessorTest {
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-
         val fileB = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -199,10 +200,13 @@ class ProcessorTest {
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.nameWithoutExtension == "ScreenAUIViewController" || it.nameWithoutExtension == "ScreenBUIViewController" }
+                .filter {
+                    it.name == "ScreenAUIViewController.kt" || it.name == "ScreenAUIViewControllerRepresentable.swift" ||
+                            it.name == "ScreenBUIViewController.kt" || it.name == "ScreenBUIViewControllerRepresentable.swift"
+                }
                 .toList()
                 .size,
-            2
+            4
         )
     }
 
@@ -231,10 +235,76 @@ class ProcessorTest {
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
-                .filter { it.nameWithoutExtension == "ScreenAUIViewController" || it.nameWithoutExtension == "ScreenBUIViewController" || it.nameWithoutExtension == "ScreenCUIViewController" }
+                .filter {
+                    it.name == "ScreenAUIViewController.kt" || it.name == "ScreenAUIViewControllerRepresentable.swift" ||
+                            it.name == "ScreenBUIViewController.kt" || it.name == "ScreenBUIViewControllerRepresentable.swift" ||
+                            it.name == "ScreenCUIViewController.kt" || it.name == "ScreenCUIViewControllerRepresentable.swift"
+                }
                 .toList()
                 .size,
-            3
+            6
         )
+    }
+
+    @Test
+    fun `Function parameter with Kotlin primitive type will map to Swift expected type`() {
+        val file1 = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            
+            @ComposeUIViewController("SharedComposables")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,
+                    callBackA: () -> Unit,
+                    callBackB: (List) -> Unit,
+                    callBackC: (MutableList) -> Unit,
+                    callBackD: (Map) -> Unit,
+                    callBackE: (MutableMap) -> Unit,
+                    callBackF: (Byte) -> Unit,
+                    callBackG: (UByte) -> Unit,
+                    callBackH: (Short) -> Unit,
+                    callBackI: (UShort) -> Unit,
+                    callBackJ: (Int) -> Unit,
+                    callBackK: (UInt) -> Unit,
+                    callBackL: (Long) -> Unit,
+                    callBackM: (ULong) -> Unit,
+                    callBackN: (Float) -> Unit,
+                    callBackO: (Double) -> Unit,
+                    callBackP: (Boolean) -> Unit
+            ) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("File1.kt", file1))
+        val result = compilation.compile()
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir.walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftTypes = listOf(
+            "Void",
+            "Array",
+            "NSMutableArray",
+            "Dictionary",
+            "NSMutableDictionary",
+            "KotlinByte",
+            "KotlinUByte",
+            "KotlinShort",
+            "KotlinUShort",
+            "KotlinInt",
+            "KotlinUInt",
+            "KotlinLong",
+            "KotlinULong",
+            "KotlinFloat",
+            "KotlinDouble",
+            "KotlinBoolean"
+        )
+        val generatedCodeFile = generatedSwiftFiles.first().readText()
+        for (expectedType in expectedSwiftTypes) {
+            assertTrue(generatedCodeFile.contains(expectedType))
+        }
     }
 }

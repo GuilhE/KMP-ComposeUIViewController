@@ -1,6 +1,13 @@
 # Changelog
 ---
 
+## [1.4.1-ALPHA]
+
+Adds `kotlinTypeToSwift` function to reflect https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers
+Fixes #1
+
+---
+
 ## [1.4.0-ALPHA]
 
 - Kotlin 1.9.22

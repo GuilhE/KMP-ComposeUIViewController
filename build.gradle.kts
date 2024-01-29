@@ -12,5 +12,5 @@ buildscript {
 
 allprojects {
     group = "com.github.guilhe.kmp"
-    version = "1.4.0-ALPHA"
+    version = "1.4.1-ALPHA"
 }

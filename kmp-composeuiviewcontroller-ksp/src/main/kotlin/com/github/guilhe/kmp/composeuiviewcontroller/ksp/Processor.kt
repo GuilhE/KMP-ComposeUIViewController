@@ -8,6 +8,7 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
 
 internal class Processor(private val codeGenerator: CodeGenerator, private val logger: KSPLogger) : SymbolProcessor {
@@ -124,7 +125,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
         makeParameters: List<KSValueParameter>,
     ): String {
         val letParameters = makeParameters.joinToString("\n") {
-            "let ${it.name()}: ${it.type}".replace("Unit", "Void")
+            "let ${it.name()}: ${kotlinTypeToSwift(it.type)}"
         }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
 
@@ -153,6 +154,36 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                 extensionName = "swift"
             ).write(code.toByteArray())
         return code
+    }
+
+    /**
+     * @param type Kotlin type to be converted to Swift type
+     * @return String with Swift type
+     * @see https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers
+     */
+    private fun kotlinTypeToSwift(type: KSTypeReference): String {
+        val regex = "\\b(Unit|List|MutableList|Map|MutableMap|Byte|UByte|Short|UShort|Int|UInt|Long|ULong|Float|Double|Boolean)\\b".toRegex()
+        return regex.replace("$type") { matchResult ->
+            when (matchResult.value) {
+                "Unit" -> "Void"
+                "List" -> "Array"
+                "MutableList" -> "NSMutableArray"
+                "Map" -> "Dictionary"
+                "MutableMap" -> "NSMutableDictionary"
+                "Byte" -> "KotlinByte"
+                "UByte" -> "KotlinUByte"
+                "Short" -> "KotlinShort"
+                "UShort" -> "KotlinUShort"
+                "Int" -> "KotlinInt"
+                "UInt" -> "KotlinUInt"
+                "Long" -> "KotlinLong"
+                "ULong" -> "KotlinULong"
+                "Float" -> "KotlinFloat"
+                "Double" -> "KotlinDouble"
+                "Boolean" -> "KotlinBoolean"
+                else -> "KotlinNumber"
+            }
+        }
     }
 
     private fun String.name() = split(".").last()
