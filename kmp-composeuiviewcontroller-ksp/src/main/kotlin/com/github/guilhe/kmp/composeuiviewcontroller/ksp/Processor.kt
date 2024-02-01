@@ -154,8 +154,6 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
             }
         """.trimIndent()
         val updatedCode = indentParameters(code, letParameters)
-
-        println(updatedCode)
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
