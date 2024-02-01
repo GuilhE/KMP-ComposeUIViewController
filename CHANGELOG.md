@@ -1,6 +1,12 @@
 # Changelog
 ---
 
+## [1.4.4-ALPHA]
+
+- Adds `indentParameters` and `removeAdjacentEmptyLines` for better code indentation in `.swift` files.
+
+---
+
 ## [1.4.3-ALPHA]
 
 - Fixes Processor bug in `getFrameworkNameFromAnnotations()` function that was accepting empty values

@@ -16,7 +16,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
         if (candidates.none()) {
-            logger.info("No @${composeUIViewControllerAnnotationName.name()} found!")
+            logger.info("No more @${composeUIViewControllerAnnotationName.name()} found!")
             return emptyList()
         }
 
@@ -134,11 +134,8 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
     ): String {
-        val letParameters = makeParameters.joinToString("\n") {
-            "let ${it.name()}: ${kotlinTypeToSwift(it.type)}"
-        }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
-
+        val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
         val code = """
             import SwiftUI
             import $frameworkName
@@ -156,14 +153,17 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                 }
             }
         """.trimIndent()
+        val updatedCode = indentParameters(code, letParameters)
+
+        println(updatedCode)
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
                 packageName = "",
                 fileName = "${composable.name()}UIViewControllerRepresentable",
                 extensionName = "swift"
-            ).write(code.toByteArray())
-        return code
+            ).write(updatedCode.toByteArray())
+        return updatedCode
     }
 
     /**
@@ -194,6 +194,28 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                 else -> "KotlinNumber"
             }
         }
+    }
+
+    private fun indentParameters(code: String, parameters: String): String {
+        parameters.ifEmpty {
+            return removeAdjacentEmptyLines(code.lines()).joinToString("\n").trimIndent()
+        }
+        val linesBeforeLetParameters = code.substringBefore(parameters).lines()
+        val indentation = linesBeforeLetParameters.lastOrNull()?.takeWhile { it.isWhitespace() } ?: ""
+        val indentedLetParameters = parameters.lines().joinToString("\n") { "$indentation$it" }.lines()
+        val codeLines = code.lines().toMutableList()
+        codeLines.subList(linesBeforeLetParameters.size - 1, linesBeforeLetParameters.size - 1 + indentedLetParameters.size).clear()
+        codeLines.addAll(linesBeforeLetParameters.size - 1, indentedLetParameters)
+        return codeLines.joinToString("\n").trimIndent()
+    }
+
+    private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
+        return list.fold<String, MutableList<String>>(mutableListOf()) { acc, line ->
+            if (!(line.isBlank() && acc.lastOrNull()?.isBlank() == true)) {
+                acc.add(line)
+            }
+            acc
+        }.toList()
     }
 
     private fun String.name() = split(".").last()
