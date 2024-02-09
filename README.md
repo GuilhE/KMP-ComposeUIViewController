@@ -26,11 +26,9 @@ It's important to note that this addresses the [current](https://github.com/JetB
 ## Configurations
 
 Steps to follow:
-
-1. [KMP shared module](#kmp-shared-module)
-2. [KMP project](#kmp-project)
-3. [iOSApp](#iosapp)
-
+<details>
+    <summary>Step 1 - <b>KMP shared module</b></summary>
+    
 ### KMP shared module
 #### Gradle
 First we need to import the ksp plugin:
@@ -122,7 +120,11 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
     }
 }
 ```
+</details>
 
+<details>
+    <summary>Step 2 - <b>KMP project</b></summary>
+    
 ### KMP project
 
 Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
@@ -139,6 +141,11 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 
 **note:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
+</details>
+
+<details>
+    <summary>Step 3 - <b>iOSApp</b></summary>
+    
 ### iOSApp
 
 Now that the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj`, they are ready to be used:
@@ -153,6 +160,8 @@ struct SharedView: View {
 Pretty simple right? 😊
 
 For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+
+</details>
 
 ## Outputs
 ```bash
