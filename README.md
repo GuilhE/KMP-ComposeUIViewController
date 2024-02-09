@@ -64,11 +64,14 @@ tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addF
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
 
+#### Code generation
+
 Now we can take advantage of two annotations:
 - `@ComposeUIViewController`: it will mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
 - `@ComposeUIViewControllerState`: it will specify the composable state variable.
 
-#### Rules and considerations
+##### Rules and considerations
+
 1. `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
 2. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name;
 3. `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
@@ -77,7 +80,8 @@ Now we can take advantage of two annotations:
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
-#### Code generation
+##### Example
+
 ```kotlin
 data class ViewState(val status: String = "default")
 
@@ -124,12 +128,12 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
 <details>
     <summary><b>Step 2 - </b>Setup auto export to Xcode</summary>
     
-### KMP project
+### Project root
 
 Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
 
 1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
-2. Copy the [exportToXcode.sh](./exportToXcode.sh) file to the project's root and run `chmod +x ./exportToXcode.sh`
+2. Copy the [exportToXcode.sh](./exportToXcode.sh) file to the **project's root** and run `chmod +x ./exportToXcode.sh`
 3. Copy the following gradle task to the project's root `build.gradle.kts`:
 ```kotlin
 tasks.register<Exec>("addFilesToXcodeproj") {
