@@ -25,9 +25,8 @@ It's important to note that this addresses the [current](https://github.com/JetB
 
 ## Configurations
 
-Steps to follow:
 <details>
-    <summary>Step 1 - <b>KMP shared module</b></summary>
+    <summary><b>Step 1 - </b>Setup code generation</b></summary>
     
 ### KMP shared module
 #### Gradle
@@ -123,7 +122,7 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
 </details>
 
 <details>
-    <summary>Step 2 - <b>KMP project</b></summary>
+    <summary><b>Step 2 - </b>Setup auto export to Xcode</summary>
     
 ### KMP project
 
@@ -144,7 +143,7 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 </details>
 
 <details>
-    <summary>Step 3 - <b>iOSApp</b></summary>
+    <summary><b>Step 3 -</b> Import and use <i>UIViewControllerRepresentable</i> files in iOSApp</summary>
     
 ### iOSApp
 
