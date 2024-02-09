@@ -153,7 +153,10 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 
 Now that the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj`, they are ready to be used:
 ```swift
-struct SharedView: View {
+import SwiftUI
+import SharedUI
+
+struct SomeView: View {
     @State private var state: ViewState = ViewState(status: "default")        
     var body: some View {
         ComposeViewRepresentable(viewState: $state, callback: {})
