@@ -6,7 +6,7 @@ public struct GradientScreenRepresentable: UIViewControllerRepresentable {
     let randomize: (KotlinLong) -> Void
     
     public func makeUIViewController(context: Context) -> UIViewController {
-        return GradientScreenUIViewController().make(randomize: randomize)
+        GradientScreenUIViewController().make(randomize: randomize)
     }
     
     public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {

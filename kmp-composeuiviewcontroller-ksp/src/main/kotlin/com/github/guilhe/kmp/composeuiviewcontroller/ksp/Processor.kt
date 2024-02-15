@@ -104,16 +104,16 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
             
-            public object ${composable.name()}UIViewController {
+            object ${composable.name()}UIViewController {
                 private val $stateParameterName = mutableStateOf(${stateParameter.type}())
                 
-                public fun make(${makeParameters.joinToString()}): UIViewController {
+                fun make(${makeParameters.joinToString()}): UIViewController {
                     return ComposeUIViewController {
                         ${composable.name()}(${parameters.toComposableParameters(stateParameterName)})
                     }
                 }
                 
-                public fun update($stateParameterName: ${stateParameter.type}) {
+                fun update($stateParameterName: ${stateParameter.type}) {
                     this.$stateParameterName.value = $stateParameterName
                 }
             }
@@ -145,7 +145,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                 $letParameters
                 
                 public func makeUIViewController(context: Context) -> UIViewController {
-                    return ${composable.name()}UIViewController().make($makeParametersParsed)
+                    ${composable.name()}UIViewController().make($makeParametersParsed)
                 }
                 
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
