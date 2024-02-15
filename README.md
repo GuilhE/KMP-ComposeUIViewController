@@ -91,16 +91,16 @@ fun ComposeView(@ComposeUIViewControllerState viewState: ViewState, callback: ()
 ```
 will produce a `ComposeViewUIViewController`:
 ```kotlin
-public object ComposeViewUIViewController {
+object ComposeViewUIViewController {
     private val viewState = mutableStateOf(ViewState())
 
-    public fun make(callback: () -> Unit): UIViewController {
+    fun make(callback: () -> Unit): UIViewController {
         return ComposeUIViewController {
             ComposeView(viewState.value, callback)
         }
     }
 
-    public fun update(viewState: ViewState) {
+    fun update(viewState: ViewState) {
         this.viewState.value = uiState
     }
 }
@@ -115,7 +115,7 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
     let callback: () -> Void
     
     func makeUIViewController(context: Context) -> UIViewController {
-        return ComposeViewUIViewController().make(callback: callback)
+        ComposeViewUIViewController().make(callback: callback)
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
