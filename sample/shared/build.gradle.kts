@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp)
-    id("org.jetbrains.compose") version "1.6.0-rc01"
+    id("org.jetbrains.compose") version "1.6.0"
 }
 
 compose {
