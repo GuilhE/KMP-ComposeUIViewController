@@ -50,8 +50,6 @@ private func convertUIColorToKotlinLong(_ color: UIColor) -> Int64 {
     return hexValue
 }
 
-struct SharedView_Previews: PreviewProvider {
-    static var previews: some View {
-        SharedView()
-    }
+#Preview {
+    SharedView()
 }

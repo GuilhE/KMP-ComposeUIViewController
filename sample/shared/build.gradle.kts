@@ -6,6 +6,7 @@ plugins {
 
 compose {
     kotlinCompilerPlugin.set("1.5.8.1-beta02")
+    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=1.9.23")
 }
 
 kotlin {
