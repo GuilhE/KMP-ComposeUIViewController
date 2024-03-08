@@ -1,6 +1,13 @@
 # Changelog
 ---
 
+## [1.5.0-ALPHA]
+
+- Kotlin 1.9.23
+- KSP 1.0.19
+
+---
+
 ## [1.4.4-ALPHA]
 
 - Adds `indentParameters` and `removeAdjacentEmptyLines` for better code indentation in `.swift` files.
