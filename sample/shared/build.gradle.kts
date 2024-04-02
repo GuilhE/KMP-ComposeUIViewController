@@ -5,8 +5,8 @@ plugins {
 }
 
 compose {
-    kotlinCompilerPlugin.set("1.5.8.1-beta02")
-    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=1.9.23")
+    kotlinCompilerPlugin.set("1.5.10.1")
+//    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=1.9.23")
 }
 
 kotlin {
@@ -23,13 +23,7 @@ kotlin {
 
         listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
             target.binaries.framework { baseName = "SharedComposables" }
-            val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
-            dependencies.add("ksp$targetName", libs.composeuiviewcontroller.ksp)
-
-//            all {
-//                //https://kotlinlang.org/docs/ksp-quickstart.html#make-ide-aware-of-generated-code
-//                kotlin.srcDir("build/generated/ksp/${target.targetName}/${target.targetName}Main/kotlin")
-//            }
+            dependencies.add("ksp${target.name.replaceFirstChar { it.uppercaseChar() }}", libs.composeuiviewcontroller.ksp)
         }
     }
 }
