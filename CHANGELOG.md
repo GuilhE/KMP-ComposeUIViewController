@@ -1,5 +1,11 @@
 # Changelog
 ---
+## [1.6.0-ALPHA]
+
+- Kotlin 2.0.0-RC1
+- KSP 1.0.20
+
+---
 
 ## [1.5.0-ALPHA]
 
