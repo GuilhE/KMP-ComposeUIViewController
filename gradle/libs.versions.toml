@@ -1,21 +1,22 @@
 [versions]
 
-kotlin = "2.0.0-RC1"
-ksp = "2.0.0-RC1-1.0.20"
-androidTools = "8.3.2"
+kotlin = "2.0.0-RC2"
+kotlinCompose = "1.6.10-beta03"
+ksp = "2.0.0-RC2-1.0.20"
 compileTesting = "1.5.0"
 junit = "4.13.2"
-composeuiviewcontroller = "1.6.0-ALPHA"
+composeuiviewcontroller = "1.7.0-ALPHA"
 
 [plugins]
 
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.compose", version.ref = "kotlinCompose" }
+kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 [libraries]
 
-gradle-android-tools = { group = "com.android.tools.build", name = "gradle", version.ref = "androidTools" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 composeuiviewcontroller-ksp = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp", version.ref = "composeuiviewcontroller" }
 composeuiviewcontroller-annotations = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations", version.ref = "composeuiviewcontroller" }
