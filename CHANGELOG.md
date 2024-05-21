@@ -1,5 +1,18 @@
 # Changelog
 ---
+
+## [1.8.0-ALPHA]
+
+- Kotlin 2.0.0-RC3
+- Compose 1.6.10
+
+---
+
+## [1.7.0-ALPHA]
+
+- Kotlin 2.0.0-RC2
+
+---
 ## [1.6.0-ALPHA]
 
 - Kotlin 2.0.0-RC1
