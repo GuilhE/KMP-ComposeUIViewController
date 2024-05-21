@@ -1,5 +1,11 @@
 # Changelog
 ---
+## [1.8.0-ALPHA]
+
+- Kotlin 2.0.0
+- KSP 1.0.21
+
+---
 
 ## [1.8.0-ALPHA]
 

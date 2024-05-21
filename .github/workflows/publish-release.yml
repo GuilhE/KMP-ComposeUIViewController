@@ -19,7 +19,14 @@ jobs:
           distribution: 'zulu'
           java-version: '11'
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Gradle tests
+        run: ./gradlew :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest"
+
       - name: Publish to Sonatype
+        if: success()
         run: ./gradlew publishAllPublicationsToSonatypeRepository
         env:
           SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}

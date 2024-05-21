@@ -1,11 +1,11 @@
 [versions]
 
-kotlin = "2.0.0-RC3"
+kotlin = "2.0.0"
 kotlinCompose = "1.6.10"
-ksp = "2.0.0-RC3-1.0.20"
+ksp = "2.0.0-1.0.21"
 compileTesting = "1.5.0"
 junit = "4.13.2"
-composeuiviewcontroller = "1.8.0-ALPHA"
+composeuiviewcontroller = "1.9.0-ALPHA"
 
 [plugins]
 
