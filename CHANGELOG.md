@@ -1,5 +1,10 @@
 # Changelog
 ---
+## [2.0.0-1.6.10-BETA-1]
+
+Allows `@ComposeUIViewController` without `@ComposeUIViewControllerState` for simples wrapper cases.
+
+---
 ## [2.0.0-1.6.10-BETA]
 
 - Gradle wrapper 8.6
