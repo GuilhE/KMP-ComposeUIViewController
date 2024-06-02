@@ -19,7 +19,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------:|:------:|:---:|:---------------------:|:------:|
 | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) |  2.0.0   | 1.0.21 | Yes |        1.6.10         | 15.3.0 |
 
-The suffix `-ALPHA` and `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
+The suffix `-ALPHA` or `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated. 
 
