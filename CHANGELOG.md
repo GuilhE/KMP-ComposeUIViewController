@@ -1,5 +1,12 @@
 # Changelog
 ---
+## [2.0.0-1.6.10-BETA]
+
+- Gradle wrapper 8.6
+
+From now on `KMP-ComposeUIViewController` version will map `Kotlin` and `Compose Multiplatform` versions
+
+---
 ## [1.8.0-ALPHA]
 
 - Kotlin 2.0.0
