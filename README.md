@@ -6,10 +6,16 @@
 KSP library for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
 ## Motivation
+This library can be used for **simple** and **advanced** use cases. As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
 
-When employing Compose Multiplatform for iOS, if the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
-As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
+### Simple
+All function parameters and UI state are managed inside the common code, in other words, using `Composable` functions inside a `SwiftUI` app through a simple [wrapper setup](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-swiftui-integration.html#use-compose-multiplatform-inside-a-swiftui-application).  
+
+### Advanced
+All function parameters and UI state are managed by the iOS app.  
+
+If the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
 Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
 
@@ -19,7 +25,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------:|:------:|:---:|:---------------------:|:------:|
 | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) |  2.0.0   | 1.0.21 | Yes |        1.6.10         | 15.3.0 |
 
-The suffix `-ALPHA` and `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
+The suffix `-ALPHA` or `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated. 
 
@@ -67,16 +73,15 @@ You can find a full setup example [here](sample/shared/build.gradle.kts).
 #### Code generation
 
 Now we can take advantage of two annotations:
-- `@ComposeUIViewController`: it will mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
-- `@ComposeUIViewControllerState`: it will specify the composable state variable.
+- `@ComposeUIViewController`: to mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
+- `@ComposeUIViewControllerState`: to specify the composable state variable.
 
 ##### Rules and considerations
 
-1. `@ComposeUIViewController` will always require a unique `@ComposeUIViewControllerState`;
-2. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name;
-3. `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
-4. The state variable of your choosing must have default values in it's initialization;
-5. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
+1. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name;
+2. `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
+3. The state variable of your choosing must have default values in it's initialization;
+4. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 

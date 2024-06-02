@@ -30,22 +30,48 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                 }) {
                     val parameters: List<KSValueParameter> = composable.parameters
                     val stateParameters = getStateParameters(parameters, composable)
-                    val stateParameter = stateParameters.first()
-                    val stateParameterName = stateParameter.name()
-                    val makeParameters = parameters.filterNot { it.type == stateParameter.type }.filterFunctions()
+                    val stateParameter = stateParameters.firstOrNull()
+                    val makeParameters =
+                        if (stateParameter == null) {
+                            parameters
+                                .filterComposableFunctions()
+                                .also {
+                                    if (parameters.size != it.size) {
+                                        throw IllegalArgumentException(
+                                            "Only 1 @${composeUIViewControllerStateAnnotationName.name()} and " +
+                                                    "N high-order function parameters (excluding @Composable content: () -> Unit) are allowed."
+                                        )
+                                    }
+                                }
+                        } else {
+                            parameters
+                                .filterNot { it.type == stateParameter.type }
+                                .filterComposableFunctions()
+                                .also {
+                                    if (parameters.size != it.size + 1) {
+                                        throw IllegalArgumentException(
+                                            "Only 1 @${composeUIViewControllerStateAnnotationName.name()} and " +
+                                                    "N high-order function parameters (excluding @Composable content: () -> Unit) are allowed."
+                                        )
+                                    }
+                                }
+                        }
 
-                    if (parameters.size != makeParameters.size + 1) {
-                        throw IllegalArgumentException(
-                            "Only 1 @${composeUIViewControllerStateAnnotationName.name()} and " +
-                                    "N high-order function parameters (excluding @Composable content: () -> Unit) are allowed."
-                        )
-                    }
-
-                    createKotlinFile(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
-                        logger.info("${composable.name()}UIViewController created!")
-                    }
-                    createSwiftFile(frameworkName, composable, stateParameterName, stateParameter, makeParameters).also {
-                        logger.info("${composable.name()}Representable created!")
+                    if (stateParameter == null) {
+                        createKotlinFileWithoutState(packageName, composable, makeParameters, parameters).also {
+                            logger.info("${composable.name()}UIViewController created!")
+                        }
+                        createSwiftFileWithoutState(frameworkName, composable, makeParameters).also {
+                            logger.info("${composable.name()}Representable created!")
+                        }
+                    } else {
+                        val stateParameterName = stateParameter.name()
+                        createKotlinFileWithState(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
+                            logger.info("${composable.name()}UIViewController created!")
+                        }
+                        createSwiftFileWithState(frameworkName, composable, stateParameterName, stateParameter, makeParameters).also {
+                            logger.info("${composable.name()}Representable created!")
+                        }
                     }
                 }
             }
@@ -79,16 +105,41 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                 "The composable ${composable.name()} has more than one parameter annotated " +
                         "with @${composeUIViewControllerStateAnnotationName.name()}."
             )
-
-            stateParameters.isEmpty() -> throw IllegalArgumentException(
-                "The composable ${composable.name()} is annotated with @${composeUIViewControllerAnnotationName.split(".").last()}" +
-                        " but it's missing the ui state parameter annotated with @${composeUIViewControllerStateAnnotationName.name()}"
-            )
         }
         return stateParameters
     }
 
-    private fun createKotlinFile(
+    private fun createKotlinFileWithoutState(
+        packageName: String,
+        composable: KSFunctionDeclaration,
+        makeParameters: List<KSValueParameter>,
+        parameters: List<KSValueParameter>
+    ): String {
+        val code = """
+            @file:Suppress("unused")
+            package $packageName
+             
+            import androidx.compose.ui.window.ComposeUIViewController
+            import platform.UIKit.UIViewController
+            
+            object ${composable.name()}UIViewController {
+                fun make(${makeParameters.joinToString()}): UIViewController {
+                    return ComposeUIViewController {
+                        ${composable.name()}(${parameters.toComposableParameters()})
+                    }
+                }
+            }
+        """.trimIndent()
+        codeGenerator
+            .createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = "${composable.name()}UIViewController",
+            ).write(code.toByteArray())
+        return code
+    }
+
+    private fun createKotlinFileWithState(
         packageName: String,
         composable: KSFunctionDeclaration,
         stateParameterName: String,
@@ -127,7 +178,41 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
         return code
     }
 
-    private fun createSwiftFile(
+    private fun createSwiftFileWithoutState(
+        frameworkName: String,
+        composable: KSFunctionDeclaration,
+        makeParameters: List<KSValueParameter>
+    ): String {
+        val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
+        val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
+        val code = """
+            import SwiftUI
+            import $frameworkName
+            
+            public struct ${composable.name()}Representable: UIViewControllerRepresentable {
+                $letParameters
+                
+                public func makeUIViewController(context: Context) -> UIViewController {
+                    ${composable.name()}UIViewController().make($makeParametersParsed)
+                }
+                
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    //unused
+                }
+            }
+        """.trimIndent()
+        val updatedCode = indentParameters(code, letParameters)
+        codeGenerator
+            .createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = "${composable.name()}UIViewControllerRepresentable",
+                extensionName = "swift"
+            ).write(updatedCode.toByteArray())
+        return updatedCode
+    }
+
+    private fun createSwiftFileWithState(
         frameworkName: String,
         composable: KSFunctionDeclaration,
         stateParameterName: String,
@@ -169,6 +254,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
      * @return String with Swift type
      * @see https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers
      */
+    @Suppress("KDocUnresolvedReference")
     private fun kotlinTypeToSwift(type: KSTypeReference): String {
         val regex = "\\b(Unit|List|MutableList|Map|MutableMap|Byte|UByte|Short|UShort|Int|UInt|Long|ULong|Float|Double|Boolean)\\b".toRegex()
         return regex.replace("$type") { matchResult ->
@@ -221,8 +307,10 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
     private fun List<KSValueParameter>.toComposableParameters(stateParameterName: String): String =
         joinToString(", ") { if (it.name() == stateParameterName) "${it.name()}.value" else it.name() }
 
-    private fun List<KSValueParameter>.filterFunctions(): List<KSValueParameter> =
-        filter { it.type.resolve().isFunctionType && it.annotations.none { annotation -> annotation.shortName.getShortName() == "Composable" } }
+    private fun List<KSValueParameter>.toComposableParameters(): String = joinToString(", ") { it.name() }
+
+    private fun List<KSValueParameter>.filterComposableFunctions(): List<KSValueParameter> =
+        filter { it.annotations.none { annotation -> annotation.shortName.getShortName() == "Composable" } }
 
     private fun List<KSValueParameter>.joinToString(): String = joinToString(", ") { "${it.name!!.getShortName()}: ${it.type}" }
 
