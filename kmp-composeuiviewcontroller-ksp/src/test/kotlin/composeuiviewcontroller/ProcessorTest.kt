@@ -143,7 +143,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Default frameworkName in @ComposeUIViewController will have the value 'ComposeApp'`() {
+    fun `Default frameworkName in @ComposeUIViewController will have the value 'SharedComposables'`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -159,7 +159,7 @@ class ProcessorTest {
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-        assertContains(generatedSwiftFiles.first().readText(), "import ComposeApp")
+        assertContains(generatedSwiftFiles.first().readText(), "import SharedComposables")
     }
 
     @Test

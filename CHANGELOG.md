@@ -1,5 +1,10 @@
 # Changelog
 ---
+## [2.0.0-1.6.10-BETA-4]
+
+Reverts `@ComposeUIViewController` default parameter to `SharedComposables`
+
+---
 ## [2.0.0-1.6.10-BETA-3]
 
 `@ComposeUIViewController` uses `ComposeApp` as default parameter to match [Kotlin Multiplatform Wizard](https://kmp.jetbrains.com/)
