@@ -84,7 +84,7 @@ Now we can take advantage of two annotations:
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
-##### Example
+##### Example for an advanced use case
 
 ```kotlin
 //iosMain
@@ -98,11 +98,11 @@ internal fun ComposeView(@ComposeUIViewControllerState viewState: ViewState, cal
 will produce a `ComposeViewUIViewController`:
 ```kotlin
 object ComposeViewUIViewController {
-    private val viewState = mutableStateOf(ViewState())
+    private val viewState = mutableStateOf<ViewState?>(null)
 
     fun make(callback: () -> Unit): UIViewController {
         return ComposeUIViewController {
-            ComposeView(viewState.value, callback)
+            viewState.value?.let { ComposeView(it, callback) }            
         }
     }
 
