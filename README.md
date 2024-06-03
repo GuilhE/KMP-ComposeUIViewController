@@ -88,11 +88,13 @@ For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-
 ##### Example
 
 ```kotlin
+//iosMain
+
 data class ViewState(val status: String = "default")
 
 @ComposeUIViewController("SharedUI")
 @Composable
-fun ComposeView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
+internal fun ComposeView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
 ```
 will produce a `ComposeViewUIViewController`:
 ```kotlin
@@ -191,8 +193,8 @@ note: [ksp] GradientScreenRepresentable created!
 <p align="center">
 <img alt="outputs" src="/media/outputs.png" height="800"/></br></br>
 It's an example of a happy path 🙌🏼</br></br>
-You can also find another working sample in <b>Expressus App</b>:</br>
-<a href="https://github.com/GuilhE/Expressus" target="_blank"><img alt="Expressus" src="https://raw.githubusercontent.com/GuilhE/Expressus/main/media/icon.png" height="100"/></a>
+You can also find other working samples in:</br></br>
+<a href="https://github.com/GuilhE/Expressus" target="_blank"><img alt="Expressus" src="https://raw.githubusercontent.com/GuilhE/Expressus/main/media/icon.png" height="100"/></a> <a href="https://github.com/GuilhE/WhosNext" target="_blank"><img alt="WhosNext" src="https://raw.githubusercontent.com/GuilhE/WhosNext/main/media/icon.png" height="100"/></a>
 </p>
 
 ## Stability
