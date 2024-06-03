@@ -79,7 +79,7 @@ Now we can take advantage of two annotations:
 
 ##### Rules and considerations
 
-1. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name;
+1. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name (default is "shared");
 2. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
@@ -89,7 +89,7 @@ For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-
 ```kotlin
 //iosMain
 
-data class ViewState(val status: String = "default")
+data class ViewState(val isLoading: Boolean)
 
 @ComposeUIViewController("SharedUI")
 @Composable
