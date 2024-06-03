@@ -1,5 +1,11 @@
 # Changelog
 ---
+## [2.0.0-1.6.10-BETA-3]
+
+`@ComposeUIViewController` uses `ComposeApp` as default parameter to match [Kotlin Multiplatform Wizard](https://kmp.jetbrains.com/)
+
+---
+
 ## [2.0.0-1.6.10-BETA-2]
 
 Removes the necessity for default values of `@ComposeUIViewControllerState`
