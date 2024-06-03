@@ -185,7 +185,7 @@ import SwiftUI
 import SharedUI
 
 struct SomeView: View {
-    @State private var state: ViewState = ViewState(status: "default")        
+    @State private var state: ViewState = ViewState(isLoading: false)
     var body: some View {
         ComposeViewRepresentable(viewState: $state, callback: {})
     }
