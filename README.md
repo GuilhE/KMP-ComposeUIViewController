@@ -8,9 +8,8 @@ KSP library for generating `ComposeUIViewController` and `UIViewControllerRepres
 ## Motivation
 This library can be used for **simple** and **advanced** use cases. As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
 
-
 ### Simple
-All function parameters and UI state are managed inside the common code, in other words, using `Composable` functions inside a `SwiftUI` app through a simple [wrapper setup](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-swiftui-integration.html#use-compose-multiplatform-inside-a-swiftui-application).  
+All function parameters and UI state are managed inside the common code, in other words, a simple [wrapper setup](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-swiftui-integration.html#use-compose-multiplatform-inside-a-swiftui-application).  
 
 ### Advanced
 All function parameters and UI state are managed by the iOS app.  
@@ -74,14 +73,13 @@ You can find a full setup example [here](sample/shared/build.gradle.kts).
 
 Now we can take advantage of two annotations:
 - `@ComposeUIViewController`: to mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
-- `@ComposeUIViewControllerState`: to specify the composable state variable.
+- `@ComposeUIViewControllerState`: to specify the composable state variable (for **advanced** use cases).
 
 ##### Rules and considerations
 
 1. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name;
 2. `@ComposeUIViewControllerState` can only be applied once per `@Composable`;
-3. The state variable of your choosing must have default values in it's initialization;
-4. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
+3. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
@@ -151,6 +149,20 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 
 **note:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
+Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
+
+`./gradlew addFilesToXcodeproj`
+
+This could be due to gradle caches not being properly invalidated upon file updates.  
+
+If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
+```kotlin
+//...configureEach { finalizedBy(":addFilesToXcodeproj") }
+```
+You will find the generated files under `{shared-module}/build/generated/ksp/`.
+
+**Warning:** avoid deleting `iosApp/SharedRepresentables` whithout first using Xcode to `Remove references`.
+
 </details>
 
 <details>
@@ -176,6 +188,14 @@ For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by 
 
 </details>
 
+## Stability
+
+| Operation              | Status |
+|------------------------|:------:|
+| Android Studio Run     |   🟢   |
+| Xcode Run              |   🟢   |
+| Xcode Preview          |   🟢   |
+
 ## Outputs
 ```bash
 > Task :shared:kspKotlinIosSimulatorArm64
@@ -196,28 +216,6 @@ It's an example of a happy path 🙌🏼</br></br>
 You can also find other working samples in:</br></br>
 <a href="https://github.com/GuilhE/Expressus" target="_blank"><img alt="Expressus" src="https://raw.githubusercontent.com/GuilhE/Expressus/main/media/icon.png" height="100"/></a> <a href="https://github.com/GuilhE/WhosNext" target="_blank"><img alt="WhosNext" src="https://raw.githubusercontent.com/GuilhE/WhosNext/main/media/icon.png" height="100"/></a>
 </p>
-
-## Stability
-
-| Operation              | Status |
-|------------------------|:------:|
-| Android Studio Run     |   🟢   |
-| Xcode Run              |   🟢   |
-| Xcode Preview          |   🟢   |
-
-Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
-
-`./gradlew addFilesToXcodeproj`
-
-This could be due to gradle caches not being properly invalidated upon file updates.  
-
-If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
-```kotlin
-//...configureEach { finalizedBy(":addFilesToXcodeproj") }
-```
-You will find the generated files under `{shared-module}/build/generated/ksp/`.
-
-**Warning:** avoid deleting `iosApp/SharedRepresentables` whithout first using Xcode to `Remove references`.
 
 ## LICENSE
 
