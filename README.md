@@ -30,6 +30,14 @@ The suffix `-ALPHA` or `-BETA` will be added to reflect JetBrain's [Compose Mult
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated. 
 
+### Stability
+
+| Operation              | Status |
+|------------------------|:------:|
+| Android Studio Run     |   🟢   |
+| Xcode Run              |   🟢   |
+| Xcode Preview          |   🟢   |
+
 ## Configurations
 
 <details>
@@ -188,14 +196,6 @@ Pretty simple right? 😊
 For a working [sample](sample/iosApp/iosApp/SharedView.swift) run **iosApp** by opening `iosApp/iosApp.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
 
 </details>
-
-## Stability
-
-| Operation              | Status |
-|------------------------|:------:|
-| Android Studio Run     |   🟢   |
-| Xcode Run              |   🟢   |
-| Xcode Preview          |   🟢   |
 
 ## Outputs
 ```bash
