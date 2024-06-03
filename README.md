@@ -6,7 +6,9 @@
 KSP library for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
 ## Motivation
-This library can be used for **simple** and **advanced** use cases. As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
+As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
+
+It can be used for **simple** and **advanced** use cases. 
 
 ### Simple
 All `@Composable` function parameters and UI state are managed inside the common code, in other words, a simple [wrapper setup](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-swiftui-integration.html#use-compose-multiplatform-inside-a-swiftui-application).  
