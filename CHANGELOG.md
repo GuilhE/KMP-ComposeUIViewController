@@ -1,5 +1,10 @@
 # Changelog
 ---
+## [2.0.0-1.6.10-BETA-2]
+
+Removes the necessity for default values of `@ComposeUIViewControllerState`
+
+---
 ## [2.0.0-1.6.10-BETA-1]
 
 Allows `@ComposeUIViewController` without `@ComposeUIViewControllerState` for simples wrapper cases.

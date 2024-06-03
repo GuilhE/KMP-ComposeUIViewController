@@ -29,8 +29,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                     it.annotations.any { annotation -> annotation.shortName.asString() == composeUIViewControllerAnnotationName.name() }
                 }) {
                     val parameters: List<KSValueParameter> = composable.parameters
-                    val stateParameters = getStateParameters(parameters, composable)
-                    val stateParameter = stateParameters.firstOrNull()
+                    val stateParameter = getStateParameter(parameters, composable).firstOrNull()
                     val makeParameters =
                         if (stateParameter == null) {
                             parameters
@@ -93,7 +92,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
         throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} requires a non-null and non-empty value for $composeUIViewControllerAnnotationParameterName")
     }
 
-    private fun getStateParameters(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
+    private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
         val stateParameters = parameters.filter {
             it.annotations
                 .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name() }
@@ -156,11 +155,11 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
             import platform.UIKit.UIViewController
             
             object ${composable.name()}UIViewController {
-                private val $stateParameterName = mutableStateOf(${stateParameter.type}())
+                private val $stateParameterName = mutableStateOf<${stateParameter.type}?>(null)
                 
                 fun make(${makeParameters.joinToString()}): UIViewController {
                     return ComposeUIViewController {
-                        ${composable.name()}(${parameters.toComposableParameters(stateParameterName)})
+                        state.value?.let { ${composable.name()}(${parameters.toComposableParameters(stateParameterName)}) }
                     }
                 }
                 
@@ -305,7 +304,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
     private fun String.name() = split(".").last()
 
     private fun List<KSValueParameter>.toComposableParameters(stateParameterName: String): String =
-        joinToString(", ") { if (it.name() == stateParameterName) "${it.name()}.value" else it.name() }
+        joinToString(", ") { if (it.name() == stateParameterName) "it" else it.name() }
 
     private fun List<KSValueParameter>.toComposableParameters(): String = joinToString(", ") { it.name() }
 

@@ -14,7 +14,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerStat
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
 
-data class ScreenState(val startColor: Long = 0xFFFF0000, val endColor: Long = 0xFF0000FF) {
+data class ScreenState(val startColor: Long, val endColor: Long) {
     val colors: List<Color> = listOf(Color(startColor), Color(endColor))
 }
 

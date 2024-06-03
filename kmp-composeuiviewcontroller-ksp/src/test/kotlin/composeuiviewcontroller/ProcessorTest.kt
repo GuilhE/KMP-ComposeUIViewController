@@ -121,7 +121,7 @@ class ProcessorTest {
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
             .toList()
-        assertTrue(generatedKotlinFiles.isNotEmpty())
+        assertTrue(generatedSwiftFiles.isNotEmpty())
         val generatedSwiftFile = generatedSwiftFiles.first().readText()
         assertEquals(generatedSwiftFile, expectedSwiftOutput)
     }
@@ -148,7 +148,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
 
-            @ComposeUIViewController()
+            @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -241,13 +241,13 @@ class ProcessorTest {
             import androidx.compose.runtime.mutableStateOf
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
-            
+
             object ScreenAUIViewController {
-                private val state = mutableStateOf(ViewAState())
+                private val state = mutableStateOf<ViewAState?>(null)
                 
                 fun make(): UIViewController {
                     return ComposeUIViewController {
-                        ScreenA(state.value)
+                        state.value?.let { ScreenA(it) }
                     }
                 }
                 
@@ -265,7 +265,7 @@ class ProcessorTest {
         val expectedSwiftOutput = """
             import SwiftUI
             import SharedComposables
-            
+
             public struct ScreenARepresentable: UIViewControllerRepresentable {
                 @Binding var state: ViewAState
                 
