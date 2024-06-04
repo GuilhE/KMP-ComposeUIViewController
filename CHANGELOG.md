@@ -1,5 +1,10 @@
 # Changelog
 ---
+## [2.0.0-1.6.11]
+
+- Compose Multiplatform 1.6.11
+
+---
 ## [2.0.0-1.6.10-BETA-4]
 
 Reverts `@ComposeUIViewController` default parameter to `SharedComposables`
