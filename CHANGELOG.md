@@ -1,5 +1,12 @@
 # Changelog
 ---
+## [2.0.0-1.6.11-BETA-1]
+
+- Improves `exportToXcode.sh`
+- Renames iosApp sample to Gradient
+
+---
+
 ## [2.0.0-1.6.11]
 
 - Compose Multiplatform 1.6.11

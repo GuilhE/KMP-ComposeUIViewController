@@ -158,6 +158,7 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 
 **note:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
+Running for the first time will give a `BUILD FAILED` because the folder `iosApp/SharedRepresentables` it's only added after. Just run it again.   
 Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
 
 `./gradlew addFilesToXcodeproj`
@@ -170,7 +171,7 @@ If necessary, disable `swift` files automatically export to Xcode and instead in
 ```
 You will find the generated files under `{shared-module}/build/generated/ksp/`.
 
-**Warning:** avoid deleting `iosApp/SharedRepresentables` whithout first using Xcode to `Remove references`.
+**Warning:** avoid deleting `iosApp/SharedRepresentables` without first using Xcode to `Remove references`.
 
 </details>
 
