@@ -85,11 +85,11 @@
 		7555FF7D242A565900829871 /* Gradient */ = {
 			isa = PBXGroup;
 			children = (
+				058557D7273AAEEB004C7B11 /* Preview Content */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				7555FF82242A565900829871 /* SharedView.swift */,
 				2152FB032600AC8F00CF470E /* GradientApp.swift */,
-				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = Gradient;
 			sourceTree = "<group>";
