@@ -1,5 +1,12 @@
 # Changelog
 ---
+## [2.0.20-Beta1-1.6.11-BETA]
+
+- Kotlin 2.0.20-Beta1
+- KSP 1.0.22
+
+---
+
 ## [2.0.0-1.6.11-BETA-1]
 
 - Improves `exportToXcode.sh`
@@ -12,11 +19,13 @@
 - Compose Multiplatform 1.6.11
 
 ---
+
 ## [2.0.0-1.6.10-BETA-4]
 
 Reverts `@ComposeUIViewController` default parameter to `SharedComposables`
 
 ---
+
 ## [2.0.0-1.6.10-BETA-3]
 
 `@ComposeUIViewController` uses `ComposeApp` as default parameter to match [Kotlin Multiplatform Wizard](https://kmp.jetbrains.com/)
@@ -28,11 +37,13 @@ Reverts `@ComposeUIViewController` default parameter to `SharedComposables`
 Removes the necessity for default values of `@ComposeUIViewControllerState`
 
 ---
+
 ## [2.0.0-1.6.10-BETA-1]
 
 Allows `@ComposeUIViewController` without `@ComposeUIViewControllerState` for simples wrapper cases.
 
 ---
+
 ## [2.0.0-1.6.10-BETA]
 
 - Gradle wrapper 8.6
@@ -40,6 +51,7 @@ Allows `@ComposeUIViewController` without `@ComposeUIViewControllerState` for si
 From now on `KMP-ComposeUIViewController` version will map `Kotlin` and `Compose Multiplatform` versions
 
 ---
+
 ## [1.8.0-ALPHA]
 
 - Kotlin 2.0.0
