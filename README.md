@@ -125,7 +125,7 @@ import SwiftUI
 import SharedUI
 
 public struct ComposeViewRepresentable: UIViewControllerRepresentable {
-    @Binding var viewState: ScreenState
+    @Binding var viewState: ViewState
     let callback: () -> Void
     
     func makeUIViewController(context: Context) -> UIViewController {
