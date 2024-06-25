@@ -147,7 +147,7 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
 Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
 
 1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
-2. Copy the [exportToXcode.sh](./exportToXcode.sh) file to the **project's root** and run `chmod +x ./exportToXcode.sh`
+2. Copy the [exportToXcode.sh](kmp-composeuiviewcontroller-gradle-plugin/scripts/exportToXcode.sh) file to the **project's root** and run `chmod +x ./exportToXcode.sh`
 3. Copy the following gradle task to the project's root `build.gradle.kts`:
 ```kotlin
 tasks.register<Exec>("addFilesToXcodeproj") {

@@ -6,9 +6,10 @@ ksp = "2.0.20-Beta1-1.0.22"
 compileTesting = "1.5.0"
 junit = "4.13.2"
 composeuiviewcontroller = "2.0.20-Beta1-1.6.11-BETA"
+gradlePublish = "1.2.1"
 
 [plugins]
-
+gradle-publish = { id="com.gradle.plugin-publish",  version.ref =  "gradlePublish" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -16,6 +17,8 @@ kotlin-compose = { id = "org.jetbrains.compose", version.ref = "kotlinCompose" }
 kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 [libraries]
+gradle-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+gradle-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 composeuiviewcontroller-ksp = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp", version.ref = "composeuiviewcontroller" }
