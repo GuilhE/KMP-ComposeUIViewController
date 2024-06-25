@@ -1,5 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.gradle.internal.impldep.junit.framework.TestCase.assertTrue
+
+
 plugins {
     `java-gradle-plugin`
     alias(libs.plugins.kotlin.jvm)
@@ -19,6 +22,13 @@ java {
 dependencies {
     implementation(libs.gradle.kotlin)
     implementation(libs.gradle.ksp)
+    testImplementation(libs.test.kotlin)
+    testImplementation(libs.test.junit.implementation)
+    testRuntimeOnly(libs.test.junit.runtimeOnly)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 gradlePlugin {
@@ -66,6 +76,7 @@ tasks.compileKotlin {
 
 val sourcesJar by tasks.getting(Jar::class) {
     dependsOn(copyVersionTemplate)
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 sourceSets {
@@ -75,6 +86,6 @@ sourceSets {
     }
 }
 
-tasks.withType(Copy::class.java){
+tasks.withType(Copy::class.java) {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
