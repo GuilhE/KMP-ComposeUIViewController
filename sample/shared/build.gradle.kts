@@ -3,6 +3,12 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.google.ksp)
+    id("com.github.guilhe.kmp.composeuiviewcontroller")
+}
+
+ComposeUiViewController {
+    iosAppName = "Gradient"
+    targetName = "Gradient"
 }
 
 kotlin {
@@ -15,13 +21,8 @@ kotlin {
             implementation(compose.ui)
         }
         jvmMain.dependencies { implementation(compose.preview) }
-        iosMain.dependencies { implementation(libs.composeuiviewcontroller.annotations) }
-
         listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
             target.binaries.framework { baseName = "SharedComposables" }
-            dependencies.add("ksp${target.name.replaceFirstChar { it.uppercaseChar() }}", libs.composeuiviewcontroller.ksp)
         }
     }
 }
-
-tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
