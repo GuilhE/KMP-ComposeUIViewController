@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     implementation(libs.ksp.api)
-    testImplementation(libs.test.junit)
+    testImplementation(libs.test.junit.implementation)
     testImplementation(libs.test.kotlin)
     testImplementation(libs.test.kotlinCompile)
     testImplementation(libs.test.kotlinCompileKsp)

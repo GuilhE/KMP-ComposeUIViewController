@@ -3,10 +3,9 @@
 kotlin = "2.0.20-Beta1"
 kotlinCompose = "1.6.11"
 ksp = "2.0.20-Beta1-1.0.22"
-compileTesting = "1.5.0"
-junit = "4.13.2"
 junitImpl = "5.7.2"
 junitRuntime  = "5.7.2"
+compileTesting = "1.6.0"
 gradlePublish = "1.2.1"
 
 [plugins]
@@ -24,7 +23,6 @@ gradle-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 
 test-kotlin = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-test-junit = { module = "junit:junit", version.ref = "junit" }
 test-junit-implementation = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitImpl" }
 test-junit-runtimeOnly = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitRuntime" }
 test-kotlinCompile = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "compileTesting" }

@@ -29,8 +29,8 @@ public class KMPComposeUIViewControllerPlugin : Plugin<Project> {
             println("> KMPComposeUIViewControllerPlugin:")
             setupTargets()
             with(extensions.create("ComposeUiViewController", ComposeUiViewControllerParameters::class.java)) {
-                copyFilesToXcodeTask(project, this)
                 finalizeFrameworksTasks(this)
+                copyFilesToXcodeTask(project, this)
             }
         }
     }

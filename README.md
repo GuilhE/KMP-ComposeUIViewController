@@ -1,20 +1,20 @@
 <img alt="icon" src="/media/icon.png" width="100" align="right"></br>
 
 # KMP-ComposeUIViewController
-[![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>  
+[![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
 KSP library for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
 ## Motivation
 As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
 
-It can be used for **simple** and **advanced** use cases. 
+It can be used for **simple** and **advanced** use cases.
 
 ### Simple
-All `@Composable` function parameters and UI state are managed inside the common code, in other words, a simple [wrapper setup](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-swiftui-integration.html#use-compose-multiplatform-inside-a-swiftui-application).  
+All `@Composable` function parameters and UI state are managed inside the common code, in other words, a simple [wrapper setup](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-swiftui-integration.html#use-compose-multiplatform-inside-a-swiftui-application).
 
 ### Advanced
-All `@Composable` function parameters and UI state are managed by the iOS app.  
+All `@Composable` function parameters and UI state are managed by the iOS app.
 
 If the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
@@ -28,21 +28,32 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 The suffix `-ALPHA` or `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
 
-It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated. 
+It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
 
-### Stability
+## Setup
 
-| Operation              | Status |
-|------------------------|:------:|
-| Android Studio Run     |   🟢   |
-| Xcode Run              |   🟢   |
-| Xcode Preview          |   🟢   |
+### Automatic
 
-## Configurations
+The recommended approach is to use the Gradle plugin in the shared module, where all configurations will be applied automatically. If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+
+```kotlin
+plugins {
+    id("org.jetbrains.kotlin.multiplatform")
+    id("com.google.devtools.ksp")
+    id("com.github.guilhe.kmp.composeuiviewcontroller") version "$LASTEST_VERSION"
+}
+
+ComposeUiViewController {
+    iosAppName = "Gradient"
+    targetName = "Gradient"
+}
+```
+
+### Manually
 
 <details>
     <summary><b>Step 1 - </b>Setup code generation</summary>
-    
+
 ### KMP shared module
 #### Gradle
 First we need to import the ksp plugin:
@@ -79,7 +90,45 @@ tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addF
 ```
 You can find a full setup example [here](sample/shared/build.gradle.kts).
 
-#### Code generation
+</details>
+
+<details>
+    <summary><b>Step 2 - </b>Setup auto export to Xcode</summary>
+
+### Project root
+
+Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
+
+1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
+2. Copy the [exportToXcode.sh](kmp-composeuiviewcontroller-gradle-plugin/src/main/resources/exportToXcode.sh) file to the **project's root** and run `chmod +x ./exportToXcode.sh`
+3. Copy the following gradle task to the project's root `build.gradle.kts`:
+```kotlin
+tasks.register<Exec>("addFilesToXcodeproj") {
+    workingDir(layout.projectDirectory)
+    commandLine("bash", "-c", "./exportToXcode.sh")
+}
+```
+
+**note:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
+
+Running for the first time will give a `BUILD FAILED` because the folder `iosApp/SharedRepresentables` it's only added after. Just run it again.   
+Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
+
+`./gradlew addFilesToXcodeproj`
+
+This could be due to gradle caches not being properly invalidated upon file updates.
+
+If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
+```kotlin
+//...configureEach { finalizedBy(":addFilesToXcodeproj") }
+```
+You will find the generated files under `{shared-module}/build/generated/ksp/`.
+
+**Warning:** avoid deleting `iosApp/SharedRepresentables` without first using Xcode to `Remove references`.
+
+</details>
+
+## Code generation
 
 Now we can take advantage of two annotations:
 - `@ComposeUIViewController`: to mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
@@ -110,7 +159,7 @@ object ComposeViewUIViewController {
 
     fun make(callback: () -> Unit): UIViewController {
         return ComposeUIViewController {
-            viewState.value?.let { ComposeView(it, callback) }            
+            viewState.value?.let { ComposeView(it, callback) }
         }
     }
 
@@ -137,50 +186,11 @@ public struct ComposeViewRepresentable: UIViewControllerRepresentable {
     }
 }
 ```
-</details>
 
-<details>
-    <summary><b>Step 2 - </b>Setup auto export to Xcode</summary>
-    
-### Project root
-
-Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
-
-1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
-2. Copy the [exportToXcode.sh](kmp-composeuiviewcontroller-gradle-plugin/scripts/exportToXcode.sh) file to the **project's root** and run `chmod +x ./exportToXcode.sh`
-3. Copy the following gradle task to the project's root `build.gradle.kts`:
-```kotlin
-tasks.register<Exec>("addFilesToXcodeproj") {
-    workingDir(layout.projectDirectory)
-    commandLine("bash", "-c", "./exportToXcode.sh")
-}
-```
-
-**note:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
-
-Running for the first time will give a `BUILD FAILED` because the folder `iosApp/SharedRepresentables` it's only added after. Just run it again.   
-Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
-
-`./gradlew addFilesToXcodeproj`
-
-This could be due to gradle caches not being properly invalidated upon file updates.  
-
-If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
-```kotlin
-//...configureEach { finalizedBy(":addFilesToXcodeproj") }
-```
-You will find the generated files under `{shared-module}/build/generated/ksp/`.
-
-**Warning:** avoid deleting `iosApp/SharedRepresentables` without first using Xcode to `Remove references`.
-
-</details>
-
-<details>
-    <summary><b>Step 3 -</b> Import and use <i>UIViewControllerRepresentable</i> files in iOSApp</summary>
-    
 ### iOSApp
 
-Now that the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj`, they are ready to be used:
+After a successful build the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj` ready to be used:
+
 ```swift
 import SwiftUI
 import SharedUI
@@ -192,11 +202,8 @@ struct SomeView: View {
     }
 }
 ```
-Pretty simple right? 😊
 
 For a working [sample](sample/iosApp/Gradient/SharedView.swift) run **iosApp** by opening `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
-
-</details>
 
 ## Outputs
 ```bash
