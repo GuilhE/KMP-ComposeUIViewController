@@ -1,8 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import org.gradle.internal.impldep.junit.framework.TestCase.assertTrue
-
-
 plugins {
     `java-gradle-plugin`
     alias(libs.plugins.kotlin.jvm)
@@ -48,6 +45,7 @@ gradlePlugin {
                 "kotlinmultiplatform",
                 "composemultiplatform",
                 "composeuiviewcontroller",
+                "uiviewcontroller",
                 "uiviewcontrollerrepresentable"
             )
         }
@@ -55,29 +53,14 @@ gradlePlugin {
 }
 
 /**
- * The provided code snippet addresses the need for a definitive source of truth regarding the library version within a module.
+ * The following configurations address the need for a unique source of truth regarding the library version within this module.
  * Despite the version being initially defined in the root project's `build.gradle.kts` under the `allprojects` extension, direct access from this module is not feasible.
  * To resolve this limitation, the code introduces a Gradle task (`copyVersionTemplate`) responsible for copying a `Version.kt` file from the project directory.
  * It incorporates variable substitution to inject the specified `version` property into the file, storing it in a designated directory (`generated/kmp-composeuiviewcontroller-version/main`).
  * By integrating this task into Kotlin compilation and JAR creation (`sourcesJar`), the approach ensures seamless inclusion of the versioned file in the main source set (`sourceSets`).
- * This methodology effectively maintains a consistent and accessible project version throughout the build lifecycle, optimizing build automation and version control practices.
+ *
+ * It also provides `sourceSets` configurations for `resources` to make it possible to access and copy `exportToXcode.sh` file.
  */
-private val copyVersionTemplate by tasks.registering(Copy::class) {
-    inputs.property("version", version)
-    from(layout.projectDirectory.file("Version.kt"))
-    into(layout.buildDirectory.dir("generated/kmp-composeuiviewcontroller-version/main"))
-    expand("version" to "$version")
-    filteringCharset = "UTF-8"
-}
-
-tasks.compileKotlin {
-    dependsOn(copyVersionTemplate)
-}
-
-val sourcesJar by tasks.getting(Jar::class) {
-    dependsOn(copyVersionTemplate)
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
 
 sourceSets {
     main {
@@ -86,6 +69,23 @@ sourceSets {
     }
 }
 
-tasks.withType(Copy::class.java) {
+private val copyVersionTemplate by tasks.registering(Copy::class) {
+    inputs.property("version", version)
+    from(layout.projectDirectory.file("Version.kt"))
+    into(layout.buildDirectory.dir("generated/kmp-composeuiviewcontroller-version/main"))
+    expand("version" to "$version")
+    filteringCharset = "UTF-8"
+}
+
+tasks.withType(Copy::class) {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.named("sourcesJar", Jar::class) {
+    dependsOn(copyVersionTemplate)
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.compileKotlin {
+    dependsOn(copyVersionTemplate)
 }

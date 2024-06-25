@@ -105,4 +105,6 @@ public class KMPComposeUIViewControllerPlugin : Plugin<Project> {
             }
         }
     }
+
+    private fun ComposeUiViewControllerParameters.toList(): List<*> = listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 }
