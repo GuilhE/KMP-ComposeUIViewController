@@ -22,7 +22,7 @@ class KmpComposeUIViewControllerPluginTest {
     fun setup(@TempDir tempDir: File) {
         project.pluginManager.apply("org.jetbrains.kotlin.multiplatform")
         project.pluginManager.apply("com.google.devtools.ksp")
-        project.pluginManager.apply("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
+        project.pluginManager.apply("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
     }
 
     @Test
@@ -33,7 +33,7 @@ class KmpComposeUIViewControllerPluginTest {
             """
             plugins {
                 id("org.jetbrains.kotlin.multiplatform")
-                id("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
+                id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
             }
             """.trimIndent()
         )
@@ -54,7 +54,7 @@ class KmpComposeUIViewControllerPluginTest {
             """
             plugins {
                 id("com.google.devtools.ksp")
-                id("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
+                id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
             }
             """.trimIndent()
         )
@@ -69,7 +69,7 @@ class KmpComposeUIViewControllerPluginTest {
 
     @Test
     fun `Plugin is applied correctly`() {
-        assertTrue(project.plugins.hasPlugin("com.github.guilhe.kmp.plugin-composeuiviewcontroller"))
+        assertTrue(project.plugins.hasPlugin("io.github.guilhe.kmp.plugin-composeuiviewcontroller"))
     }
 
     @Test
@@ -118,7 +118,7 @@ class KmpComposeUIViewControllerPluginTest {
             plugins {
                 id("org.jetbrains.kotlin.multiplatform")
                 id("com.google.devtools.ksp")
-                id("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
+                id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
             }
 
             ComposeUiViewController {

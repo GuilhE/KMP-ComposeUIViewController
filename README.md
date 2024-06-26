@@ -40,7 +40,7 @@ The recommended approach is to use the Gradle plugin in the shared module, where
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.google.devtools.ksp")
-    id("com.github.guilhe.kmp.composeuiviewcontroller") version "$LASTEST_VERSION"
+    id("io.github.guilhe.kmp.plugin-composeuiviewcontroller") version "$LASTEST_VERSION"
 }
 
 ComposeUiViewController {
