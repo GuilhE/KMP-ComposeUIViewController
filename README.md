@@ -134,14 +134,14 @@ You will find the generated files under `[module]/build/generated/ksp/`.
 Inside `iosMain` we can take advantage of two annotations:
 
 `@ComposeUIViewController`:  
-To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**.  
-It has a `frameworkName` parameter that must match the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25) (default is `SharedComposables`).
+To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the  iOS app.  
+It has a `frameworkName` [parameter](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/kmp-composeuiviewcontroller-annotations/src/commonMain/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/Annotations.kt#L13) that must match the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25).
 
 `@ComposeUIViewControllerState`:  
 To annotate the parameter as the composable state variable (for **advanced** use cases).
 
 > [!NOTE]
->  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
+>  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
@@ -251,9 +251,9 @@ struct SomeView: View {
 }
 ```
 
-For a working [sample](sample/iosApp/Gradient/SharedView.swift) run **iosApp** by opening `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+## Sample
+For a working [sample](sample/iosApp/Gradient/SharedView.swift) run `iosApp` by opening `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
 
-## Outputs
 ```bash
 > Task :shared:kspKotlinIosSimulatorArm64
 note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
@@ -269,7 +269,6 @@ note: [ksp] GradientScreenRepresentable created!
 
 <p align="center">
 <img alt="outputs" src="/media/outputs.png" height="800"/></br></br>
-It's an example of a happy path 🙌🏼</br></br>
 You can also find other working samples in:</br></br>
 <a href="https://github.com/GuilhE/Expressus" target="_blank"><img alt="Expressus" src="https://raw.githubusercontent.com/GuilhE/Expressus/main/media/icon.png" height="100"/></a> <a href="https://github.com/GuilhE/WhosNext" target="_blank"><img alt="WhosNext" src="https://raw.githubusercontent.com/GuilhE/WhosNext/main/media/icon.png" height="100"/></a>
 </p>
