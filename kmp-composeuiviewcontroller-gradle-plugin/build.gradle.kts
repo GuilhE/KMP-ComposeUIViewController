@@ -34,7 +34,7 @@ group = "io.github.guilhe.kmp"
 
 gradlePlugin {
     website = "https://github.com/GuilhE/KMP-ComposeUIViewController"
-    vcsUrl = "https://github.com/GuilhE/KMP-ComposeUIViewController"
+    vcsUrl = "https://github.com/GuilhE/KMP-ComposeUIViewController.git"
     plugins {
         create("kmpComposeUIViewController") {
             id = "$group.plugin-composeuiviewcontroller"
