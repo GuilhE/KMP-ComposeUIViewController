@@ -134,7 +134,8 @@ You will find the generated files under `[module]/build/generated/ksp/`.
 Inside `iosMain` we can take advantage of two annotations:
 
 `@ComposeUIViewController`:  
-To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**. It has a `frameworkName` parameter that must match the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25) (default is `SharedComposables`).
+To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**.  
+It has a `frameworkName` parameter that must match the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25) (default is `SharedComposables`).
 
 `@ComposeUIViewControllerState`:  
 To annotate the parameter as the composable state variable (for **advanced** use cases).
