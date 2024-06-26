@@ -30,6 +30,7 @@ tasks.test {
 }
 
 version = "1.0.0"
+group = "io.github.guilhe.kmp"
 
 gradlePlugin {
     website = "https://github.com/GuilhE/KMP-ComposeUIViewController"
