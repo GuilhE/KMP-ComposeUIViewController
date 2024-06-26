@@ -1,26 +1,8 @@
 <img alt="icon" src="/media/icon.png" width="100" align="right"></br>
 
 # KMP-ComposeUIViewController
-[![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
 KSP library for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
-
-## Motivation
-As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary code for you.
-
-It can be used for **simple** and **advanced** use cases.
-
-### Simple
-All `@Composable` function parameters and UI state are managed inside the common code, in other words, a simple [wrapper setup](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-swiftui-integration.html#use-compose-multiplatform-inside-a-swiftui-application).
-
-### Advanced
-All `@Composable` function parameters and UI state are managed by the iOS app.
-
-If the goal is to effectively manage the UI state within the iOS app, it's essential to adopt the approach detailed here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
-
-Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
-
-## Compatibility
 
 | Version                                                                                                                                                                                                                                                                                                                                                                                                                                                             |    Kotlin    |  KSP   | Compose Multiplatform |        Xcode        |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------:|:------:|:---------------------:|:-------------------:|
@@ -29,6 +11,24 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 The suffix `-ALPHA` or `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
 
 It's important to note that this addresses the [current](https://github.com/JetBrains/compose-multiplatform/issues/3478) Compose Multiplatform API design. Depending on JetBrains' future implementations, this may potentially become deprecated.
+
+[![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
+
+## Motivation
+As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary Kotlin and Swift code for you.
+
+It can be used for **simple** and **advanced** use cases.
+
+### Simple
+`@Composable` UI state is managed inside the common code from the KMP module.
+
+### Advanced
+`@Composable` UI state is managed by the iOS app.
+
+> [!NOTE]
+> This library takes care of the heavy lifting for you, but if you're interested in understanding how it works, the detailed approach is explained here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
+
+Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
 
 ## Setup
 
@@ -52,11 +52,11 @@ ComposeUiViewController {
 ### Manually
 
 <details>
-    <summary><b>Step 1 - </b>Setup code generation</summary>
+    <summary><b>Step 1 - </b>Dependencies setup</summary>
 
-### KMP shared module
-#### Gradle
-First we need to import the ksp plugin:
+#### KMP module
+
+First we need to import the KSP plugin:
 ```kotlin
 plugins {
     id("com.google.devtools.ksp") version "${Kotlin}-${KSP}"
@@ -79,7 +79,7 @@ listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
     dependencies.add("ksp$targetName", "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERSION}")
 }
 ```
-Finish it by adding this `task` configuration in the end of the file:
+Finish it by adding the following configuration in the end of the file:
 - If using XCFramework:
 ```kotlin
 tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
@@ -88,14 +88,14 @@ tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach
 ```kotlin
 tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
 ```
-You can find a full setup example [here](sample/shared/build.gradle.kts).
+You can find a full setup example [here](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/5ae770b84fc99cf29bc53bc6f4290511d8474251/sample/shared/build.gradle.kts).
 
 </details>
 
 <details>
     <summary><b>Step 2 - </b>Setup auto export to Xcode</summary>
 
-### Project root
+#### Project root
 
 Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
 
@@ -109,20 +109,19 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 }
 ```
 
-**note:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
+**Warning:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
-Running for the first time will give a `BUILD FAILED` because the folder `iosApp/SharedRepresentables` it's only added after. Just run it again.   
 Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
 
 `./gradlew addFilesToXcodeproj`
 
 This could be due to gradle caches not being properly invalidated upon file updates.
 
-If necessary, disable `swift` files automatically export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
+If necessary, disable automatic files export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
 ```kotlin
 //...configureEach { finalizedBy(":addFilesToXcodeproj") }
 ```
-You will find the generated files under `{shared-module}/build/generated/ksp/`.
+You will find the generated files under `[module]/build/generated/ksp/`.
 
 **Warning:** avoid deleting `iosApp/SharedRepresentables` without first using Xcode to `Remove references`.
 
@@ -130,18 +129,62 @@ You will find the generated files under `{shared-module}/build/generated/ksp/`.
 
 ## Code generation
 
-Now we can take advantage of two annotations:
-- `@ComposeUIViewController`: to mark the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**;
-- `@ComposeUIViewControllerState`: to specify the composable state variable (for **advanced** use cases).
+### KMP module
 
-##### Rules and considerations
+Inside `iosMain` we can take advantage of two annotations:
 
-1. `@ComposeUIViewController` has a `frameworkName` parameter that must be used to specify the shared library framework's base name (default is `SharedComposables`);
-2. Only 1 `@ComposeUIViewControllerState` and * function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
+`@ComposeUIViewController`:  
+To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the **iosApp**. It has a `frameworkName` parameter that must match the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25) (default is `SharedComposables`).
+
+`@ComposeUIViewControllerState`:  
+To annotate the parameter as the composable state variable (for **advanced** use cases).
+
+> [!NOTE]
+>  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of function parameters (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
+
 
 For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
-##### Example for an advanced use case
+#### Examples
+
+<details><summary>Simple</summary>
+
+```kotlin
+//iosMain
+
+@ComposeUIViewController("SharedUI")
+@Composable
+internal fun ComposeSimpleView() { }
+```
+will produce a `ComposeSimpleViewUIViewController`:
+```kotlin
+object ComposeSimpleViewUIViewController {
+    fun make(): UIViewController {
+        return ComposeUIViewController {
+            ComposeSimpleView()
+        }
+    }
+}
+```
+and also a `ComposeSimpleViewRepresentable`:
+```swift
+import SwiftUI
+import SharedUI
+
+public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
+        
+    func makeUIViewController(context: Context) -> UIViewController {
+        ComposeSimpleViewUIViewController().make()
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        //unused
+    }
+}
+```    
+</details>
+
+<details><summary>Advanced</summary>
 
 ```kotlin
 //iosMain
@@ -150,16 +193,16 @@ data class ViewState(val isLoading: Boolean)
 
 @ComposeUIViewController("SharedUI")
 @Composable
-internal fun ComposeView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
+internal fun ComposeAdvancedView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
 ```
-will produce a `ComposeViewUIViewController`:
+will produce a `ComposeAdvancedViewUIViewController`:
 ```kotlin
-object ComposeViewUIViewController {
+object ComposeAdvancedViewUIViewController {
     private val viewState = mutableStateOf<ViewState?>(null)
 
     fun make(callback: () -> Unit): UIViewController {
         return ComposeUIViewController {
-            viewState.value?.let { ComposeView(it, callback) }
+            viewState.value?.let { ComposeAdvancedView(it, callback) }
         }
     }
 
@@ -168,24 +211,25 @@ object ComposeViewUIViewController {
     }
 }
 ```
-and also a `ComposeViewRepresentable`:
+and also a `ComposeAdvancedViewRepresentable`:
 ```swift
 import SwiftUI
 import SharedUI
 
-public struct ComposeViewRepresentable: UIViewControllerRepresentable {
+public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
     @Binding var viewState: ViewState
     let callback: () -> Void
     
     func makeUIViewController(context: Context) -> UIViewController {
-        ComposeViewUIViewController().make(callback: callback)
+        ComposeAdvancedViewUIViewController().make(callback: callback)
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        ComposeViewUIViewController().update(viewState: viewState)
+        ComposeAdvancedViewUIViewController().update(viewState: viewState)
     }
 }
 ```
+</details>
 
 ### iOSApp
 
@@ -198,7 +242,10 @@ import SharedUI
 struct SomeView: View {
     @State private var state: ViewState = ViewState(isLoading: false)
     var body: some View {
-        ComposeViewRepresentable(viewState: $state, callback: {})
+        VStack {
+            ComposeSimpleViewRepresentable()
+            ComposeAdvancedViewRepresentable(viewState: $state, callback: {})
+        }
     }
 }
 ```
