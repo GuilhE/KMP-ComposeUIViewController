@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 rootProject.name = "ComposeUIViewController"
 include(":kmp-composeuiviewcontroller-ksp")
 include(":kmp-composeuiviewcontroller-annotations")
+include(":kmp-composeuiviewcontroller-gradle-plugin")

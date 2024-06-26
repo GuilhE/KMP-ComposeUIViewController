@@ -3,12 +3,13 @@
 kotlin = "2.0.20-Beta1"
 kotlinCompose = "1.6.11"
 ksp = "2.0.20-Beta1-1.0.22"
-compileTesting = "1.5.0"
-junit = "4.13.2"
-composeuiviewcontroller = "2.0.20-Beta1-1.6.11-BETA"
+junitImpl = "5.7.2"
+junitRuntime  = "5.7.2"
+compileTesting = "1.6.0"
+gradlePublish = "1.2.1"
 
 [plugins]
-
+gradle-publish = { id = "com.gradle.plugin-publish", version.ref = "gradlePublish" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -16,12 +17,13 @@ kotlin-compose = { id = "org.jetbrains.compose", version.ref = "kotlinCompose" }
 kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 [libraries]
+gradle-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+gradle-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
-composeuiviewcontroller-ksp = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp", version.ref = "composeuiviewcontroller" }
-composeuiviewcontroller-annotations = { module = "com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations", version.ref = "composeuiviewcontroller" }
 
-test-junit = { module = "junit:junit", version.ref = "junit" }
+test-kotlin = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+test-junit-implementation = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitImpl" }
+test-junit-runtimeOnly = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitRuntime" }
 test-kotlinCompile = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "compileTesting" }
 test-kotlinCompileKsp = { module = "com.github.tschuchortdev:kotlin-compile-testing-ksp", version.ref = "compileTesting" }
-test-kotlin = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
