@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.test.assertTrue
 
-class KMPComposeUIViewControllerPluginTest {
+class KmpComposeUIViewControllerPluginTest {
 
     private val project = ProjectBuilder.builder().build()
     private lateinit var projectDir: File
@@ -22,7 +22,7 @@ class KMPComposeUIViewControllerPluginTest {
     fun setup(@TempDir tempDir: File) {
         project.pluginManager.apply("org.jetbrains.kotlin.multiplatform")
         project.pluginManager.apply("com.google.devtools.ksp")
-        project.pluginManager.apply("com.github.guilhe.kmp.composeuiviewcontroller")
+        project.pluginManager.apply("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
     }
 
     @Test
@@ -33,7 +33,7 @@ class KMPComposeUIViewControllerPluginTest {
             """
             plugins {
                 id("org.jetbrains.kotlin.multiplatform")
-                id("com.github.guilhe.kmp.composeuiviewcontroller")
+                id("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
             }
             """.trimIndent()
         )
@@ -43,7 +43,7 @@ class KMPComposeUIViewControllerPluginTest {
             .withPluginClasspath()
             .buildAndFail()
 
-        assertTrue(result.output.contains("KMPComposeUIViewControllerPlugin requires the KSP plugin to be applied."))
+        assertTrue(result.output.contains("KmpComposeUIViewControllerPlugin requires the KSP plugin to be applied."))
     }
 
     @Test
@@ -54,7 +54,7 @@ class KMPComposeUIViewControllerPluginTest {
             """
             plugins {
                 id("com.google.devtools.ksp")
-                id("com.github.guilhe.kmp.composeuiviewcontroller")
+                id("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
             }
             """.trimIndent()
         )
@@ -64,12 +64,12 @@ class KMPComposeUIViewControllerPluginTest {
             .withPluginClasspath()
             .buildAndFail()
 
-        assertTrue(result.output.contains("KMPComposeUIViewControllerPlugin requires the Kotlin Multiplatform plugin to be applied."))
+        assertTrue(result.output.contains("KmpComposeUIViewControllerPlugin requires the Kotlin Multiplatform plugin to be applied."))
     }
 
     @Test
     fun `Plugin is applied correctly`() {
-        assertTrue(project.plugins.hasPlugin("com.github.guilhe.kmp.composeuiviewcontroller"))
+        assertTrue(project.plugins.hasPlugin("com.github.guilhe.kmp.plugin-composeuiviewcontroller"))
     }
 
     @Test
@@ -118,7 +118,7 @@ class KMPComposeUIViewControllerPluginTest {
             plugins {
                 id("org.jetbrains.kotlin.multiplatform")
                 id("com.google.devtools.ksp")
-                id("com.github.guilhe.kmp.composeuiviewcontroller")
+                id("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
             }
 
             ComposeUiViewController {

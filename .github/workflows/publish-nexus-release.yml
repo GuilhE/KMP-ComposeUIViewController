@@ -1,0 +1,45 @@
+name: Nexus release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish-to-nexus:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/wrapper
+            ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Gradle Wrapper Validation
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '18'
+          cache: gradle
+
+      - name: Run Processor tests
+        run: ./gradlew :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest"
+
+      - name: Publish to Sonatype
+        if: success()
+        run: ./gradlew publishAllPublicationsToSonatypeRepository
+        env:
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}

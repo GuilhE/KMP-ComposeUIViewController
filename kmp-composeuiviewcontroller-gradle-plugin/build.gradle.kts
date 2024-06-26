@@ -2,6 +2,7 @@
 
 plugins {
     `java-gradle-plugin`
+    `kmp-composeuiviewcontroller-publish`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.gradle.publish)
 }
@@ -28,13 +29,15 @@ tasks.test {
     useJUnitPlatform()
 }
 
+version = "1.0.0"
+
 gradlePlugin {
     website = "https://github.com/GuilhE/KMP-ComposeUIViewController"
     vcsUrl = "https://github.com/GuilhE/KMP-ComposeUIViewController"
     plugins {
-        create("KMP-ComposeUIViewController") {
-            id = "com.github.guilhe.kmp.composeuiviewcontroller"
-            implementationClass = "com.github.guilhe.kmp.composeuiviewcontroller.gradle.KMPComposeUIViewControllerPlugin"
+        create("kmpComposeUIViewController") {
+            id = "$group.plugin-composeuiviewcontroller"
+            implementationClass = "com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin"
             displayName = "KMP-ComposeUIViewController"
             description =
                 "KSP library for generating ComposeUIViewController and UIViewControllerRepresentable files when using Compose Multiplatform for iOS"

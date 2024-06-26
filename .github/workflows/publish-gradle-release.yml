@@ -1,11 +1,12 @@
-name: Publish a Kotlin release
+name: Gradle Portal release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'plugin-release-*'
 
 jobs:
-  publish-kotlin-libraries:
+  publish-to-gradle-portal:
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -31,24 +32,8 @@ jobs:
           java-version: '18'
           cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Run Processor tests
-        run: ./gradlew :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest"
-
-      - name: Publish to Sonatype
-        if: success()
-        run: ./gradlew publishAllPublicationsToSonatypeRepository
-        env:
-          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-
       - name: Run Plugin tests
-        run: ./gradlew :kmp-composeuiviewcontroller-gradle-plugin:test --tests "composeuiviewcontroller.KMPComposeUIViewControllerPluginTest"
+        run: ./gradlew :kmp-composeuiviewcontroller-gradle-plugin:test --tests "composeuiviewcontroller.KmpComposeUIViewControllerPluginTest"
 
       - name: Publish to Gradle Plugin Portal
         if: success()

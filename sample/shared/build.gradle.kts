@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.google.ksp)
-    id("com.github.guilhe.kmp.composeuiviewcontroller")
+    id("com.github.guilhe.kmp.plugin-composeuiviewcontroller")
 }
 
 ComposeUiViewController {

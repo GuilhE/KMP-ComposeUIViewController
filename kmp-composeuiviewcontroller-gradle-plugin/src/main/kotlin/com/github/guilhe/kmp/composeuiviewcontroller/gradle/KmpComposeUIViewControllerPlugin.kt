@@ -13,20 +13,20 @@ import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
 
-public class KMPComposeUIViewControllerPlugin : Plugin<Project> {
+public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     private fun KotlinTarget.isKmpNativeCoroutinesTarget(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
     override fun apply(project: Project) {
         if (!project.plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
-            throw PluginInstantiationException("KMPComposeUIViewControllerPlugin requires the Kotlin Multiplatform plugin to be applied.")
+            throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the Kotlin Multiplatform plugin to be applied.")
         }
 
         if (!project.plugins.hasPlugin("com.google.devtools.ksp")) {
-            throw PluginInstantiationException("KMPComposeUIViewControllerPlugin requires the KSP plugin to be applied.")
+            throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the KSP plugin to be applied.")
         }
 
         with(project) {
-            println("> KMPComposeUIViewControllerPlugin:")
+            println("> KmpComposeUIViewControllerPlugin:")
             setupTargets()
             with(extensions.create("ComposeUiViewController", ComposeUiViewControllerParameters::class.java)) {
                 finalizeFrameworksTasks(this)
@@ -59,7 +59,7 @@ public class KMPComposeUIViewControllerPlugin : Plugin<Project> {
     private fun Project.finalizeFrameworksTasks(extensionParameters: ComposeUiViewControllerParameters) {
         tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" || it.name == "syncFramework" }.configureEach { task ->
             if (extensionParameters.autoExport) {
-                println("> KMPComposeUIViewControllerPlugin: ${task.name} will be finalizedBy copyFilesToXcode")
+                println("> KmpComposeUIViewControllerPlugin: ${task.name} will be finalizedBy copyFilesToXcode")
                 task.finalizedBy("copyFilesToXcode")
             }
         }
@@ -69,7 +69,7 @@ public class KMPComposeUIViewControllerPlugin : Plugin<Project> {
         tasks.register("copyFilesToXcode", Exec::class.java) { task ->
             val keepScriptFile = project.hasProperty("keepScriptFile") && project.property("keepScriptFile") == "true"
             println("\t> parameters: ${extensionParameters.toList()}")
-            val inputStream = KMPComposeUIViewControllerPlugin::class.java.getResourceAsStream("/exportToXcode.sh")
+            val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/exportToXcode.sh")
             val script = inputStream?.use { stream ->
                 stream.bufferedReader().use(BufferedReader::readText)
             } ?: throw GradleException("Unable to read resource file")
