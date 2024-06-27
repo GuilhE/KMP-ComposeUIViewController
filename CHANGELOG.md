@@ -1,5 +1,10 @@
 # Changelog
 ---
+## [2.0.20-Beta1-1.6.11-BETA-1]
+
+- Prepares Processor for Plugin 1.1.0 where it will be capable of checking for compilerArgs
+
+---
 ## [2.0.20-Beta1-1.6.11-BETA]
 
 - Kotlin 2.0.20-Beta1

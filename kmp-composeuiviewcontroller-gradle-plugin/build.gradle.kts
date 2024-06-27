@@ -33,7 +33,6 @@ version = "1.1.0"
 group = "io.github.guilhe.kmp"
 
 gradlePlugin {
-    version
     website = "https://github.com/GuilhE/KMP-ComposeUIViewController"
     vcsUrl = "https://github.com/GuilhE/KMP-ComposeUIViewController.git"
     plugins {
