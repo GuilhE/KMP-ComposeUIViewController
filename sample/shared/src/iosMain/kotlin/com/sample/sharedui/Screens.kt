@@ -18,7 +18,7 @@ data class ScreenState(val startColor: Long, val endColor: Long) {
     val colors: List<Color> = listOf(Color(startColor), Color(endColor))
 }
 
-@ComposeUIViewController("SharedComposables")
+@ComposeUIViewController
 @Composable
 fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: (Long) -> Unit) {
     Box(contentAlignment = Alignment.Center) {
