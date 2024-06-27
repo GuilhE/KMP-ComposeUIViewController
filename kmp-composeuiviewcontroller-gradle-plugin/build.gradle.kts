@@ -41,7 +41,7 @@ gradlePlugin {
             implementationClass = "com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin"
             displayName = "KMP-ComposeUIViewController"
             description =
-                "KSP library for generating ComposeUIViewController and UIViewControllerRepresentable files when using Compose Multiplatform for iOS"
+                "Automates configuration for the KMP-ComposeUIViewController KSP library by introducing a Gradle extension for streamlined setup and usage."
             tags = listOf(
                 "kotlin",
                 "swift",
