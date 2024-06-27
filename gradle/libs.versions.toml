@@ -4,7 +4,7 @@ kotlin = "2.0.20-Beta1"
 kotlinCompose = "1.6.11"
 ksp = "2.0.20-Beta1-1.0.22"
 junitImpl = "5.7.2"
-junitRuntime  = "5.7.2"
+junitRuntime = "5.7.2"
 compileTesting = "1.6.0"
 gradlePublish = "1.2.1"
 
@@ -18,12 +18,12 @@ kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.
 
 [libraries]
 gradle-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
-gradle-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
+gradle-ksp = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
 
-ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 
-test-kotlin = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-test-junit-implementation = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitImpl" }
-test-junit-runtimeOnly = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitRuntime" }
-test-kotlinCompile = { module = "com.github.tschuchortdev:kotlin-compile-testing", version.ref = "compileTesting" }
-test-kotlinCompileKsp = { module = "com.github.tschuchortdev:kotlin-compile-testing-ksp", version.ref = "compileTesting" }
+test-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+test-junit-implementation = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junitImpl" }
+test-junit-runtimeOnly = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitRuntime" }
+test-kotlinCompile = { group = "com.github.tschuchortdev", name = "kotlin-compile-testing", version.ref = "compileTesting" }
+test-kotlinCompileKsp = { group = "com.github.tschuchortdev", name = "kotlin-compile-testing-ksp", version.ref = "compileTesting" }

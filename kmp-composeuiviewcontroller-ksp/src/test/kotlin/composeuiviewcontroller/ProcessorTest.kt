@@ -2,13 +2,13 @@
 
 package composeuiviewcontroller
 
-import com.github.guilhe.kmp.composeuiviewcontroller.ksp.Processor
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerAnnotationName
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerStateAnnotationName
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
+import com.tschuchort.compiletesting.kspArgs
 import com.tschuchort.compiletesting.kspIncremental
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
@@ -27,7 +27,7 @@ class ProcessorTest {
     @JvmField
     var temporaryFolder: TemporaryFolder = TemporaryFolder()
 
-    private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
+    private fun prepareCompilation(vararg sourceFiles: SourceFile, args: Map<String, String> = emptyMap()): KotlinCompilation {
         return KotlinCompilation().apply {
             workingDir = temporaryFolder.root
             inheritClassPath = true
@@ -35,6 +35,7 @@ class ProcessorTest {
             sources = sourceFiles.asList()
             verbose = false
             kspIncremental = false
+            kspArgs = args.toMutableMap()
         }
     }
 
@@ -62,6 +63,78 @@ class ProcessorTest {
                 .toList()
                 .isEmpty()
         )
+    }
+
+    @Test
+    fun `Empty frameworkName in @ComposeUIViewController throws IllegalStateException`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+
+            @ComposeUIViewController("")
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+    }
+
+    @Test
+    fun `Empty frameworkBaseName in CompilerArgs throws IllegalStateException`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+
+            @ComposeUIViewController
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), args = mapOf("frameworkBaseName" to ""))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+    }
+
+    @Test
+    fun `Default frameworkName in @ComposeUIViewController will have the value 'SharedComposables'`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+
+            @ComposeUIViewController
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+        assertContains(generatedSwiftFiles.first().readText(), "import SharedComposables")
+    }
+
+    @Test
+    fun `If frameworkBaseName is provided via compiler argument it will be used over default @ComposeUIViewController frameworkName value`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+
+            @ComposeUIViewController
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), args = mapOf("frameworkBaseName" to "MyFramework"))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+        assertContains(generatedSwiftFiles.first().readText(), "import MyFramework")
     }
 
     @Test
@@ -130,48 +203,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Empty frameworkName in @ComposeUIViewController throws IllegalStateException`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-
-            @ComposeUIViewController("")
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        val result = compilation.compile()
-
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
-    }
-
-    @Test
-    fun `Default frameworkName in @ComposeUIViewController will have the value 'SharedComposables'`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-
-            @ComposeUIViewController
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        val result = compilation.compile()
-
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-        assertContains(generatedSwiftFiles.first().readText(), "import SharedComposables")
-    }
-
-    @Test
-    fun `If Gradle Plugin is used, frameworkBaseName is provided via compiler argument`() {
-
-    }
-
-    @Test
-    fun `No more than one @ComposeUIViewControllerState is allowed`() {
+    fun `Only 1 @ComposeUIViewControllerState is allowed`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
