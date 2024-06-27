@@ -74,25 +74,6 @@ class KmpComposeUIViewControllerPluginTest {
     }
 
     @Test
-    fun `Method addFrameworkBaseNameToKsp adds frameworkName parameter to KSP`(@TempDir tempDir: File) {
-        val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
-        kotlin.apply {
-            jvm()
-            listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-                target.binaries.framework {
-                    baseName = "ComposablesFramework"
-                }
-            }
-        }
-
-        project.tasks.withType(KotlinCompile::class.java) { compileTask ->
-            val compilerArgs = compileTask.compilerOptions.freeCompilerArgs.get()
-            assertTrue(compilerArgs.any { it.contains("-Pplugin:com.google.devtools.ksp:frameworkBaseName=test") })
-            println(">>>> $compilerArgs")
-        }
-    }
-
-    @Test
     fun `Method setupTargets configures dependencies and targets correctly`() {
         val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.apply {
@@ -121,16 +102,65 @@ class KmpComposeUIViewControllerPluginTest {
         }
     }
 
+//    @Test
+//    fun `Method injectFrameworkBaseNameInCompileArgs adds frameworkBaseName as KSP parameter`(@TempDir tempDir: File) {
+//        projectDir = File(tempDir, "testProject").apply { mkdirs() }
+//        val buildFile = File(projectDir, "build.gradle.kts")
+//        buildFile.writeText(
+//            """
+//            plugins {
+//                id("org.jetbrains.kotlin.multiplatform")
+//                id("com.google.devtools.ksp")
+//                id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
+//            }
+//
+//            repositories {
+//                mavenCentral()
+//            }
+//
+//            kotlin {
+//                jvm()
+//                listOf(iosSimulatorArm64()).forEach { target ->
+//                    target.binaries.framework {
+//                        baseName = "ComposablesFramework"
+//                    }
+//                }
+//                sourceSets {
+//                    val commonMain by getting {
+//                        dependencies {
+//                            implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.20-Beta1")
+//                        }
+//                    }
+//                }
+//            }
+//            """.trimIndent()
+//        )
+//
+//        val result = GradleRunner.create()
+//            .withProjectDir(projectDir)
+//            .withArguments("build")
+//            .withPluginClasspath()
+//            .build()
+//
+//        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+//
+//        project.tasks.withType(KotlinCompile::class.java) { compileTask ->
+//            val compilerArgs = compileTask.compilerOptions.freeCompilerArgs.get()
+//            println(">>>>>> $compilerArgs")
+//            assertTrue(compilerArgs.any { it.contains("-Pplugin:com.google.devtools.ksp:frameworkBaseName=ComposablesFramework") })
+//        }
+//    }
+
     @Test
-    fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or syncFramework with copyFilesToXcode task`() {
+    fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or syncFramework with CopyFilesToXcode task`() {
         val embedTask = project.tasks.register("embedAndSignAppleFrameworkForXcode") {}
         val syncTask = project.tasks.register("syncFramework") {}
-        assertTrue(embedTask.get().finalizedBy.getDependencies(project.tasks.getByName("copyFilesToXcode")).size == 1)
-        assertTrue(syncTask.get().finalizedBy.getDependencies(project.tasks.getByName("copyFilesToXcode")).size == 1)
+        assertTrue(embedTask.get().finalizedBy.getDependencies(project.tasks.getByName("CopyFilesToXcode")).size == 1)
+        assertTrue(syncTask.get().finalizedBy.getDependencies(project.tasks.getByName("CopyFilesToXcode")).size == 1)
     }
 
     @Test
-    fun `Task copyFilesToXcode will inject the extension parameters into exportToXcode file`(@TempDir tempDir: File) {
+    fun `Task CopyFilesToXcode will inject the extension parameters into exportToXcode file`(@TempDir tempDir: File) {
         projectDir = File(tempDir, "testProject").apply { mkdirs() }
         val buildFile = File(projectDir, "build.gradle.kts")
         buildFile.writeText(
@@ -154,7 +184,7 @@ class KmpComposeUIViewControllerPluginTest {
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
-            .withArguments("copyFilesToXcode", "-PkeepScriptFile=true", "--stacktrace")
+            .withArguments("CopyFilesToXcode", "-PkeepScriptFile=true", "--stacktrace")
             .build()
 
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))

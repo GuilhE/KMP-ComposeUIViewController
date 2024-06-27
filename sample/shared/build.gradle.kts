@@ -22,7 +22,7 @@ kotlin {
         }
         jvmMain.dependencies { implementation(compose.preview) }
         listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-            target.binaries.framework { baseName = "SharedComposables" }
+            target.binaries.framework { baseName = "Composables" }
         }
     }
 }
