@@ -8,29 +8,55 @@ import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
 
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
-    private fun KotlinTarget.isKmpNativeCoroutinesTarget(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
+    private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
     override fun apply(project: Project) {
-        if (!project.plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
-            throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the Kotlin Multiplatform plugin to be applied.")
-        }
-
-        if (!project.plugins.hasPlugin("com.google.devtools.ksp")) {
-            throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the KSP plugin to be applied.")
-        }
-
         with(project) {
+            if (!plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
+                throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the Kotlin Multiplatform plugin to be applied.")
+            }
+
+            if (!plugins.hasPlugin("com.google.devtools.ksp")) {
+                throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the KSP plugin to be applied.")
+            }
+
             println("> KmpComposeUIViewControllerPlugin:")
+            addFrameworkBaseNameToKsp()
             setupTargets()
             with(extensions.create("ComposeUiViewController", ComposeUiViewControllerParameters::class.java)) {
                 finalizeFrameworksTasks(this)
                 copyFilesToXcodeTask(project, this)
+            }
+        }
+    }
+
+    private fun Project.addFrameworkBaseNameToKsp() {
+        val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
+        kotlin.targets.configureEach { target ->
+            if (target.fromIosFamily()) {
+                val frameworkNames = mutableSetOf<String>()
+                (target as KotlinNativeTarget).binaries.withType(Framework::class.java).configureEach { framework ->
+                    println(">>>>>>  ${target.name} ${framework.name} ${framework.baseName}")
+                    frameworkNames += framework.baseName
+                }.also {
+                    tasks.withType(KotlinCompilationTask::class.java).configureEach { task ->
+                        task.compilerOptions {
+                            if (!freeCompilerArgs.get().any { it.contains("-Pplugin:com.google.devtools.ksp:frameworkBaseName=") }) {
+                                freeCompilerArgs.addAll(
+                                    "-Pplugin:com.google.devtools.ksp:frameworkBaseName=${frameworkNames.joinToString(",")}"
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -47,9 +73,9 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 )
             }
 
-            kotlin.targets.configureEach { kotlinTarget ->
-                if (!kotlinTarget.isKmpNativeCoroutinesTarget()) return@configureEach
-                val kspConfigName = "ksp${kotlinTarget.targetName.replaceFirstChar { it.uppercaseChar() }}"
+            kotlin.targets.configureEach { target ->
+                if (!target.fromIosFamily()) return@configureEach
+                val kspConfigName = "ksp${target.targetName.replaceFirstChar { it.uppercaseChar() }}"
                 dependencies.add(kspConfigName, "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:$VERSION")
                 println("\t> Adding com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:$VERSION to $kspConfigName")
             }
@@ -106,5 +132,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun ComposeUiViewControllerParameters.toList(): List<*> = listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
+    private fun ComposeUiViewControllerParameters.toList(): List<*> =
+        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 }

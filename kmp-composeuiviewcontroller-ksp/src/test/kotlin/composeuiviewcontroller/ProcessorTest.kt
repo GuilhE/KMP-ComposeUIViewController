@@ -2,6 +2,7 @@
 
 package composeuiviewcontroller
 
+import com.github.guilhe.kmp.composeuiviewcontroller.ksp.Processor
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerAnnotationName
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerStateAnnotationName
@@ -162,6 +163,11 @@ class ProcessorTest {
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
         assertContains(generatedSwiftFiles.first().readText(), "import SharedComposables")
+    }
+
+    @Test
+    fun `If Gradle Plugin is used, frameworkBaseName is provided via compiler argument`() {
+
     }
 
     @Test

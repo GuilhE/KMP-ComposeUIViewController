@@ -22,7 +22,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
-            val frameworkName: String = getFrameworkNameFromAnnotations(node)
+            val frameworkBaseName: String = System.getProperty("frameworkBaseName") ?: getFrameworkNameFromAnnotations(node)
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
@@ -60,7 +60,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                         createKotlinFileWithoutState(packageName, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithoutState(frameworkName, composable, makeParameters).also {
+                        createSwiftFileWithoutState(frameworkBaseName, composable, makeParameters).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
@@ -68,7 +68,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                         createKotlinFileWithState(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithState(frameworkName, composable, stateParameterName, stateParameter, makeParameters).also {
+                        createSwiftFileWithState(frameworkBaseName, composable, stateParameterName, stateParameter, makeParameters).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     }

@@ -6,6 +6,7 @@ import org.gradle.testkit.runner.GradleRunner
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.target.Family
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,6 +24,11 @@ class KmpComposeUIViewControllerPluginTest {
         project.pluginManager.apply("org.jetbrains.kotlin.multiplatform")
         project.pluginManager.apply("com.google.devtools.ksp")
         project.pluginManager.apply("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
+    }
+
+    @Test
+    fun `Plugin is applied correctly`() {
+        assertTrue(project.plugins.hasPlugin("io.github.guilhe.kmp.plugin-composeuiviewcontroller"))
     }
 
     @Test
@@ -68,8 +74,22 @@ class KmpComposeUIViewControllerPluginTest {
     }
 
     @Test
-    fun `Plugin is applied correctly`() {
-        assertTrue(project.plugins.hasPlugin("io.github.guilhe.kmp.plugin-composeuiviewcontroller"))
+    fun `Method addFrameworkBaseNameToKsp adds frameworkName parameter to KSP`(@TempDir tempDir: File) {
+        val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
+        kotlin.apply {
+            jvm()
+            listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
+                target.binaries.framework {
+                    baseName = "ComposablesFramework"
+                }
+            }
+        }
+
+        project.tasks.withType(KotlinCompile::class.java) { compileTask ->
+            val compilerArgs = compileTask.compilerOptions.freeCompilerArgs.get()
+            assertTrue(compilerArgs.any { it.contains("-Pplugin:com.google.devtools.ksp:frameworkBaseName=test") })
+            println(">>>> $compilerArgs")
+        }
     }
 
     @Test
