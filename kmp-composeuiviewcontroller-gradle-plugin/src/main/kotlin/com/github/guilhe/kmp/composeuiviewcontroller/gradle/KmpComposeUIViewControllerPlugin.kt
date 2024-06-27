@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
 
+private const val VERSION = "2.0.20-Beta1-1.6.11-BETA-1"
+
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     private fun KotlinTarget.isKmpNativeCoroutinesTarget(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 

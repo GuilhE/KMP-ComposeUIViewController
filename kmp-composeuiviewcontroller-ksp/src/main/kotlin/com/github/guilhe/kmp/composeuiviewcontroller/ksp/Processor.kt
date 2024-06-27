@@ -11,7 +11,11 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
 
-internal class Processor(private val codeGenerator: CodeGenerator, private val logger: KSPLogger) : SymbolProcessor {
+internal class Processor(
+    private val codeGenerator: CodeGenerator,
+    private val logger: KSPLogger,
+    private val options: Map<String, String>
+) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
@@ -22,7 +26,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
-            val frameworkName: String = getFrameworkNameFromAnnotations(node)
+            val frameworkBaseName: String = getFrameworkNameFromCompilerArgs() ?: getFrameworkNameFromAnnotations(node)
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
@@ -60,7 +64,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                         createKotlinFileWithoutState(packageName, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithoutState(frameworkName, composable, makeParameters).also {
+                        createSwiftFileWithoutState(frameworkBaseName, composable, makeParameters).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
@@ -68,7 +72,7 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
                         createKotlinFileWithState(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithState(frameworkName, composable, stateParameterName, stateParameter, makeParameters).also {
+                        createSwiftFileWithState(frameworkBaseName, composable, stateParameterName, stateParameter, makeParameters).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     }
@@ -76,6 +80,16 @@ internal class Processor(private val codeGenerator: CodeGenerator, private val l
             }
         }
         return emptyList()
+    }
+
+    private fun getFrameworkNameFromCompilerArgs(): String? {
+        val name = options["frameworkBaseName"]
+        if (name != null) {
+            return name.ifEmpty {
+                throw IllegalArgumentException("@${composeUIViewControllerAnnotationName.name()} requires a non-null and non-empty value for $composeUIViewControllerAnnotationParameterName")
+            }
+        }
+        return name
     }
 
     private fun getFrameworkNameFromAnnotations(node: KSAnnotated): String {
