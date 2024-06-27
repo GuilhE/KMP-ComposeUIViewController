@@ -1,6 +1,8 @@
 name: Gradle Portal release
 
 on:
+  release:
+    types: [published]
   push:
     tags:
       - 'plugin-release-*'
