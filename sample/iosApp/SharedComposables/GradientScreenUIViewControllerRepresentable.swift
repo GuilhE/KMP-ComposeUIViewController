@@ -1,5 +1,5 @@
 import SwiftUI
-import SharedComposables
+import Composables
 
 public struct GradientScreenRepresentable: UIViewControllerRepresentable {
     @Binding var state: ScreenState

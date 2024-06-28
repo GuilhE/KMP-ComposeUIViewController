@@ -1,6 +1,6 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
-import com.google.devtools.ksp.gradle.KspTaskNative
+import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
@@ -70,7 +70,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             if (target.fromIosFamily()) {
                 (target as KotlinNativeTarget).binaries.withType(Framework::class.java).configureEach { framework ->
                     frameworkNames += framework.baseName
-                    println(">>>>>> ${target.name} ${framework.name} ${framework.baseName}")
                 }
             }
         }
@@ -82,15 +81,12 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.targets.configureEach { target ->
             if (target.fromIosFamily()) {
-                tasks.withType(KspTaskNative::class.java).configureEach { compileTask ->
-                    compileTask.compilerOptions {
-                        if (!freeCompilerArgs.get().any { it.contains("plugin:com.google.devtools.ksp:frameworkBaseName=") }) {
-                            freeCompilerArgs.addAll(
-                                "-P",
-                                "plugin:com.google.devtools.ksp:frameworkBaseName=${frameworkNames.joinToString(",")}"
-                            )
+                tasks.withType(KotlinNativeCompile::class.java).configureEach {
+                    val ksp = extensions.getByType(KspExtension::class.java)
+                    ksp.apply {
+                        if(!arguments.containsKey("frameworkBaseName")) {
+                            arg("frameworkBaseName", frameworkNames.first())
                         }
-                        println(">>>>>> ${freeCompilerArgs.get()}")
                     }
                 }
             }

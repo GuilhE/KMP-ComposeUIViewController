@@ -1,12 +1,12 @@
 package composeuiviewcontroller
 
+import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.internal.impldep.junit.framework.TestCase.assertNotNull
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.target.Family
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -102,54 +102,53 @@ class KmpComposeUIViewControllerPluginTest {
         }
     }
 
-//    @Test
-//    fun `Method injectFrameworkBaseNameInCompileArgs adds frameworkBaseName as KSP parameter`(@TempDir tempDir: File) {
-//        projectDir = File(tempDir, "testProject").apply { mkdirs() }
-//        val buildFile = File(projectDir, "build.gradle.kts")
-//        buildFile.writeText(
-//            """
-//            plugins {
-//                id("org.jetbrains.kotlin.multiplatform")
-//                id("com.google.devtools.ksp")
-//                id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
-//            }
-//
-//            repositories {
-//                mavenCentral()
-//            }
-//
-//            kotlin {
-//                jvm()
-//                listOf(iosSimulatorArm64()).forEach { target ->
-//                    target.binaries.framework {
-//                        baseName = "ComposablesFramework"
-//                    }
-//                }
-//                sourceSets {
-//                    val commonMain by getting {
-//                        dependencies {
-//                            implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.20-Beta1")
-//                        }
-//                    }
-//                }
-//            }
-//            """.trimIndent()
-//        )
-//
-//        val result = GradleRunner.create()
-//            .withProjectDir(projectDir)
-//            .withArguments("build")
-//            .withPluginClasspath()
-//            .build()
-//
-//        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
-//
-//        project.tasks.withType(KotlinCompile::class.java) { compileTask ->
-//            val compilerArgs = compileTask.compilerOptions.freeCompilerArgs.get()
-//            println(">>>>>> $compilerArgs")
-//            assertTrue(compilerArgs.any { it.contains("-Pplugin:com.google.devtools.ksp:frameworkBaseName=ComposablesFramework") })
-//        }
-//    }
+    @Test
+    fun `Method configureCompileArgs adds frameworkBaseName as a KSP parameter`(@TempDir tempDir: File) {
+        projectDir = File(tempDir, "testProject").apply { mkdirs() }
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+            repositories {
+                mavenCentral()
+            }
+            
+            plugins {
+                id("org.jetbrains.kotlin.multiplatform")
+                id("com.google.devtools.ksp")
+                id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
+            }
+            
+            ComposeUiViewController {
+                autoExport = false
+            }
+
+            kotlin {
+                jvm()
+                iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
+                sourceSets {
+                    val commonMain by getting {
+                        dependencies {
+                            implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.20-Beta1")
+                        }
+                    }
+                }
+            }
+            """.trimIndent()
+        )
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("compileKotlinIosSimulatorArm64")
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+        assertTrue {
+            project.extensions.getByType(KspExtension::class.java).arguments.containsKey("frameworkBaseName")
+            project.extensions.getByType(KspExtension::class.java).arguments.containsValue("ComposablesFramework")
+        }
+    }
 
     @Test
     fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or syncFramework with CopyFilesToXcode task`() {

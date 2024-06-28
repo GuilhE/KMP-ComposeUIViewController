@@ -19,7 +19,7 @@ public open class ComposeUiViewControllerParameters {
     /**
      *  Name of the destination folder inside iOS project ([iosAppFolderName]) where the Composable files will be copied to when [autoExport] is `true`
      */
-    public var exportFolderName: String = "SharedComposables"
+    public var exportFolderName: String = "Composables"
 
     /**
      *  Auto export generated files to Xcode project
