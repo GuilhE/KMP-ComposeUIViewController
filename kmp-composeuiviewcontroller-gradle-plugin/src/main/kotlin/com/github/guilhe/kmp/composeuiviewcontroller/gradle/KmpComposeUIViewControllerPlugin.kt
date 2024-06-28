@@ -15,24 +15,28 @@ import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
 
-private const val VERSION = "2.0.20-Beta1-1.6.11-BETA-3"
-
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
+
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
+
+    private fun Project.scriptFile() = File("$rootDir/$SCRIPT_FILE_NAME")
+
+    private fun ComposeUiViewControllerParameters.toList(): List<*> =
+        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
     override fun apply(project: Project) {
         with(project) {
-            if (!plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
-                throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the Kotlin Multiplatform plugin to be applied.")
+            if (!plugins.hasPlugin(PLUGIN_KMP)) {
+                throw PluginInstantiationException(ERROR_MISSING_KMP)
             }
 
-            if (!plugins.hasPlugin("com.google.devtools.ksp")) {
-                throw PluginInstantiationException("KmpComposeUIViewControllerPlugin requires the KSP plugin to be applied.")
+            if (!plugins.hasPlugin(PLUGIN_KSP)) {
+                throw PluginInstantiationException(ERROR_MISSING_KSP)
             }
 
-            println("> KmpComposeUIViewControllerPlugin:")
+            println("> $LOG_TAG:")
             setupTargets()
-            with(extensions.create("ComposeUiViewController", ComposeUiViewControllerParameters::class.java)) {
+            with(extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)) {
                 registerCopyFilesToXcodeTask(project, this)
                 finalizeFrameworkTasks(this)
             }
@@ -47,18 +51,15 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val commonMainSourceSet = kmp.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
         configurations.getByName(commonMainSourceSet.implementationConfigurationName).dependencies.apply {
-            add(dependencies.create("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:$VERSION"))
-            println(
-                "\t> Adding com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:$VERSION" +
-                        " to ${commonMainSourceSet.implementationConfigurationName}"
-            )
+            add(dependencies.create(LIB_ANNOTATION))
+            println("\t> Adding $LIB_ANNOTATION to ${commonMainSourceSet.implementationConfigurationName}")
         }
 
         kmp.targets.configureEach { target ->
             if (!target.fromIosFamily()) return@configureEach
             val kspConfigName = "ksp${target.targetName.replaceFirstChar { it.uppercaseChar() }}"
-            dependencies.add(kspConfigName, "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:$VERSION")
-            println("\t> Adding com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:$VERSION to $kspConfigName")
+            dependencies.add(kspConfigName, LIB_KSP)
+            println("\t> Adding $LIB_KSP to $kspConfigName")
         }
     }
 
@@ -81,8 +82,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         kotlin.targets.configureEach { target ->
             if (target.fromIosFamily()) {
                 extensions.getByType(KspExtension::class.java).apply {
-                    if (!arguments.containsKey("frameworkBaseName")) {
-                        arg("frameworkBaseName", frameworkNames.first())
+                    if (!arguments.containsKey(ARG_KSP_FRAMEWORK_NAME)) {
+                        arg(ARG_KSP_FRAMEWORK_NAME, frameworkNames.first())
                     }
                 }
             }
@@ -90,56 +91,80 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {
-        tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" || it.name == "syncFramework" }.configureEach { task ->
+        tasks.matching { it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE || it.name == TASK_SYNC_FRAMEWORK }.configureEach { task ->
             if (extensionParameters.autoExport) {
-                println("> KmpComposeUIViewControllerPlugin: ${task.name} will be finalizedBy CopyFilesToXcodeTask")
-                task.finalizedBy("CopyFilesToXcode")
+                println("> $LOG_TAG: ${task.name} will be finalizedBy $TASK_COPY_FILES_TO_XCODE")
+                task.finalizedBy(TASK_COPY_FILES_TO_XCODE)
             }
         }
     }
 
     private fun Project.registerCopyFilesToXcodeTask(project: Project, extensionParameters: ComposeUiViewControllerParameters) {
-        tasks.register("CopyFilesToXcode", Exec::class.java) { task ->
-            val keepScriptFile = project.hasProperty("keepScriptFile") && project.property("keepScriptFile") == "true"
+        tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
+            val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
             println("\t> parameters: ${extensionParameters.toList()}")
-            val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/exportToXcode.sh")
+            val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$SCRIPT_FILE_NAME")
             val script = inputStream?.use { stream ->
                 stream.bufferedReader().use(BufferedReader::readText)
             } ?: throw GradleException("Unable to read resource file")
 
             val modifiedScript = script
                 .replace(
-                    oldValue = "kmp_module=\"shared\"",
-                    newValue = "kmp_module=\"${project.name}\""
+                    oldValue = "$PARAM_KMP_MODULE=\"shared\"",
+                    newValue = "$PARAM_KMP_MODULE=\"${project.name}\""
                 )
                 .replace(
-                    oldValue = "iosApp_project_folder=\"iosApp\"",
-                    newValue = "iosApp_project_folder=\"${extensionParameters.iosAppFolderName}\""
+                    oldValue = "$PARAM_FOLDER=\"iosApp\"",
+                    newValue = "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\""
                 )
                 .replace(
-                    oldValue = "iosApp_name=\"iosApp\"",
-                    newValue = "iosApp_name=\"${extensionParameters.iosAppName}\""
+                    oldValue = "$PARAM_APP_NAME=\"iosApp\"",
+                    newValue = "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\""
                 )
                 .replace(
-                    oldValue = "iosApp_target_name=\"iosApp\"",
-                    newValue = "iosApp_target_name=\"${extensionParameters.targetName}\""
+                    oldValue = "$PARAM_TARGET=\"iosApp\"",
+                    newValue = "$PARAM_TARGET=\"${extensionParameters.targetName}\""
                 )
                 .replace(
-                    oldValue = "group_name=\"Representables\"",
-                    newValue = "group_name=\"${extensionParameters.exportFolderName}\""
+                    oldValue = "$PARAM_GROUP=\"Representables\"",
+                    newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
                 )
 
-            val scriptFile = File("${project.rootDir}/exportToXcode.sh")
-            scriptFile.writeText(modifiedScript)
-            scriptFile.setExecutable(true)
-            task.workingDir = project.rootDir
-            task.commandLine("bash", "-c", "./exportToXcode.sh")
-            if (!keepScriptFile) {
-                task.doLast { scriptFile.delete() }
+            with(scriptFile()) {
+                writeText(modifiedScript)
+                setExecutable(true)
+                task.workingDir = project.rootDir
+                task.commandLine("bash", "-c", "./$SCRIPT_FILE_NAME")
+                if (!keepScriptFile) {
+                    task.doLast { delete() }
+                }
             }
         }
     }
 
-    private fun ComposeUiViewControllerParameters.toList(): List<*> =
-        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
+    internal companion object {
+        private const val VERSION_LIBRARY = "2.0.20-Beta1-1.6.11-BETA-3"
+        internal const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
+        internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
+        internal const val PLUGIN_KSP = "com.google.devtools.ksp"
+        internal const val LIB_GROUP = "com.github.guilhe.kmp"
+        internal const val LIB_KSP_NAME = "kmp-composeuiviewcontroller-ksp"
+        internal const val LIB_KSP = "$LIB_GROUP:$LIB_KSP_NAME:$VERSION_LIBRARY"
+        internal const val LIB_ANNOTATIONS_NAME = "kmp-composeuiviewcontroller-annotations"
+        internal const val LIB_ANNOTATION = "$LIB_GROUP:$LIB_ANNOTATIONS_NAME:$VERSION_LIBRARY"
+        internal const val EXTENSION_PLUGIN = "ComposeUiViewController"
+        internal const val TASK_COPY_FILES_TO_XCODE = "CopyFilesToXcodeTask"
+        internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
+        internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
+        internal const val ARG_KSP_FRAMEWORK_NAME = "frameworkBaseName"
+        internal const val SCRIPT_FILE_NAME = "exportToXcode.sh"
+        internal const val PARAM_KEEP_FILE = "keepScriptFile"
+        internal const val PARAM_KMP_MODULE = "kmp_module"
+        internal const val PARAM_FOLDER = "iosApp_project_folder"
+        internal const val PARAM_APP_NAME = "iosApp_name"
+        internal const val PARAM_TARGET = "iosApp_target_name"
+        internal const val PARAM_GROUP = "group_name"
+        internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
+        internal const val ERROR_MISSING_KSP = "$LOG_TAG requires the KSP plugin to be applied."
+    }
 }
