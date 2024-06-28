@@ -1,8 +1,11 @@
 name: Nexus release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+    tags:
+      - 'library-release-*'
 
 jobs:
   publish-to-nexus:

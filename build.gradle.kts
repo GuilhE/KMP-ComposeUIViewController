@@ -13,7 +13,7 @@ buildscript {
 
 allprojects {
     group = "com.github.guilhe.kmp"
-    version = "2.0.20-Beta1-1.6.11-BETA-1"
+    version = "2.0.20-Beta1-1.6.11-BETA-2"
 }
 
 tasks.register("publishLibraryModules") {
