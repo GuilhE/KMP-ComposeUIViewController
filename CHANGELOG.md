@@ -1,6 +1,12 @@
 # Changelog
 ---
 
+## [2.0.20-Beta1-1.6.11-BETA-3]
+
+- Adds all KMP targets available to `kmp-composeuiviewcontroller-annotations`
+ 
+---
+
 ## [2.0.20-Beta1-1.6.11-BETA-2]
 
 - Compatible with Plugin 1.1.0
