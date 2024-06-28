@@ -261,7 +261,7 @@ note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.k
 note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
 
-> Task :addFilesToXcodeproj
+> Task :CopyFilesToXcodeTask
 > Copying files to iosApp/SharedRepresentables/
 > Checking for new references to be added to xcodeproj
 > GradientScreenUIViewControllerRepresentable.swift added!
