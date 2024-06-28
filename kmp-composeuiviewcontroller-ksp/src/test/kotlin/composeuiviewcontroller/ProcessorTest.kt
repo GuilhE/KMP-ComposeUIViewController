@@ -98,26 +98,6 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Default frameworkName in @ComposeUIViewController will have the value 'SharedComposables'`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-
-            @ComposeUIViewController
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        val result = compilation.compile()
-
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-        assertContains(generatedSwiftFiles.first().readText(), "import SharedComposables")
-    }
-
-    @Test
     fun `If frameworkBaseName is provided via compiler argument it will be used over default @ComposeUIViewController frameworkName value`() {
         val code = """
             package com.mycomposable.test

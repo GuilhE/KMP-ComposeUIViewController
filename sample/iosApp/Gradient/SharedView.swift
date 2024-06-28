@@ -1,5 +1,5 @@
 import SwiftUI
-import SharedComposables
+import Composables
 
 struct SharedView: View {
     @State private var screenState: ScreenState = ScreenState(

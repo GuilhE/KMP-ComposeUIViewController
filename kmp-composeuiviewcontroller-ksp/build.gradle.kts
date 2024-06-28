@@ -5,10 +5,10 @@ plugins {
 
 dependencies {
     implementation(libs.ksp.api)
-    testImplementation(libs.test.junit.implementation)
     testImplementation(libs.test.kotlin)
     testImplementation(libs.test.kotlinCompile)
     testImplementation(libs.test.kotlinCompileKsp)
+    testImplementation(libs.test.junit.implementation)
     testImplementation(project(":kmp-composeuiviewcontroller-annotations"))
 }
 

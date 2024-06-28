@@ -9,7 +9,7 @@ iosApp_target_name="iosApp"
 
 xcodeproj_path="$iosApp_name.xcodeproj"
 files_source="$kmp_module/build/generated/ksp/"
-group_name="SharedRepresentables"
+group_name="Representables"
 files_destination="$iosApp_project_folder/$group_name/"
 copied_count=0
 
