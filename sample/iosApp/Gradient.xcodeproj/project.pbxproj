@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
+		08C2EF971A4767F5ABB9B12E /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661A1AB332F33F8FCF0AC40A /* GradientScreenUIViewControllerRepresentable.swift */; };
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
 		7555FF83242A565900829871 /* SharedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* SharedView.swift */; };
-		F30A2518AE61E8E7D1150FCA /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95AC0EE58E576BA023DADE5D /* GradientScreenUIViewControllerRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,10 +31,10 @@
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* GradientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientApp.swift; sourceTree = "<group>"; };
+		661A1AB332F33F8FCF0AC40A /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = Representables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* SharedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		95AC0EE58E576BA023DADE5D /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = SharedComposables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +62,7 @@
 				7555FF7D242A565900829871 /* Gradient */,
 				7555FF7C242A565900829871 /* Products */,
 				7555FFB0242A642200829871 /* Frameworks */,
-				8E2940030623E17F56CCC782 /* SharedComposables */,
+				BCCB492568475CF55158240F /* Representables */,
 			);
 			sourceTree = "<group>";
 		};
@@ -93,12 +93,12 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		8E2940030623E17F56CCC782 /* SharedComposables */ = {
+		BCCB492568475CF55158240F /* Representables */ = {
 			isa = PBXGroup;
 			children = (
-				95AC0EE58E576BA023DADE5D /* GradientScreenUIViewControllerRepresentable.swift */,
+				661A1AB332F33F8FCF0AC40A /* GradientScreenUIViewControllerRepresentable.swift */,
 			);
-			name = SharedComposables;
+			name = Representables;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -198,7 +198,7 @@
 			files = (
 				2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */,
 				7555FF83242A565900829871 /* SharedView.swift in Sources */,
-				F30A2518AE61E8E7D1150FCA /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
+				08C2EF971A4767F5ABB9B12E /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

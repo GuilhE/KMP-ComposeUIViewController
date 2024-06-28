@@ -125,7 +125,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     newValue = "iosApp_target_name=\"${extensionParameters.targetName}\""
                 )
                 .replace(
-                    oldValue = "group_name=\"SharedRepresentables\"",
+                    oldValue = "group_name=\"Representables\"",
                     newValue = "group_name=\"${extensionParameters.exportFolderName}\""
                 )
 
