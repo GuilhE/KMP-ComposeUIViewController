@@ -34,9 +34,9 @@ jobs:
       - name: Run Processor tests
         run: ./gradlew :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest"
 
-      - name: Publish to Sonatype
+      - name: Publish to Nexus
         if: success()
-        run: ./gradlew publishAllPublicationsToSonatypeRepository
+        run: ./gradlew publishLibraryModules
         env:
           SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
