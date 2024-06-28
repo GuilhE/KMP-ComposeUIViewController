@@ -2,8 +2,6 @@ name: Nexus release
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'library-release-*'
 
