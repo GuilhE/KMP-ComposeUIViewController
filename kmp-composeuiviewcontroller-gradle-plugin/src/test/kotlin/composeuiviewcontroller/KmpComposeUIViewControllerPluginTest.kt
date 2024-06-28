@@ -1,6 +1,8 @@
 package composeuiviewcontroller
 
 import com.google.devtools.ksp.gradle.KspExtension
+import org.gradle.api.internal.project.DefaultProject
+import org.gradle.configuration.project.ProjectEvaluator
 import org.gradle.internal.impldep.junit.framework.TestCase.assertNotNull
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
@@ -34,8 +36,7 @@ class KmpComposeUIViewControllerPluginTest {
     @Test
     fun `Plugin throws exception if KSP plugin is not applied`(@TempDir tempDir: File) {
         projectDir = File(tempDir, "testProject").apply { mkdirs() }
-        val buildFile = File(projectDir, "build.gradle.kts")
-        buildFile.writeText(
+        File(projectDir, "build.gradle.kts").writeText(
             """
             plugins {
                 id("org.jetbrains.kotlin.multiplatform")
@@ -55,8 +56,7 @@ class KmpComposeUIViewControllerPluginTest {
     @Test
     fun `Plugin throws exception if Kotlin Multiplatform plugin is not applied`(@TempDir tempDir: File) {
         projectDir = File(tempDir, "testProject").apply { mkdirs() }
-        val buildFile = File(projectDir, "build.gradle.kts")
-        buildFile.writeText(
+        File(projectDir, "build.gradle.kts").writeText(
             """
             plugins {
                 id("com.google.devtools.ksp")
@@ -103,50 +103,20 @@ class KmpComposeUIViewControllerPluginTest {
     }
 
     @Test
-    fun `Method configureCompileArgs adds frameworkBaseName as a KSP parameter`(@TempDir tempDir: File) {
-        projectDir = File(tempDir, "testProject").apply { mkdirs() }
-        val buildFile = File(projectDir, "build.gradle.kts")
-        buildFile.writeText(
-            """
-            repositories {
-                mavenCentral()
-            }
-            
-            plugins {
-                id("org.jetbrains.kotlin.multiplatform")
-                id("com.google.devtools.ksp")
-                id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
-            }
-            
-            ComposeUiViewController {
-                autoExport = false
-            }
-
-            kotlin {
+    fun `Method configureCompileArgs adds frameworkBaseName as a KSP parameter`() {
+        with(project) {
+            extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
                 jvm()
                 iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
-                sourceSets {
-                    val commonMain by getting {
-                        dependencies {
-                            implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.20-Beta1")
-                        }
-                    }
-                }
             }
-            """.trimIndent()
-        )
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("compileKotlinIosSimulatorArm64")
-            .withPluginClasspath()
-            .build()
+            println("> $state")
+            (project as DefaultProject).evaluate()
+            println("> $state")
+            println("> ${extensions.getByType(KspExtension::class.java).arguments}")
 
-        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
-
-        assertTrue {
-            project.extensions.getByType(KspExtension::class.java).arguments.containsKey("frameworkBaseName")
-            project.extensions.getByType(KspExtension::class.java).arguments.containsValue("ComposablesFramework")
+            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsKey("frameworkBaseName"))
+            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsValue("ComposablesFramework"))
         }
     }
 

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
@@ -81,12 +80,9 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.targets.configureEach { target ->
             if (target.fromIosFamily()) {
-                tasks.withType(KotlinNativeCompile::class.java).configureEach {
-                    val ksp = extensions.getByType(KspExtension::class.java)
-                    ksp.apply {
-                        if(!arguments.containsKey("frameworkBaseName")) {
-                            arg("frameworkBaseName", frameworkNames.first())
-                        }
+                extensions.getByType(KspExtension::class.java).apply {
+                    if (!arguments.containsKey("frameworkBaseName")) {
+                        arg("frameworkBaseName", frameworkNames.first())
                     }
                 }
             }
