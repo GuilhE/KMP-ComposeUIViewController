@@ -135,7 +135,7 @@ Inside `iosMain` we can take advantage of two annotations:
 To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the  iOS app.
 
 > [!NOTE]
->  If you choose to opt-out of using the gradle `plugin-composeuiviewcontroller`, you will be responsible for ensuring that the `frameworkName` [parameter](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/kmp-composeuiviewcontroller-annotations/src/commonMain/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/Annotations.kt#L13) in all `@ComposeUIViewController` annotations, matches the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25).
+>  If you choose to opt-out of using the gradle `plugin-composeuiviewcontroller`, you will be responsible for ensuring that the `frameworkName` [parameter](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/src/iosMain/kotlin/com/sample/sharedui/Screens.kt#L21) in all `@ComposeUIViewController` annotations, matches the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25).
 
 
 `@ComposeUIViewControllerState`:  
