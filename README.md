@@ -109,7 +109,7 @@ tasks.register<Exec>("addFilesToXcodeproj") {
 
 **Warning:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
 
-Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
+Occasionally, if you experience `iosApp/Representables` files not being updated after a successful build, try to run the following command manually:
 
 `./gradlew addFilesToXcodeproj`
 
@@ -121,7 +121,7 @@ If necessary, disable automatic files export to Xcode and instead include them m
 ```
 You will find the generated files under `[module]/build/generated/ksp/`.
 
-**Warning:** avoid deleting `iosApp/SharedRepresentables` without first using Xcode to `Remove references`.
+**Warning:** avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
 
 </details>
 
@@ -262,7 +262,7 @@ note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
 
 > Task :CopyFilesToXcodeTask
-> Copying files to iosApp/SharedRepresentables/
+> Copying files to iosApp/Representables/
 > Checking for new references to be added to xcodeproj
 > GradientScreenUIViewControllerRepresentable.swift added!
 > Done
