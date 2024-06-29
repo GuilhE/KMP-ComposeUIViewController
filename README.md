@@ -23,7 +23,7 @@ It can be used for **simple** and **advanced** use cases.
 ### Advanced
 `@Composable` UI state is managed by the iOS app.
 
-> [!NOTE]
+> [!TIP]
 > This library takes care of the heavy lifting for you, but if you're interested in understanding how it works, the detailed approach is explained here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
 Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
@@ -134,14 +134,14 @@ Inside `iosMain` we can take advantage of two annotations:
 `@ComposeUIViewController`:  
 To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the  iOS app.
 
-> [!NOTE]
+> [!CAUTION]
 >  If you choose to opt-out of using the gradle `plugin-composeuiviewcontroller`, you will be responsible for ensuring that the `frameworkName` [parameter](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/src/iosMain/kotlin/com/sample/sharedui/Screens.kt#L21) in all `@ComposeUIViewController` annotations, matches the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25).
 
 
 `@ComposeUIViewControllerState`:  
 To annotate the parameter as the composable state variable (for **advanced** use cases).
 
-> [!NOTE]
+> [!IMPORTANT]
 >  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 
