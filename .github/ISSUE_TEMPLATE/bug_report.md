@@ -1,25 +1,35 @@
-## Describe the bug
+**Describe the bug**
 A clear and concise description of what the bug is.
 
-## To Reproduce
+**Versions**
+- Libraries:
+  - Compose Multiplatform version:
+  - Navigation Multiplatform version (for related issues):
+  - ...
+- Kotlin version: 
+- OS version(s) (required for Desktop and iOS issues): 
+- OS architecture (x86 or arm64):
+- Device (model or simulator for iOS issues): 
+- JDK (for desktop issues): 
+
+**To Reproduce**
 Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
+1. Run this code snippet:
+   ```kt
+   @Composable
+   fun BugReproduction() {
+       // ...
+   }
+   ```
+2. Click on '...'
+3. Scroll down to '...'
 4. See error
 
-## Expected behavior
+**Expected behavior**
 A clear and concise description of what you expected to happen.
 
-## Screenshots
+**Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-## Details (please complete the following information):
-- Library version
-- Android version
-- Emulator/Device specs
-- Logs/Crash Reports/Stacktraces
-- Example Code/Link to repositories
-
-## Additional context
+**Additional context**
 Add any other context about the problem here.
