@@ -4,7 +4,6 @@ A clear and concise description of what the bug is.
 **Versions**
 - Libraries:
   - Compose Multiplatform version:
-  - Navigation Multiplatform version (for related issues):
   - ...
 - Kotlin version: 
 - OS version(s) (required for Desktop and iOS issues): 
