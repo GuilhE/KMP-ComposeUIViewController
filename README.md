@@ -262,7 +262,7 @@ note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
 
 > Task :CopyFilesToXcodeTask
-> Copying files to iosApp/Representables/
+> Copying files to iosApp/SharedRepresentables/
 > Checking for new references to be added to xcodeproj
 > GradientScreenUIViewControllerRepresentable.swift added!
 > Done
