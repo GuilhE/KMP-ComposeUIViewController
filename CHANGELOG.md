@@ -3,7 +3,7 @@
 
 ## [2.0.20-Beta1-1.6.11-BETA-4]
 
-- Adds KSP validation to import types from different modules
+- Adds feature to import types from external modules
 
 ---
 

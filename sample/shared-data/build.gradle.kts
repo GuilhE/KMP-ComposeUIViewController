@@ -1,5 +1,11 @@
 plugins {
+    alias(libs.plugins.google.ksp)
     alias(libs.plugins.kotlin.multiplatform)
+    id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
+}
+
+ComposeUiViewController {
+    autoExport = false
 }
 
 kotlin {

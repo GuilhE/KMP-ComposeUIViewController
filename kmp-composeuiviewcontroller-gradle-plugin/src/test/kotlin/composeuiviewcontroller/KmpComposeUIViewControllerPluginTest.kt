@@ -16,6 +16,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.SCRIPT_FILE_NAME
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.SCRIPT_TEMP_FILE_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
 import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.internal.project.DefaultProject
@@ -117,6 +118,7 @@ class KmpComposeUIViewControllerPluginTest {
     fun `Method configureCompileArgs adds frameworkBaseName as a KSP parameter`() {
         with(project) {
             extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
+                group = "com.composables.module"
                 jvm()
                 iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
             }
@@ -126,8 +128,8 @@ class KmpComposeUIViewControllerPluginTest {
             println("> $state")
             println("> ${extensions.getByType(KspExtension::class.java).arguments}")
 
-            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsKey(ARG_KSP_FRAMEWORK_NAME))
-            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsValue("ComposablesFramework"))
+            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsKey("$ARG_KSP_FRAMEWORK_NAME-ComposablesFramework"))
+            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsValue("com.composables.module"))
         }
     }
 
@@ -160,6 +162,8 @@ class KmpComposeUIViewControllerPluginTest {
                 exportFolderName = "Composables"
                 autoExport = true
             }
+            
+            group = "com.test"
         """.trimIndent()
         )
 
@@ -171,7 +175,7 @@ class KmpComposeUIViewControllerPluginTest {
 
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))
 
-        val modifiedScriptContent = File(projectDir, SCRIPT_FILE_NAME).readText()
+        val modifiedScriptContent = File(projectDir, SCRIPT_TEMP_FILE_NAME).readText()
         assertTrue(modifiedScriptContent.contains("$PARAM_KMP_MODULE=\"${projectDir.name}\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_FOLDER=\"iosFolder\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_APP_NAME=\"iosApp\""))

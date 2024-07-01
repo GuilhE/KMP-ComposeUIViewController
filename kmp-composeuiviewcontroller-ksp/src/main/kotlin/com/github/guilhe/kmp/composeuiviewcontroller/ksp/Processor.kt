@@ -25,7 +25,6 @@ internal class Processor(
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
-            val frameworkBaseName: String = getFrameworkBaseNameFromCompilerArgs() ?: getFrameworkNameFromAnnotations(node)
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
@@ -57,7 +56,7 @@ internal class Processor(
                         createKotlinFileWithoutState(packageName, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithoutState(frameworkBaseName, composable, makeParameters).also {
+                        createSwiftFileWithoutState(getFrameworkBaseNames(node, makeParameters, parameters), composable, makeParameters).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
@@ -65,7 +64,13 @@ internal class Processor(
                         createKotlinFileWithState(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithState(frameworkBaseName, composable, stateParameterName, stateParameter, makeParameters).also {
+                        createSwiftFileWithState(
+                            getFrameworkBaseNames(node, makeParameters, parameters, stateParameter),
+                            composable,
+                            stateParameterName,
+                            stateParameter,
+                            makeParameters
+                        ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     }
@@ -75,15 +80,21 @@ internal class Processor(
         return emptyList()
     }
 
-    private fun getFrameworkBaseNameFromCompilerArgs(): String? {
-        val name = options[composeUIViewControllerAnnotationParameterName]
-        return name?.ifEmpty { throw EmptyFrameworkBaseNameException() } ?: name
+    private fun getFrameworkMetadataFromCompilerArgs(): List<FrameworkMetadata> {
+        val options = options.filter { it.key.startsWith("$frameworkBaseNameAnnotationParameter-") }
+        val metadata = mutableListOf<FrameworkMetadata>()
+        options.forEach {
+            metadata.add(FrameworkMetadata(it.key, it.value))
+        }
+        println(">>> options >>> $options")
+        println(">>> metadata >>> $metadata")
+        return metadata.ifEmpty { throw EmptyFrameworkBaseNameException() }
     }
 
-    private fun getFrameworkNameFromAnnotations(node: KSAnnotated): String {
+    private fun getFrameworkBaseNameFromAnnotations(node: KSAnnotated): String {
         val annotation = node.annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
         if (annotation != null) {
-            val argument = annotation.arguments.firstOrNull { it.name?.asString() == composeUIViewControllerAnnotationParameterName }
+            val argument = annotation.arguments.firstOrNull { it.name?.asString() == frameworkBaseNameAnnotationParameter }
             if (argument != null) {
                 val value = argument.value
                 if (value is String && value.isNotEmpty()) {
@@ -105,6 +116,26 @@ internal class Processor(
             stateParameters.size > 1 -> throw MultipleComposeUIViewControllerStateException(composable)
         }
         return stateParameters
+    }
+
+    private fun getFrameworkBaseNames(
+        node: KSAnnotated,
+        makeParameters: List<KSValueParameter>,
+        parameters: List<KSValueParameter>,
+        stateParameter: KSValueParameter? = null
+    ): List<String> {
+        val frameworkBaseNames = mutableListOf<String>()
+        frameworkBaseNames.addAll(
+            retrieveFrameworkBaseNames(
+                getFrameworkMetadataFromCompilerArgs(),
+                makeParameters,
+                parameters,
+                stateParameter
+            )
+        )
+        println(">>>> getFrameworkBaseNames >>>> $frameworkBaseNames")
+        frameworkBaseNames.ifEmpty { frameworkBaseNames.add(getFrameworkBaseNameFromAnnotations(node)) }
+        return frameworkBaseNames
     }
 
     private fun createKotlinFileWithoutState(
@@ -148,7 +179,7 @@ internal class Processor(
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>
     ): String {
-        val imports = generateImports(packageName, makeParameters, parameters)
+        val imports = generateImports(packageName, makeParameters, parameters, stateParameter)
         val code = """
             @file:Suppress("unused")
             package $packageName
@@ -183,15 +214,16 @@ internal class Processor(
     }
 
     private fun createSwiftFileWithoutState(
-        frameworkBaseName: String,
+        frameworkBaseName: List<String>,
         composable: KSFunctionDeclaration,
         makeParameters: List<KSValueParameter>
     ): String {
+        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()} " }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
         val code = """
             import SwiftUI
-            import $frameworkBaseName
+            $frameworks
 
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
                 $letParameters
@@ -217,17 +249,18 @@ internal class Processor(
     }
 
     private fun createSwiftFileWithState(
-        frameworkBaseName: String,
+        frameworkBaseName: List<String>,
         composable: KSFunctionDeclaration,
         stateParameterName: String,
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
     ): String {
+        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()} " }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
         val code = """
             import SwiftUI
-            import $frameworkBaseName
+            $frameworks
 
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
                 @Binding var $stateParameterName: ${stateParameter.type}

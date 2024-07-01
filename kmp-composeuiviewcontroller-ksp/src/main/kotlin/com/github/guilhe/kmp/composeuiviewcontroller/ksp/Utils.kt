@@ -58,10 +58,16 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
     }.toList()
 }
 
-internal fun generateImports(packageName: String, makeParameters: List<KSValueParameter>, parameters: List<KSValueParameter>): String {
+internal fun generateImports(
+    packageName: String,
+    makeParameters: List<KSValueParameter>,
+    parameters: List<KSValueParameter>,
+    stateParameter: KSValueParameter? = null
+): String {
     val parameterSet = setOf<KSValueParameter>()
         .plus(makeParameters)
         .plus(parameters)
+    stateParameter?.let { parameters.plus(it) }
     return parameterSet
         .mapNotNull {
             val resolvedType = it.type.resolve()
@@ -75,6 +81,33 @@ internal fun generateImports(packageName: String, makeParameters: List<KSValuePa
         }
         .distinct()
         .joinToString("\n") { "import $it" }
+}
+
+internal fun retrieveFrameworkBaseNames(
+    frameworkMetadata: List<FrameworkMetadata>,
+    makeParameters: List<KSValueParameter>,
+    parameters: List<KSValueParameter>,
+    stateParameter: KSValueParameter? = null
+): List<String> {
+    val parameterSet = setOf<KSValueParameter>()
+        .plus(makeParameters)
+        .plus(parameters)
+    stateParameter?.let { parameters.plus(it) }
+
+    val parameterPackages = parameterSet
+        .mapNotNull {
+            val resolvedType = it.type.resolve()
+            val typeDeclaration = resolvedType.declaration
+            (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
+        }
+        .filterNot { it.startsWith("kotlin") }
+        .distinct()
+
+    println(">>>> frameworkMetadata >>>> $frameworkMetadata")
+    println(">>>> parameterPackages >>>> $parameterPackages")
+    return parameterPackages.mapNotNull { pkg ->
+        frameworkMetadata.find { it.packageName == pkg }?.baseName?.removePrefix("$frameworkBaseNameAnnotationParameter-")
+    }.distinct()
 }
 
 internal fun String.name() = split(".").last()
@@ -93,8 +126,10 @@ internal fun KSFunctionDeclaration.name(): String = qualifiedName!!.getShortName
 
 internal fun KSValueParameter.name(): String = name!!.getShortName()
 
+internal data class FrameworkMetadata(val baseName: String, val packageName: String)
+
 internal class EmptyFrameworkBaseNameException : IllegalArgumentException(
-    "@${composeUIViewControllerAnnotationName.name()} requires a non-null and non-empty value for $composeUIViewControllerAnnotationParameterName"
+    "@${composeUIViewControllerAnnotationName.name()} requires a non-null and non-empty value for $frameworkBaseNameAnnotationParameter"
 )
 
 internal class MultipleComposeUIViewControllerStateException(composable: KSFunctionDeclaration) : IllegalArgumentException(

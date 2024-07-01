@@ -20,6 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 import kotlin.test.assertContains
 
 @OptIn(ExperimentalCompilerApi::class)
@@ -30,6 +31,12 @@ class ProcessorTest {
     var temporaryFolder: TemporaryFolder = TemporaryFolder()
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile, args: Map<String, String> = emptyMap()): KotlinCompilation {
+        val sourceRoot = temporaryFolder.newFolder("src", "main", "kotlin")
+//        sourceFiles.forEach { sourceFile ->
+//            val file = File(sourceRoot, sourceFile.relativePath)
+//            file.parentFile.mkdirs()
+//            file.writeText(sourceFile)
+//        }
         return KotlinCompilation().apply {
             workingDir = temporaryFolder.root
             inheritClassPath = true
@@ -366,7 +373,7 @@ class ProcessorTest {
             @Composable
             fun ScreenC(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val compilation = prepareCompilation(kotlin("Screen.kt", code, isMultiplatformCommonSource = true))
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)

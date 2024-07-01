@@ -41,8 +41,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 finalizeFrameworkTasks(this)
             }
             afterEvaluate {
-                val frameworkNames = collectFrameworkBaseNames()
-                configureCompileArgs(frameworkNames)
+                val packageName = retrievePackage()
+                println(">>>> retrievePackage >>>> $packageName")
+                val frameworkNames = retrieveFrameworkBaseNames()
+                println(">>>> frameworkNames >>>> $frameworkNames")
+                configureCompileArgs(packageName, frameworkNames)
             }
         }
     }
@@ -63,7 +66,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.collectFrameworkBaseNames(): Set<String> {
+    private fun Project.retrieveFrameworkBaseNames(): Set<String> {
         val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val frameworkNames = mutableSetOf<String>()
         kotlin.targets.configureEach { target ->
@@ -76,14 +79,39 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return frameworkNames
     }
 
-    private fun Project.configureCompileArgs(frameworkNames: Set<String>) {
+    private fun Project.retrievePackage(): String {
+        val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
+        val commonMainSourceSet = kmp.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
+        val srcDirs = commonMainSourceSet.kotlin.srcDirs
+        for (srcDir in srcDirs) {
+            srcDir.walkTopDown().forEach { file ->
+                if (file.isFile && file.extension == "kt") {
+                    val relativePath = file.relativeTo(srcDir).parentFile?.path ?: ""
+                    val packagePath = relativePath.replace(File.separator, ".")
+                    if (packagePath.isNotEmpty()) {
+                        return packagePath
+                    }
+                }
+            }
+        }
+        if (group.toString().isNotEmpty()) {
+            return group.toString()
+        }
+        throw IllegalStateException("Cloud not determine project's package nor group")
+    }
+
+    private fun Project.configureCompileArgs(packageName: String, frameworkNames: Set<String>) {
+        packageName.ifEmpty { return }
         frameworkNames.ifEmpty { return }
+        val frameworkBaseName = frameworkNames.first() //let's assume for now all targets will have the same frameworkBaseName
         val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.targets.configureEach { target ->
             if (target.fromIosFamily()) {
                 extensions.getByType(KspExtension::class.java).apply {
-                    if (!arguments.containsKey(ARG_KSP_FRAMEWORK_NAME)) {
-                        arg(ARG_KSP_FRAMEWORK_NAME, frameworkNames.first())
+                    val keyComposed = "$ARG_KSP_FRAMEWORK_NAME-$frameworkBaseName"
+                    if (!arguments.containsKey(keyComposed)) {
+                        arg(keyComposed, packageName)
+                        println(">>> [$keyComposed, $packageName]")
                     }
                 }
             }
@@ -130,11 +158,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
                 )
 
-            with(scriptFile()) {
+            with(File("$rootDir/${SCRIPT_TEMP_FILE_NAME}")) {
                 writeText(modifiedScript)
                 setExecutable(true)
                 task.workingDir = project.rootDir
-                task.commandLine("bash", "-c", "./$SCRIPT_FILE_NAME")
+                task.commandLine("bash", "-c", "./$SCRIPT_TEMP_FILE_NAME")
                 if (!keepScriptFile) {
                     task.doLast { delete() }
                 }
@@ -158,6 +186,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
         internal const val ARG_KSP_FRAMEWORK_NAME = "frameworkBaseName"
         internal const val SCRIPT_FILE_NAME = "exportToXcode.sh"
+        internal const val SCRIPT_TEMP_FILE_NAME = "temp.sh"
         internal const val PARAM_KEEP_FILE = "keepScriptFile"
         internal const val PARAM_KMP_MODULE = "kmp_module"
         internal const val PARAM_FOLDER = "iosApp_project_folder"

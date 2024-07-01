@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerState
-import com.sample.data.TestParameter2
+import com.sample.data.ExternalClass2
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
 
@@ -36,5 +36,5 @@ private fun getCurrentMillis(): Long = NSDate().timeIntervalSince1970.toLong() *
 
 @ComposeUIViewController
 @Composable
-internal fun TestScreen(testParameter: TestParameter2) {
+internal fun ScreenWithExternalDependencies(param: ExternalClass2) {
 }
