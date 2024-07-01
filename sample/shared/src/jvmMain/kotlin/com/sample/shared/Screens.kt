@@ -1,4 +1,4 @@
-package com.sample.sharedui
+package com.sample.shared
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.runtime.Composable

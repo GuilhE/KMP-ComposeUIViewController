@@ -21,6 +21,7 @@ kotlin {
             implementation(compose.ui)
         }
         jvmMain.dependencies { implementation(compose.preview) }
+        iosMain.dependencies { implementation(project(":shared-data")) }
         listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
             target.binaries.framework { baseName = "Composables" }
         }

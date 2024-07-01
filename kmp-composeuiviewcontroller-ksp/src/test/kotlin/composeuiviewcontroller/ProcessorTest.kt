@@ -2,6 +2,8 @@
 
 package composeuiviewcontroller
 
+import com.github.guilhe.kmp.composeuiviewcontroller.ksp.EmptyFrameworkBaseNameException
+import com.github.guilhe.kmp.composeuiviewcontroller.ksp.InvalidParametersException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerAnnotationName
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerStateAnnotationName
@@ -66,7 +68,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Empty frameworkName in @ComposeUIViewController throws IllegalStateException`() {
+    fun `Empty frameworkBaseName in @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -79,10 +81,11 @@ class ProcessorTest {
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
     }
 
     @Test
-    fun `Empty frameworkBaseName in CompilerArgs throws IllegalStateException`() {
+    fun `Empty frameworkBaseName in CompilerArgs throws EmptyFrameworkBaseNameException`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -95,10 +98,11 @@ class ProcessorTest {
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
     }
 
     @Test
-    fun `If frameworkBaseName is provided via compiler argument it will be used over default @ComposeUIViewController frameworkName value`() {
+    fun `If frameworkBaseName is provided via compiler argument it overrides @ComposeUIViewController frameworkBaseName value`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -135,7 +139,7 @@ class ProcessorTest {
         val expectedKotlinOutput = """
             @file:Suppress("unused")
             package com.mycomposable.test
-             
+
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
 
@@ -158,16 +162,16 @@ class ProcessorTest {
         val expectedSwiftOutput = """
             import SwiftUI
             import SharedComposables
-            
+
             public struct ScreenRepresentable: UIViewControllerRepresentable {
                 let data: SomeClass
                 let value: KotlinInt
                 let callBack: () -> Void
-                
+
                 public func makeUIViewController(context: Context) -> UIViewController {
                     ScreenUIViewController().make(data: data, value: value, callBack: callBack)
                 }
-                
+
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
                     //unused
                 }
@@ -219,6 +223,7 @@ class ProcessorTest {
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertContains(result.messages, InvalidParametersException().message!!)
     }
 
     @Test
@@ -257,20 +262,20 @@ class ProcessorTest {
         val expectedKotlinOutput = """
             @file:Suppress("unused")
             package com.mycomposable.test
-             
+
             import androidx.compose.runtime.mutableStateOf
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
 
             object ScreenAUIViewController {
                 private val state = mutableStateOf<ViewAState?>(null)
-                
+
                 fun make(): UIViewController {
                     return ComposeUIViewController {
                         state.value?.let { ScreenA(it) }
                     }
                 }
-                
+
                 fun update(state: ViewAState) {
                     this.state.value = state
                 }
@@ -292,7 +297,7 @@ class ProcessorTest {
                 public func makeUIViewController(context: Context) -> UIViewController {
                     ScreenAUIViewController().make()
                 }
-                
+
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
                     ScreenAUIViewController().update(state: state)
                 }

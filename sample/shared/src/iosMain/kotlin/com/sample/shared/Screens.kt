@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.sample.sharedui
+package com.sample.shared
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerState
+import com.sample.data.TestParameter2
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
 
@@ -20,7 +21,7 @@ data class ScreenState(val startColor: Long, val endColor: Long) {
 
 @ComposeUIViewController
 @Composable
-fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: (Long) -> Unit) {
+internal fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: (Long) -> Unit) {
     Box(contentAlignment = Alignment.Center) {
         Crossfade(targetState = state) {
             Gradient(it.colors)
@@ -32,3 +33,8 @@ fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: 
 }
 
 private fun getCurrentMillis(): Long = NSDate().timeIntervalSince1970.toLong() * 1000
+
+@ComposeUIViewController
+@Composable
+internal fun TestScreen(testParameter: TestParameter2) {
+}

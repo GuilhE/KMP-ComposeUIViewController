@@ -34,3 +34,4 @@ includeBuild("..") {
 
 rootProject.name = "sample"
 include(":shared")
+include(":shared-data")

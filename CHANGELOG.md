@@ -1,6 +1,12 @@
 # Changelog
 ---
 
+## [2.0.20-Beta1-1.6.11-BETA-4]
+
+- Adds KSP validation to import types from different modules
+
+---
+
 ## [2.0.20-Beta1-1.6.11-BETA-3]
 
 - Adds all KMP targets available to `kmp-composeuiviewcontroller-annotations`

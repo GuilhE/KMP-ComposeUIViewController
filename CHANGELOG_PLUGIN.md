@@ -1,6 +1,13 @@
 # Changelog
 ---
 
+## [1.1.2]
+
+- Compatible with 2.0.20-Beta1-1.6.11-BETA-4
+
+
+---
+
 ## [1.1.1]
 
 - Compatible with 2.0.20-Beta1-1.6.11-BETA-3
