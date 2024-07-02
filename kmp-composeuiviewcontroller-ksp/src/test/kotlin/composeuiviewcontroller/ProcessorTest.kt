@@ -10,7 +10,6 @@ import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewController
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
-import com.tschuchort.compiletesting.kspArgs
 import com.tschuchort.compiletesting.kspIncremental
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
@@ -19,6 +18,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.io.TempDir
 import org.junit.rules.TemporaryFolder
 import java.io.File
 import kotlin.test.assertContains
@@ -30,21 +31,15 @@ class ProcessorTest {
     @JvmField
     var temporaryFolder: TemporaryFolder = TemporaryFolder()
 
-    private fun prepareCompilation(vararg sourceFiles: SourceFile, args: Map<String, String> = emptyMap()): KotlinCompilation {
-        val sourceRoot = temporaryFolder.newFolder("src", "main", "kotlin")
-//        sourceFiles.forEach { sourceFile ->
-//            val file = File(sourceRoot, sourceFile.relativePath)
-//            file.parentFile.mkdirs()
-//            file.writeText(sourceFile)
-//        }
+    private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
+        temporaryFolder.newFolder("build")
         return KotlinCompilation().apply {
             workingDir = temporaryFolder.root
             inheritClassPath = true
             symbolProcessorProviders = listOf(ProcessorProvider())
-            sources = sourceFiles.asList()
+            sources = sourceFiles.asList() + listOf()
             verbose = false
             kspIncremental = false
-            kspArgs = args.toMutableMap()
         }
     }
 
@@ -92,7 +87,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Empty frameworkBaseName in CompilerArgs throws EmptyFrameworkBaseNameException`() {
+    fun `Empty frameworkBaseName in ArgsProperties throws EmptyFrameworkBaseNameException`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -101,7 +96,7 @@ class ProcessorTest {
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), args = mapOf("frameworkBaseName" to ""))
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
@@ -109,16 +104,31 @@ class ProcessorTest {
     }
 
     @Test
-    fun `If frameworkBaseName is provided via compiler argument it overrides @ComposeUIViewController frameworkBaseName value`() {
+    fun `When frameworkBaseName is provided via ArgsProperties it overrides @ComposeUIViewController frameworkBaseName value`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
 
-            @ComposeUIViewController
+            @ComposeUIViewController("ComposablesFramework")
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), args = mapOf("frameworkBaseName" to "MyFramework"))
+        val buildGradle = File(temporaryFolder.root, "build.gradle.kts").apply {
+            writeText("""
+                plugins {
+                    id("org.jetbrains.kotlin.multiplatform")
+                    id("com.google.devtools.ksp")
+                    id("io.github.guilhe.kmp.plugin-composeuiviewcontroller)
+                }
+                kotlin {
+                    jvm()
+                    listOf(iosSimulatorArm64()).forEach { target ->
+                        target.binaries.framework { baseName = "Composables" }
+                    }
+                }
+            """.trimIndent())
+        }
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -134,7 +144,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
 
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun Screen(data: SomeClass, value: Int, callBack: () -> Unit) { }
         """.trimIndent()
@@ -200,7 +210,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
         """.trimIndent()
@@ -217,7 +227,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
@@ -240,13 +250,13 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewAState) { }
             
             private fun dummy() 
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewBState) { }
         """.trimIndent()
@@ -324,7 +334,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -333,7 +343,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -361,15 +371,15 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
 
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit) { }
 
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun ScreenC(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
         """.trimIndent()
@@ -397,7 +407,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,

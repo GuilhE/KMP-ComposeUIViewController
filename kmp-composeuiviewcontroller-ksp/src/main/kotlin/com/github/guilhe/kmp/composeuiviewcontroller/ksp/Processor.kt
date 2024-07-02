@@ -57,7 +57,11 @@ internal class Processor(
                         createKotlinFileWithoutState(packageName, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithoutState(getFrameworkBaseNames(node, makeParameters, parameters), composable, makeParameters).also {
+                        createSwiftFileWithoutState(
+                            getFrameworkBaseNames(composable, node, makeParameters, parameters),
+                            composable,
+                            makeParameters
+                        ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
@@ -66,7 +70,7 @@ internal class Processor(
                             logger.info("${composable.name()}UIViewController created!")
                         }
                         createSwiftFileWithState(
-                            getFrameworkBaseNames(node, makeParameters, parameters, stateParameter),
+                            getFrameworkBaseNames(composable, node, makeParameters, parameters, stateParameter),
                             composable,
                             stateParameterName,
                             stateParameter,
@@ -123,6 +127,7 @@ internal class Processor(
     }
 
     private fun getFrameworkBaseNames(
+        composable: KSFunctionDeclaration,
         node: KSAnnotated,
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>,
@@ -131,6 +136,7 @@ internal class Processor(
         val frameworkBaseNames = mutableListOf<String>()
         frameworkBaseNames.addAll(
             retrieveFrameworkBaseNames(
+                composable,
                 getFrameworkMetadataFromCompilerArgs(),
                 makeParameters,
                 parameters,
@@ -221,7 +227,7 @@ internal class Processor(
         composable: KSFunctionDeclaration,
         makeParameters: List<KSValueParameter>
     ): String {
-        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()} " }
+        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
         val code = """
@@ -258,7 +264,7 @@ internal class Processor(
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
     ): String {
-        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()} " }
+        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
         val code = """
@@ -289,7 +295,7 @@ internal class Processor(
         return updatedCode
     }
 
-    private companion object {
-        private const val FILE_NAME_ARGS = "args.properties"
+    internal companion object {
+        internal const val FILE_NAME_ARGS = "args.properties"
     }
 }

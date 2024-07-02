@@ -1,5 +1,6 @@
 import SwiftUI
 import Composables
+import SharedModels
 
 struct SharedView: View {
     @State private var screenState: ScreenState = ScreenState(
@@ -19,7 +20,7 @@ struct SharedView: View {
             print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(milliseconds: millis)))", terminator: "\n")
             let randomIndexes = (0..<colors.count).shuffled().prefix(2)
             let randomColors = randomIndexes.map { colors[$0] }
-            screenState = ScreenState(
+            screenState = Shared_modelsScreenState(
                 startColor: convertUIColorToKotlinLong(randomColors[0]),
                 endColor: convertUIColorToKotlinLong(randomColors[1])
             )

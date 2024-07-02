@@ -84,6 +84,7 @@ internal fun generateImports(
 }
 
 internal fun retrieveFrameworkBaseNames(
+    composable: KSFunctionDeclaration,
     frameworkMetadata: List<FrameworkMetadata>,
     makeParameters: List<KSValueParameter>,
     parameters: List<KSValueParameter>,
@@ -102,6 +103,10 @@ internal fun retrieveFrameworkBaseNames(
         }
         .filterNot { it.startsWith("kotlin") }
         .distinct()
+        .toMutableList()
+
+    parameterPackages.add(composable.packageName.asString())
+
     return parameterPackages.mapNotNull { pkg ->
         frameworkMetadata.find { it.packageName == pkg }?.baseName?.removePrefix("$frameworkBaseNameAnnotationParameter-")
     }.distinct()

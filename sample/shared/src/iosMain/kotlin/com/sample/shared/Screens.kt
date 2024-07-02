@@ -11,20 +11,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerState
-import com.sample.data.ExternalClass2
+import com.sample.models.ScreenState
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
 
-data class ScreenState(val startColor: Long, val endColor: Long) {
-    val colors: List<Color> = listOf(Color(startColor), Color(endColor))
-}
+fun ScreenState.colors(): List<Color> = listOf(Color(startColor), Color(endColor))
 
 @ComposeUIViewController
 @Composable
 internal fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: (Long) -> Unit) {
     Box(contentAlignment = Alignment.Center) {
         Crossfade(targetState = state) {
-            Gradient(it.colors)
+            Gradient(it.colors())
         }
         Button(onClick = { randomize(getCurrentMillis()) }) {
             Text(text = "Shuffle")
@@ -33,8 +31,3 @@ internal fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, ra
 }
 
 private fun getCurrentMillis(): Long = NSDate().timeIntervalSince1970.toLong() * 1000
-
-@ComposeUIViewController
-@Composable
-internal fun ScreenWithExternalDependencies(param: ExternalClass2) {
-}
