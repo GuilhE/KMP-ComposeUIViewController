@@ -19,13 +19,6 @@ internal class Processor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val kspParamsFile = File("build/$FILE_NAME_ARGS")
-        val properties = Properties()
-        if (kspParamsFile.exists()) {
-            kspParamsFile.inputStream().use { properties.load(it) }
-        }
-        println(">>> PROCESSOR args > ${kspParamsFile.readText()}")
-
         val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
         if (candidates.none()) {
             logger.info("No more @${composeUIViewControllerAnnotationName.name()} found!")
@@ -90,12 +83,16 @@ internal class Processor(
     }
 
     private fun getFrameworkMetadataFromCompilerArgs(): List<FrameworkMetadata> {
-        val options = options.filter { it.key.startsWith("$frameworkBaseNameAnnotationParameter-") }
-        val metadata = mutableListOf<FrameworkMetadata>()
-        options.forEach {
-            metadata.add(FrameworkMetadata(it.key, it.value))
+        val paramsFile = File("build/$FILE_NAME_ARGS")
+        val properties = Properties()
+        if (paramsFile.exists()) {
+            paramsFile.inputStream().use { properties.load(it) }
         }
-        println(">>> PROCESSOR metadata > $metadata")
+
+        val filteredProperties = properties.filter { (key, _) -> key.toString().startsWith("$frameworkBaseNameAnnotationParameter-") }
+        val metadata = filteredProperties.map { (key, value) ->
+            FrameworkMetadata(key.toString(), value.toString())
+        }
         return metadata.ifEmpty { throw EmptyFrameworkBaseNameException() }
     }
 
