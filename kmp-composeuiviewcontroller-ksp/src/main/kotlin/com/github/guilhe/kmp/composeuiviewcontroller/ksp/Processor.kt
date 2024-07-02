@@ -9,6 +9,8 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
+import java.io.File
+import java.util.Properties
 
 internal class Processor(
     private val codeGenerator: CodeGenerator,
@@ -17,6 +19,13 @@ internal class Processor(
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        val kspParamsFile = File("build/$FILE_NAME_ARGS")
+        val properties = Properties()
+        if (kspParamsFile.exists()) {
+            kspParamsFile.inputStream().use { properties.load(it) }
+        }
+        println(">>> PROCESSOR args > ${kspParamsFile.readText()}")
+
         val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
         if (candidates.none()) {
             logger.info("No more @${composeUIViewControllerAnnotationName.name()} found!")
@@ -86,8 +95,7 @@ internal class Processor(
         options.forEach {
             metadata.add(FrameworkMetadata(it.key, it.value))
         }
-        println(">>> options >>> $options")
-        println(">>> metadata >>> $metadata")
+        println(">>> PROCESSOR metadata > $metadata")
         return metadata.ifEmpty { throw EmptyFrameworkBaseNameException() }
     }
 
@@ -133,7 +141,6 @@ internal class Processor(
                 stateParameter
             )
         )
-        println(">>>> getFrameworkBaseNames >>>> $frameworkBaseNames")
         frameworkBaseNames.ifEmpty { frameworkBaseNames.add(getFrameworkBaseNameFromAnnotations(node)) }
         return frameworkBaseNames
     }
@@ -284,5 +291,9 @@ internal class Processor(
                 extensionName = "swift"
             ).write(updatedCode.toByteArray())
         return updatedCode
+    }
+
+    private companion object {
+        private const val FILE_NAME_ARGS = "args.properties"
     }
 }

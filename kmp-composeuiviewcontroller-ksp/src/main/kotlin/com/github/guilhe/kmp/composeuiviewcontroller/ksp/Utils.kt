@@ -102,9 +102,6 @@ internal fun retrieveFrameworkBaseNames(
         }
         .filterNot { it.startsWith("kotlin") }
         .distinct()
-
-    println(">>>> frameworkMetadata >>>> $frameworkMetadata")
-    println(">>>> parameterPackages >>>> $parameterPackages")
     return parameterPackages.mapNotNull { pkg ->
         frameworkMetadata.find { it.packageName == pkg }?.baseName?.removePrefix("$frameworkBaseNameAnnotationParameter-")
     }.distinct()

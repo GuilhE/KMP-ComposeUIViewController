@@ -1,6 +1,5 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
-import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -14,15 +13,13 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
+import java.util.Properties
 
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
-    private fun Project.scriptFile() = File("$rootDir/$SCRIPT_FILE_NAME")
-
-    private fun ComposeUiViewControllerParameters.toList(): List<*> =
-        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
+    private fun ComposeUiViewControllerParameters.toList() = listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
     override fun apply(project: Project) {
         with(project) {
@@ -41,11 +38,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 finalizeFrameworkTasks(this)
             }
             afterEvaluate {
-                val packageName = retrievePackage()
-                println(">>>> retrievePackage >>>> $packageName")
-                val frameworkNames = retrieveFrameworkBaseNames()
-                println(">>>> frameworkNames >>>> $frameworkNames")
-                configureCompileArgs(packageName, frameworkNames)
+                writeArgsToDisk(configureCompileArgs(retrievePackage(), retrieveFrameworkBaseNames()))
             }
         }
     }
@@ -67,9 +60,9 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     private fun Project.retrieveFrameworkBaseNames(): Set<String> {
-        val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
+        val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val frameworkNames = mutableSetOf<String>()
-        kotlin.targets.configureEach { target ->
+        kmp.targets.configureEach { target ->
             if (target.fromIosFamily()) {
                 (target as KotlinNativeTarget).binaries.withType(Framework::class.java).configureEach { framework ->
                     frameworkNames += framework.baseName
@@ -100,28 +93,36 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         throw IllegalStateException("Cloud not determine project's package nor group")
     }
 
-    private fun Project.configureCompileArgs(packageName: String, frameworkNames: Set<String>) {
-        packageName.ifEmpty { return }
-        frameworkNames.ifEmpty { return }
+    private fun Project.configureCompileArgs(packageName: String, frameworkNames: Set<String>): Map<String, String> {
+        packageName.ifEmpty { return emptyMap() }
+        frameworkNames.ifEmpty { return emptyMap() }
+        val args = mutableMapOf<String, String>()
         val frameworkBaseName = frameworkNames.first() //let's assume for now all targets will have the same frameworkBaseName
         val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.targets.configureEach { target ->
             if (target.fromIosFamily()) {
-                extensions.getByType(KspExtension::class.java).apply {
-                    val keyComposed = "$ARG_KSP_FRAMEWORK_NAME-$frameworkBaseName"
-                    if (!arguments.containsKey(keyComposed)) {
-                        arg(keyComposed, packageName)
-                        println(">>> [$keyComposed, $packageName]")
-                    }
-                }
+                val keyComposed = "$ARG_FRAMEWORK_NAME-$frameworkBaseName"
+                args[keyComposed] = packageName
             }
         }
+        return args
+    }
+
+    private fun Project.writeArgsToDisk(args: Map<String, String>) {
+        val argsFile = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
+        val properties = Properties()
+        if (argsFile.exists()) {
+            argsFile.inputStream().use { properties.load(it) }
+        }
+        args.forEach { (key, value) -> properties[key] = value }
+        argsFile.parentFile.mkdirs()
+        argsFile.outputStream().use { properties.store(it, null) }
     }
 
     private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {
         tasks.matching { it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE || it.name == TASK_SYNC_FRAMEWORK }.configureEach { task ->
             if (extensionParameters.autoExport) {
-                println("> $LOG_TAG: ${task.name} will be finalizedBy $TASK_COPY_FILES_TO_XCODE")
+                println("\n> $LOG_TAG:\n\t> ${task.name}will be finalizedBy $TASK_COPY_FILES_TO_XCODE task")
                 task.finalizedBy(TASK_COPY_FILES_TO_XCODE)
             }
         }
@@ -131,7 +132,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
             val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
             println("\t> parameters: ${extensionParameters.toList()}")
-            val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$SCRIPT_FILE_NAME")
+            val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_SCRIPT")
             val script = inputStream?.use { stream ->
                 stream.bufferedReader().use(BufferedReader::readText)
             } ?: throw GradleException("Unable to read resource file")
@@ -158,11 +159,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
                 )
 
-            with(File("$rootDir/${SCRIPT_TEMP_FILE_NAME}")) {
+            with(File("$rootDir/${FILE_NAME_SCRIPT_TEMP}")) {
                 writeText(modifiedScript)
                 setExecutable(true)
                 task.workingDir = project.rootDir
-                task.commandLine("bash", "-c", "./$SCRIPT_TEMP_FILE_NAME")
+                task.commandLine("bash", "-c", "./$FILE_NAME_SCRIPT_TEMP")
                 if (!keepScriptFile) {
                     task.doLast { delete() }
                 }
@@ -181,12 +182,13 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val LIB_ANNOTATIONS_NAME = "kmp-composeuiviewcontroller-annotations"
         internal const val LIB_ANNOTATION = "$LIB_GROUP:$LIB_ANNOTATIONS_NAME:$VERSION_LIBRARY"
         internal const val EXTENSION_PLUGIN = "ComposeUiViewController"
-        internal const val TASK_COPY_FILES_TO_XCODE = "CopyFilesToXcodeTask"
+        internal const val TASK_COPY_FILES_TO_XCODE = "copyFilesToXcode"
         internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
         internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
-        internal const val ARG_KSP_FRAMEWORK_NAME = "frameworkBaseName"
-        internal const val SCRIPT_FILE_NAME = "exportToXcode.sh"
-        internal const val SCRIPT_TEMP_FILE_NAME = "temp.sh"
+        internal const val ARG_FRAMEWORK_NAME = "frameworkBaseName"
+        internal const val FILE_NAME_ARGS = "args.properties"
+        internal const val FILE_NAME_SCRIPT = "exportToXcode.sh"
+        internal const val FILE_NAME_SCRIPT_TEMP = "temp.sh"
         internal const val PARAM_KEEP_FILE = "keepScriptFile"
         internal const val PARAM_KMP_MODULE = "kmp_module"
         internal const val PARAM_FOLDER = "iosApp_project_folder"
