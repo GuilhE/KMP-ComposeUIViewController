@@ -100,8 +100,9 @@ internal fun retrieveFrameworkBaseNames(
     val parameterPackages = parameterSet
         .mapNotNull {
             val resolvedType = it.type.resolve()
-            val typeDeclaration = resolvedType.declaration
-            (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
+            val typeName = resolvedType.declaration.simpleName.asString()
+            if(typeName == "<Error>") throw TypeResolutionError(it)
+            (resolvedType.declaration as? KSClassDeclaration)?.packageName?.asString()
         }
         .filterNot { it.startsWith("kotlin") }
         .distinct()

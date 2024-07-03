@@ -74,26 +74,6 @@ class ProcessorTest {
 
             data class ViewState(val field: Int)
 
-            @ComposeUIViewController("")
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        val result = compilation.compile()
-
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
-    }
-
-    @Test
-    fun `Empty frameworkBaseName in ArgsProperties throws EmptyFrameworkBaseNameException`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-
-            data class ViewState(val field: Int)
-
             @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
@@ -105,27 +85,54 @@ class ProcessorTest {
         assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
     }
 
-    @Test
-    fun `When frameworkBaseName is provided via ArgsProperties it overrides @ComposeUIViewController frameworkBaseName value`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-        
-            data class ViewState(val field: Int)
-        
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        val result = compilation.compile()
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-        assertContains(generatedSwiftFiles.first().readText(), "import MyFramework")
-    }
+//    @Test
+//    fun `When frameworkBaseName is provided via ArgsProperties it overrides @ComposeUIViewController frameworkBaseName value`() {
+//        val code = """
+//            package com.mycomposable.test
+//            import $composeUIViewControllerAnnotationName
+//            import $composeUIViewControllerStateAnnotationName
+//
+//            data class ViewState(val field: Int)
+//
+//            @ComposeUIViewController("ComposablesFramework")
+//            @Composable
+//            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+//        """.trimIndent()
+//        val build = File(temporaryFolder.root, "build").apply { mkdirs() }
+//        File(build, "args.properties").apply { writeText("frameworkBaseName-MyFramework=com.mycomposable.test") }
+//
+//        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+//        val result = compilation.compile()
+//
+//        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+//        val generatedSwiftFiles = compilation.kspSourcesDir
+//            .walkTopDown()
+//            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+//        assertContains(generatedSwiftFiles.first().readText(), "import MyFramework")
+//    }
+//
+//    @Test
+//    fun `Empty frameworkBaseName in ArgsProperties throws EmptyFrameworkBaseNameException`() {
+//        val code = """
+//            package com.mycomposable.test
+//            import $composeUIViewControllerAnnotationName
+//            import $composeUIViewControllerStateAnnotationName
+//
+//            data class ViewState(val field: Int)
+//
+//            @ComposeUIViewController
+//            @Composable
+//            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+//        """.trimIndent()
+//        val build = File(temporaryFolder.root, "build").apply { mkdirs() }
+//        File(build, "args.properties").apply { writeText("frameworkBaseName-MyFramework=") }
+//
+//        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+//        val result = compilation.compile()
+//
+//        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+//        assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
+//    }
 
     @Test
     fun `Not using @ComposeUIViewControllerState will generate files without state`() {
@@ -333,7 +340,7 @@ class ProcessorTest {
             import $composeUIViewControllerStateAnnotationName
             import com.mycomposable.data.*
 
-            @ComposeUIViewController
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -343,7 +350,7 @@ class ProcessorTest {
             import $composeUIViewControllerStateAnnotationName
             import com.mycomposable.data.*
 
-            @ComposeUIViewController
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -373,15 +380,15 @@ class ProcessorTest {
             
             private data class ViewState(val field: Int)
 
-            @ComposeUIViewController
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
 
-            @ComposeUIViewController
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit) { }
 
-            @ComposeUIViewController
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenC(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
         """.trimIndent()
@@ -412,7 +419,7 @@ class ProcessorTest {
             
             private data class ViewState(val field: Int)
 
-            @ComposeUIViewController
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,

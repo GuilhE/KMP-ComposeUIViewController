@@ -37,20 +37,12 @@ internal class Processor(
                         if (stateParameter == null) {
                             parameters
                                 .filterComposableFunctions()
-                                .also {
-                                    if (parameters.size != it.size) {
-                                         throw InvalidParametersException()
-                                    }
-                                }
+                                .also { if (parameters.size != it.size) throw InvalidParametersException() }
                         } else {
                             parameters
                                 .filterNot { it.type == stateParameter.type }
                                 .filterComposableFunctions()
-                                .also {
-                                    if (parameters.size != it.size + 1) {
-                                         throw InvalidParametersException()
-                                    }
-                                }
+                                .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                         }
 
                     if (stateParameter == null) {
@@ -99,7 +91,7 @@ internal class Processor(
         return metadata
     }
 
-    private fun getFrameworkBaseNameFromAnnotations(node: KSAnnotated): String {
+    private fun getFrameworkBaseNameFromAnnotation(node: KSAnnotated): String? {
         val annotation = node.annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
         if (annotation != null) {
             val argument = annotation.arguments.firstOrNull { it.name?.asString() == frameworkBaseNameAnnotationParameter }
@@ -110,7 +102,7 @@ internal class Processor(
                 }
             }
         }
-        return ""
+        return null
     }
 
     private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
@@ -143,7 +135,9 @@ internal class Processor(
                 stateParameter
             )
         )
-        frameworkBaseNames.ifEmpty { frameworkBaseNames.add(getFrameworkBaseNameFromAnnotations(node)) }
+        frameworkBaseNames.ifEmpty {
+            getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) }
+        }
         frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
         return frameworkBaseNames
     }
