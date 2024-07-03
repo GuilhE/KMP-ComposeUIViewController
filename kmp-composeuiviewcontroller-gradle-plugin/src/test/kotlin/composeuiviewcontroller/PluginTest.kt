@@ -33,7 +33,7 @@ import java.io.File
 import java.util.Properties
 import kotlin.test.assertTrue
 
-class KmpComposeUIViewControllerPluginTest {
+class PluginTest {
 
     private val project = ProjectBuilder.builder().build()
     private lateinit var projectDir: File

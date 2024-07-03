@@ -39,7 +39,7 @@ internal class Processor(
                                 .filterComposableFunctions()
                                 .also {
                                     if (parameters.size != it.size) {
-                                        throw InvalidParametersException()
+                                         throw InvalidParametersException()
                                     }
                                 }
                         } else {
@@ -48,7 +48,7 @@ internal class Processor(
                                 .filterComposableFunctions()
                                 .also {
                                     if (parameters.size != it.size + 1) {
-                                        throw InvalidParametersException()
+                                         throw InvalidParametersException()
                                     }
                                 }
                         }
@@ -96,7 +96,7 @@ internal class Processor(
         val metadata = filteredProperties.map { (key, value) ->
             FrameworkMetadata(key.toString(), value.toString())
         }
-        return metadata.ifEmpty { throw EmptyFrameworkBaseNameException() }
+        return metadata
     }
 
     private fun getFrameworkBaseNameFromAnnotations(node: KSAnnotated): String {
@@ -110,7 +110,7 @@ internal class Processor(
                 }
             }
         }
-        throw EmptyFrameworkBaseNameException()
+        return ""
     }
 
     private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
@@ -144,6 +144,7 @@ internal class Processor(
             )
         )
         frameworkBaseNames.ifEmpty { frameworkBaseNames.add(getFrameworkBaseNameFromAnnotations(node)) }
+        frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
         return frameworkBaseNames
     }
 

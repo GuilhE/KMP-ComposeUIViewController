@@ -71,6 +71,8 @@ internal fun generateImports(
     return parameterSet
         .mapNotNull {
             val resolvedType = it.type.resolve()
+            val typeName = resolvedType.declaration.simpleName.asString()
+            if(typeName == "<Error>") throw TypeResolutionError(it)
             val typeDeclaration = resolvedType.declaration
 //            println(">> Type: ${it.type}, Resolved: $resolvedType, Declaration: $typeDeclaration")
             val typePackage = (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
@@ -141,4 +143,8 @@ internal class MultipleComposeUIViewControllerStateException(composable: KSFunct
 internal class InvalidParametersException : IllegalArgumentException(
     "Only 1 @${composeUIViewControllerStateAnnotationName.name()} and " +
             "N high-order function parameters (excluding @Composable content: () -> Unit) are allowed."
+)
+
+internal class TypeResolutionError(parameter: KSValueParameter) : IllegalArgumentException(
+    "Cannot resolve type for parameter ${parameter.name()} from ${parameter.location}. Check your file imports"
 )
