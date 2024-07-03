@@ -11,6 +11,8 @@
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		08C2EF971A4767F5ABB9B12E /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661A1AB332F33F8FCF0AC40A /* GradientScreenUIViewControllerRepresentable.swift */; };
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
+		5CB1570E2C355FB600D04C27 /* KMPObservableViewModelCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5CB1570D2C355FB600D04C27 /* KMPObservableViewModelCore */; };
+		5CB157102C355FB600D04C27 /* KMPObservableViewModelSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5CB1570F2C355FB600D04C27 /* KMPObservableViewModelSwiftUI */; };
 		7555FF83242A565900829871 /* SharedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* SharedView.swift */; };
 /* End PBXBuildFile section */
 
@@ -42,6 +44,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5CB1570E2C355FB600D04C27 /* KMPObservableViewModelCore in Frameworks */,
+				5CB157102C355FB600D04C27 /* KMPObservableViewModelSwiftUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +123,10 @@
 			dependencies = (
 			);
 			name = Gradient;
+			packageProductDependencies = (
+				5CB1570D2C355FB600D04C27 /* KMPObservableViewModelCore */,
+				5CB1570F2C355FB600D04C27 /* KMPObservableViewModelSwiftUI */,
+			);
 			productName = iosApp;
 			productReference = 7555FF7B242A565900829871 /* Gradient.app */;
 			productType = "com.apple.product-type.application";
@@ -148,6 +156,9 @@
 				Base,
 			);
 			mainGroup = 7555FF72242A565900829871;
+			packageReferences = (
+				5CB1570C2C355FB500D04C27 /* XCRemoteSwiftPackageReference "KMP-ObservableViewModel" */,
+			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -187,7 +198,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -407,6 +418,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5CB1570C2C355FB500D04C27 /* XCRemoteSwiftPackageReference "KMP-ObservableViewModel" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rickclephas/KMP-ObservableViewModel.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5CB1570D2C355FB600D04C27 /* KMPObservableViewModelCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5CB1570C2C355FB500D04C27 /* XCRemoteSwiftPackageReference "KMP-ObservableViewModel" */;
+			productName = KMPObservableViewModelCore;
+		};
+		5CB1570F2C355FB600D04C27 /* KMPObservableViewModelSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5CB1570C2C355FB500D04C27 /* XCRemoteSwiftPackageReference "KMP-ObservableViewModel" */;
+			productName = KMPObservableViewModelSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7555FF73242A565900829871 /* Project object */;
 }
