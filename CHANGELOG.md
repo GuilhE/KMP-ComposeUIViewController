@@ -3,7 +3,7 @@
 
 ## [2.0.20-Beta1-1.6.11-BETA-4]
 
-- Adds feature to import types from external modules. 
+- Adds experimental feature to import types from external modules. 
 
 > [!CAUTION]
 > Theres an actual limitation on Kotlin Multiplatform where each binary framework is compiled as a "closed world“, meaning it's not possible to pass custom type between two frameworks even it’s the same in Kotlin.
@@ -16,14 +16,13 @@
 > Shared: `public class Shared_modelsHello : KotlinBase`  
 > Shared: `open func update(state: Shared_modelsHello)`
 > 
-> I was expecting this:
+> Instead of:
 > 
 > SharedModels: `public class Hello : KotlinBase`  
 > Shared: `open func update(state: Hello)`
 > 
 > https://kotlinlang.slack.com/archives/C3SGXARS6/p1719961104891399
 
-Kotlin Multiplatform needs to address this issue for the feature to be functional. While it is capable of generating Kotlin and Swift files with the respective imports from different modules, the iOS build will fail due to this limitation.
 
 ---
 

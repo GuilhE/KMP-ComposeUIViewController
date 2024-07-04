@@ -10,7 +10,7 @@ import kotlin.native.HidesFromObjC
 /**
  * @param frameworkBaseName: shared library framework's base name
  */
-public annotation class ComposeUIViewController(val frameworkBaseName: String)
+public annotation class ComposeUIViewController(val frameworkBaseName: String = "")
 
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION)
 @Retention(AnnotationRetention.SOURCE)

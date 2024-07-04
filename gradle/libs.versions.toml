@@ -2,7 +2,7 @@
 
 kotlin = "2.0.20-Beta1"
 ksp = "2.0.20-Beta1-1.0.22"
-kotlinCompose = "1.6.11"
+kotlinCompose = "1.7.0-alpha01"
 junitImpl = "5.7.2"
 junitRuntime = "5.7.2"
 compileTesting = "1.6.0"

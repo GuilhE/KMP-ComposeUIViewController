@@ -85,6 +85,12 @@ class ProcessorTest {
         assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
     }
 
+
+    /**
+     * I don't know how to test the following two scenarios because the "test project" folder structure created does not replicate
+     * a normal project structure, therefore it will always fail because the plugin will try to search for the project's root build folder that does not exist in this context.
+     */
+
 //    @Test
 //    fun `When frameworkBaseName is provided via ArgsProperties it overrides @ComposeUIViewController frameworkBaseName value`() {
 //        val code = """
@@ -120,7 +126,7 @@ class ProcessorTest {
 //
 //            data class ViewState(val field: Int)
 //
-//            @ComposeUIViewController
+//            @ComposeUIViewController("ComposablesFramework")
 //            @Composable
 //            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
 //        """.trimIndent()
