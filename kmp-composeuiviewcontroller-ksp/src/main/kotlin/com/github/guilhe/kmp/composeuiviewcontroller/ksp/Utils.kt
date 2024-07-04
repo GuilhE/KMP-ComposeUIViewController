@@ -1,6 +1,7 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
@@ -58,7 +59,7 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
     }.toList()
 }
 
-internal fun generateImports(
+internal fun extractImports(
     packageName: String,
     makeParameters: List<KSValueParameter>,
     parameters: List<KSValueParameter>,
@@ -85,7 +86,7 @@ internal fun generateImports(
         .joinToString("\n") { "import $it" }
 }
 
-internal fun retrieveFrameworkBaseNames(
+internal fun extractFrameworkBaseNames(
     composable: KSFunctionDeclaration,
     frameworkMetadata: List<FrameworkMetadata>,
     makeParameters: List<KSValueParameter>,
@@ -148,4 +149,8 @@ internal class InvalidParametersException : IllegalArgumentException(
 
 internal class TypeResolutionError(parameter: KSValueParameter) : IllegalArgumentException(
     "Cannot resolve type for parameter ${parameter.name()} from ${parameter.location}. Check your file imports"
+)
+
+internal class UnkownModuleException(file: KSFile) : IllegalArgumentException(
+    "Cannot find the module for ${file.filePath}"
 )

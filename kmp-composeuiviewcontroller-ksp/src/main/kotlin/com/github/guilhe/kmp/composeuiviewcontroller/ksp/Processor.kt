@@ -7,6 +7,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import java.io.File
@@ -27,7 +28,7 @@ internal class Processor(
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
             node.containingFile?.let { file ->
-                val packageName = file.packageName.asString()
+                val moduleName = findModuleNameFromPath(file)
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
                     it.annotations.any { annotation -> annotation.shortName.asString() == composeUIViewControllerAnnotationName.name() }
                 }) {
@@ -45,6 +46,7 @@ internal class Processor(
                                 .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                         }
 
+                    val packageName = file.packageName.asString()
                     if (stateParameter == null) {
                         createKotlinFileWithoutState(packageName, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
@@ -77,8 +79,51 @@ internal class Processor(
         return emptyList()
     }
 
-    private fun getFrameworkMetadataFromCompilerArgs(): List<FrameworkMetadata> {
-        val paramsFile = File("build/$FILE_NAME_ARGS")
+    private fun findModuleNameFromPath(file: KSFile): String {
+        val pathParts = file.filePath.split(File.separator)
+        val srcIndex = pathParts.indexOf("src")
+        return if (srcIndex > 0) pathParts[srcIndex - 1] else throw UnkownModuleException(file)
+    }
+
+    private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
+        val stateParameters = parameters.filter {
+            it.annotations
+                .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name() }
+                .toList()
+                .isNotEmpty()
+        }
+        when {
+            stateParameters.size > 1 -> throw MultipleComposeUIViewControllerStateException(composable)
+        }
+        return stateParameters
+    }
+
+    private fun getFrameworkBaseNames(
+        composable: KSFunctionDeclaration,
+        node: KSAnnotated,
+        makeParameters: List<KSValueParameter>,
+        parameters: List<KSValueParameter>,
+        stateParameter: KSValueParameter? = null
+    ): List<String> {
+        val frameworkBaseNames = mutableListOf<String>()
+        frameworkBaseNames.addAll(
+            extractFrameworkBaseNames(
+                composable,
+                getFrameworkMetadataFromArgsProperties(),
+                makeParameters,
+                parameters,
+                stateParameter
+            )
+        )
+        frameworkBaseNames.ifEmpty {
+            getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) }
+        }
+        frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
+        return frameworkBaseNames
+    }
+
+    private fun getFrameworkMetadataFromArgsProperties(): List<FrameworkMetadata> {
+        val paramsFile = File("./build/$FILE_NAME_ARGS")
         val properties = Properties()
         if (paramsFile.exists()) {
             paramsFile.inputStream().use { properties.load(it) }
@@ -105,50 +150,13 @@ internal class Processor(
         return null
     }
 
-    private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
-        val stateParameters = parameters.filter {
-            it.annotations
-                .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name() }
-                .toList()
-                .isNotEmpty()
-        }
-        when {
-            stateParameters.size > 1 -> throw MultipleComposeUIViewControllerStateException(composable)
-        }
-        return stateParameters
-    }
-
-    private fun getFrameworkBaseNames(
-        composable: KSFunctionDeclaration,
-        node: KSAnnotated,
-        makeParameters: List<KSValueParameter>,
-        parameters: List<KSValueParameter>,
-        stateParameter: KSValueParameter? = null
-    ): List<String> {
-        val frameworkBaseNames = mutableListOf<String>()
-        frameworkBaseNames.addAll(
-            retrieveFrameworkBaseNames(
-                composable,
-                getFrameworkMetadataFromCompilerArgs(),
-                makeParameters,
-                parameters,
-                stateParameter
-            )
-        )
-        frameworkBaseNames.ifEmpty {
-            getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) }
-        }
-        frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
-        return frameworkBaseNames
-    }
-
     private fun createKotlinFileWithoutState(
         packageName: String,
         composable: KSFunctionDeclaration,
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>
     ): String {
-        val imports = generateImports(packageName, makeParameters, parameters)
+        val imports = extractImports(packageName, makeParameters, parameters)
         val code = """
             @file:Suppress("unused")
             package $packageName
@@ -183,7 +191,7 @@ internal class Processor(
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>
     ): String {
-        val imports = generateImports(packageName, makeParameters, parameters, stateParameter)
+        val imports = extractImports(packageName, makeParameters, parameters, stateParameter)
         val code = """
             @file:Suppress("unused")
             package $packageName

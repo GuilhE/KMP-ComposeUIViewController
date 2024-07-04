@@ -19,18 +19,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 import kotlin.test.assertContains
 
 @OptIn(ExperimentalCompilerApi::class)
 class ProcessorTest {
 
-    @Rule
-    @JvmField
-    var temporaryFolder: TemporaryFolder = TemporaryFolder()
+    @get:Rule
+    val tempFolder = TemporaryFolder(File("build/tmp/test-module/src").also { it.mkdirs() })
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
+
         return KotlinCompilation().apply {
-            workingDir = temporaryFolder.root
+            workingDir = tempFolder.root
             inheritClassPath = true
             symbolProcessorProviders = listOf(ProcessorProvider())
             sources = sourceFiles.asList()
@@ -66,7 +67,63 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Empty frameworkBaseName in @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
+    fun `When frameworkBaseName is provided via ArgsProperties it overrides @ComposeUIViewController frameworkBaseName value`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+
+            data class ViewState(val field: Int)
+
+            @ComposeUIViewController("ComposablesFramework")
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //for this test to pass we need to reach module's ./build
+        val args = File(build, "args.properties").apply {
+            writeText("frameworkBaseName-MyFramework=com.mycomposable.test")
+        }
+
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+        args.delete()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+        assertContains(generatedSwiftFiles.first().readText(), "import MyFramework")
+    }
+
+    @Test
+    fun `Empty frameworkBaseName in ArgsProperties falls back to frameworkBaseName in @ComposeUIViewController`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+
+            data class ViewState(val field: Int)
+
+            @ComposeUIViewController("ComposablesFramework")
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //for this test to pass we need to reach module's ./build
+        val args = File(build, "args.properties").apply { writeText("frameworkBaseName-MyFramework=") }
+
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+        args.delete()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+        assertContains(generatedSwiftFiles.first().readText(), "import ComposablesFramework")
+    }
+
+    @Test
+    fun `Empty frameworkBaseName in ArgsProperties and @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -85,61 +142,6 @@ class ProcessorTest {
         assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
     }
 
-
-    /**
-     * I don't know how to test the following two scenarios because the "test project" folder structure created does not replicate
-     * a normal project structure, therefore it will always fail because the plugin will try to search for the project's root build folder that does not exist in this context.
-     */
-
-//    @Test
-//    fun `When frameworkBaseName is provided via ArgsProperties it overrides @ComposeUIViewController frameworkBaseName value`() {
-//        val code = """
-//            package com.mycomposable.test
-//            import $composeUIViewControllerAnnotationName
-//            import $composeUIViewControllerStateAnnotationName
-//
-//            data class ViewState(val field: Int)
-//
-//            @ComposeUIViewController("ComposablesFramework")
-//            @Composable
-//            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-//        """.trimIndent()
-//        val build = File(temporaryFolder.root, "build").apply { mkdirs() }
-//        File(build, "args.properties").apply { writeText("frameworkBaseName-MyFramework=com.mycomposable.test") }
-//
-//        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-//        val result = compilation.compile()
-//
-//        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
-//        val generatedSwiftFiles = compilation.kspSourcesDir
-//            .walkTopDown()
-//            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-//        assertContains(generatedSwiftFiles.first().readText(), "import MyFramework")
-//    }
-//
-//    @Test
-//    fun `Empty frameworkBaseName in ArgsProperties throws EmptyFrameworkBaseNameException`() {
-//        val code = """
-//            package com.mycomposable.test
-//            import $composeUIViewControllerAnnotationName
-//            import $composeUIViewControllerStateAnnotationName
-//
-//            data class ViewState(val field: Int)
-//
-//            @ComposeUIViewController("ComposablesFramework")
-//            @Composable
-//            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-//        """.trimIndent()
-//        val build = File(temporaryFolder.root, "build").apply { mkdirs() }
-//        File(build, "args.properties").apply { writeText("frameworkBaseName-MyFramework=") }
-//
-//        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-//        val result = compilation.compile()
-//
-//        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
-//        assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
-//    }
-
     @Test
     fun `Not using @ComposeUIViewControllerState will generate files without state`() {
         val code = """
@@ -152,6 +154,7 @@ class ProcessorTest {
             @Composable
             fun Screen(data: SomeClass, value: Int, callBack: () -> Unit) { }
         """.trimIndent()
+
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
@@ -478,5 +481,52 @@ class ProcessorTest {
         for (expectedType in expectedSwiftTypes) {
             assertTrue(generatedCodeFile.contains(expectedType))
         }
+    }
+
+    @Test
+    fun `Types imported from different KMP modules will produce Swift files with composed types`() {
+        val data = """
+            package com.mycomposable.data
+            data class Data(val field: Int)
+        """.trimIndent()
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.Data
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(data: Data) { }
+        """.trimIndent()
+
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftOutput = """
+            import SwiftUI
+            import MyFramework
+
+            public struct ScreenRepresentable: UIViewControllerRepresentable {
+                let data: Test_moduleData
+
+                public func makeUIViewController(context: Context) -> UIViewController {
+                    ScreenUIViewController().make(data: data)
+                }
+
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    //unused
+                }
+            }
+        """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
     }
 }
