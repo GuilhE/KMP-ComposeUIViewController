@@ -35,53 +35,42 @@ internal class Processor(
                 }) {
                     val parameters: List<KSValueParameter> = composable.parameters
                     val stateParameter = getStateParameter(parameters, composable).firstOrNull()
-                    val makeParameters =
-                        if (stateParameter == null) {
-                            parameters
-                                .filterComposableFunctions()
-                                .also { if (parameters.size != it.size) throw InvalidParametersException() }
-                        } else {
-                            parameters
-                                .filterNot { it.type == stateParameter.type }
-                                .filterComposableFunctions()
-                                .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
-                        }
-
+                    val makeParameters = if (stateParameter == null) {
+                        parameters
+                            .filterComposableFunctions()
+                            .also { if (parameters.size != it.size) throw InvalidParametersException() }
+                    } else {
+                        parameters
+                            .filterNot { it.type == stateParameter.type }
+                            .filterComposableFunctions()
+                            .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
+                    }
                     val packageName = file.packageName.asString()
                     val imports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
+                    val externalModuleTypes = buildExternalModuleParameters(moduleName, imports)
+
                     if (stateParameter == null) {
                         createKotlinFileWithoutState(packageName, imports, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
 
-                        createSwiftFileWithoutState(
-                            getFrameworkBaseNames(composable, node, makeParameters, parameters),
-                            composable,
-                            makeParameters,
-                            buildExternalModuleParameter(moduleName, imports)
-                        ).also {
+//                        val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
+                        val currentFramework = trimFrameworkBaseNames(node, packageName)
+                        createSwiftFileWithoutState(listOf(currentFramework), composable, makeParameters, externalModuleTypes).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
                         val stateParameterName = stateParameter.name()
                         createKotlinFileWithState(
-                            packageName,
-                            imports,
-                            composable,
-                            stateParameterName,
-                            stateParameter,
-                            makeParameters,
-                            parameters
+                            packageName, imports, composable, stateParameterName, stateParameter, makeParameters, parameters
                         ).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
+
+//                        val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
+                        val currentFramework = trimFrameworkBaseNames(node, packageName)
                         createSwiftFileWithState(
-                            getFrameworkBaseNames(composable, node, makeParameters, parameters, stateParameter),
-                            composable,
-                            stateParameterName,
-                            stateParameter,
-                            makeParameters,
-                            buildExternalModuleParameter(moduleName, imports)
+                            listOf(currentFramework), composable, stateParameterName, stateParameter, makeParameters, externalModuleTypes
                         ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
@@ -111,6 +100,22 @@ internal class Processor(
         return stateParameters
     }
 
+    /**
+     * This exists because of KMP current implementation bla bla bla. When fixed this will become deprecated and substituted by [getFrameworkBaseNames]
+     */
+    private fun trimFrameworkBaseNames(node: KSAnnotated, packageName: String): String {
+        val metadata = getFrameworkMetadataFromArgsProperties()
+        if (metadata.isEmpty()) {
+            val framework = getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException()
+            return framework
+        } else {
+            val framework =
+                metadata.firstOrNull { it.packageName == packageName }?.baseName?.removePrefix("$frameworkBaseNameAnnotationParameter-") ?: ""
+            framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
+            return framework
+        }
+    }
+
     private fun getFrameworkBaseNames(
         composable: KSFunctionDeclaration,
         node: KSAnnotated,
@@ -136,18 +141,17 @@ internal class Processor(
     }
 
     private fun getFrameworkMetadataFromArgsProperties(): List<FrameworkMetadata> {
-        return emptyList()
-//        val paramsFile = File("./build/$FILE_NAME_ARGS")
-//        val properties = Properties()
-//        if (paramsFile.exists()) {
-//            paramsFile.inputStream().use { properties.load(it) }
-//        }
-//
-//        val filteredProperties = properties.filter { (key, _) -> key.toString().startsWith("$frameworkBaseNameAnnotationParameter-") }
-//        val metadata = filteredProperties.map { (key, value) ->
-//            FrameworkMetadata(key.toString(), value.toString())
-//        }
-//        return metadata
+        val paramsFile = File("./build/$FILE_NAME_ARGS")
+        val properties = Properties()
+        if (paramsFile.exists()) {
+            paramsFile.inputStream().use { properties.load(it) }
+        }
+
+        val filteredProperties = properties.filter { (key, _) -> key.toString().startsWith("$frameworkBaseNameAnnotationParameter-") }
+        val metadata = filteredProperties.map { (key, value) ->
+            FrameworkMetadata(key.toString(), value.toString())
+        }
+        return metadata
     }
 
     private fun getFrameworkBaseNameFromAnnotation(node: KSAnnotated): String? {
@@ -241,7 +245,7 @@ internal class Processor(
         return updatedCode
     }
 
-    private fun buildExternalModuleParameter(moduleName: String, imports: List<String>): MutableMap<String, String> {
+    private fun buildExternalModuleParameters(moduleName: String, imports: List<String>): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
         val capitalized = moduleName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
         val replaced = capitalized.replace("-", "_")

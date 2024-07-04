@@ -114,7 +114,7 @@ class ProcessorTest {
         val args = File(
             File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), //we need to reach module's ./build
             "args.properties"
-        ).apply { writeText("frameworkBaseName-MyFramework=") }
+        ).apply { writeText("frameworkBaseName-=com.mycomposable.test") }
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
