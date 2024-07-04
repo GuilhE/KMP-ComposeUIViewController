@@ -241,7 +241,7 @@ internal class Processor(
                 }
             }
         """.trimIndent()
-        val updatedCode = indentParameters(code, letParameters)
+        val updatedCode = indentParameters(indentParameters(code, frameworks), letParameters)
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
@@ -279,7 +279,7 @@ internal class Processor(
                 }
             }
         """.trimIndent()
-        val updatedCode = indentParameters(code, letParameters)
+        val updatedCode = indentParameters(indentParameters(code, frameworks), letParameters)
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
