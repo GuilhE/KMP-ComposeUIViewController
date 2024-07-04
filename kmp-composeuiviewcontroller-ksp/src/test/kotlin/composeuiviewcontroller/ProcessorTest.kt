@@ -499,7 +499,13 @@ class ProcessorTest {
             @Composable
             fun Screen(data: Data) { }
         """.trimIndent()
-
+        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //for this test to pass we need to reach module's ./build
+        val args = File(build, "args.properties").apply {
+            writeText("""
+                frameworkBaseName-MyFramework=com.mycomposable.test
+                frameworkBaseName-MyFramework2=com.mycomposable.data
+            """.trimIndent())
+        }
         val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
         val result = compilation.compile()
 
@@ -528,5 +534,6 @@ class ProcessorTest {
             }
         """.trimIndent()
         assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+//        args.delete()
     }
 }
