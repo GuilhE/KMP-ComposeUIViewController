@@ -79,8 +79,10 @@ class ProcessorTest {
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //for this test to pass we need to reach module's ./build
-        val args = File(build, "args.properties").apply {
+        val args = File(
+            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), // we need to reach module's ./build
+            "args.properties"
+        ).apply {
             writeText("frameworkBaseName-MyFramework=com.mycomposable.test")
         }
 
@@ -108,8 +110,11 @@ class ProcessorTest {
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //for this test to pass we need to reach module's ./build
-        val args = File(build, "args.properties").apply { writeText("frameworkBaseName-MyFramework=") }
+
+        val args = File(
+            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), //we need to reach module's ./build
+            "args.properties"
+        ).apply { writeText("frameworkBaseName-MyFramework=") }
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -499,12 +504,17 @@ class ProcessorTest {
             @Composable
             fun Screen(data: Data) { }
         """.trimIndent()
-        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //for this test to pass we need to reach module's ./build
-        val args = File(build, "args.properties").apply {
-            writeText("""
+
+        val args = File(
+            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), //we need to reach module's ./build
+            "args.properties"
+        ).apply {
+            writeText(
+                """
                 frameworkBaseName-MyFramework=com.mycomposable.test
                 frameworkBaseName-MyFramework2=com.mycomposable.data
-            """.trimIndent())
+            """.trimIndent()
+            )
         }
         val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
         val result = compilation.compile()
@@ -534,6 +544,6 @@ class ProcessorTest {
             }
         """.trimIndent()
         assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
-//        args.delete()
+        args.delete()
     }
 }

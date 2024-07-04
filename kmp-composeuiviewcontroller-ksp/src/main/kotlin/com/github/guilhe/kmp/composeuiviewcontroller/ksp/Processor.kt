@@ -11,6 +11,7 @@ import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import java.io.File
+import java.util.Locale
 import java.util.Properties
 
 internal class Processor(
@@ -47,20 +48,31 @@ internal class Processor(
                         }
 
                     val packageName = file.packageName.asString()
+                    val imports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
                     if (stateParameter == null) {
-                        createKotlinFileWithoutState(packageName, composable, makeParameters, parameters).also {
+                        createKotlinFileWithoutState(packageName, imports, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
+
                         createSwiftFileWithoutState(
                             getFrameworkBaseNames(composable, node, makeParameters, parameters),
                             composable,
-                            makeParameters
+                            makeParameters,
+                            buildExternalModuleParameter(moduleName, imports)
                         ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
                         val stateParameterName = stateParameter.name()
-                        createKotlinFileWithState(packageName, composable, stateParameterName, stateParameter, makeParameters, parameters).also {
+                        createKotlinFileWithState(
+                            packageName,
+                            imports,
+                            composable,
+                            stateParameterName,
+                            stateParameter,
+                            makeParameters,
+                            parameters
+                        ).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
                         createSwiftFileWithState(
@@ -68,7 +80,8 @@ internal class Processor(
                             composable,
                             stateParameterName,
                             stateParameter,
-                            makeParameters
+                            makeParameters,
+                            buildExternalModuleParameter(moduleName, imports)
                         ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
@@ -123,17 +136,18 @@ internal class Processor(
     }
 
     private fun getFrameworkMetadataFromArgsProperties(): List<FrameworkMetadata> {
-        val paramsFile = File("./build/$FILE_NAME_ARGS")
-        val properties = Properties()
-        if (paramsFile.exists()) {
-            paramsFile.inputStream().use { properties.load(it) }
-        }
-
-        val filteredProperties = properties.filter { (key, _) -> key.toString().startsWith("$frameworkBaseNameAnnotationParameter-") }
-        val metadata = filteredProperties.map { (key, value) ->
-            FrameworkMetadata(key.toString(), value.toString())
-        }
-        return metadata
+        return emptyList()
+//        val paramsFile = File("./build/$FILE_NAME_ARGS")
+//        val properties = Properties()
+//        if (paramsFile.exists()) {
+//            paramsFile.inputStream().use { properties.load(it) }
+//        }
+//
+//        val filteredProperties = properties.filter { (key, _) -> key.toString().startsWith("$frameworkBaseNameAnnotationParameter-") }
+//        val metadata = filteredProperties.map { (key, value) ->
+//            FrameworkMetadata(key.toString(), value.toString())
+//        }
+//        return metadata
     }
 
     private fun getFrameworkBaseNameFromAnnotation(node: KSAnnotated): String? {
@@ -152,18 +166,19 @@ internal class Processor(
 
     private fun createKotlinFileWithoutState(
         packageName: String,
+        imports: List<String>,
         composable: KSFunctionDeclaration,
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>
     ): String {
-        val imports = extractImports(packageName, makeParameters, parameters)
+        val importsParsed = imports.joinToString("\n") { "import $it" }
         val code = """
             @file:Suppress("unused")
             package $packageName
 
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
-            $imports
+            $importsParsed
 
             object ${composable.name()}UIViewController {
                 fun make(${makeParameters.joinToString()}): UIViewController {
@@ -173,7 +188,7 @@ internal class Processor(
                 }
             }
         """.trimIndent()
-        val updatedCode = indentParameters(code, imports)
+        val updatedCode = indentParameters(code, importsParsed)
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
@@ -185,13 +200,14 @@ internal class Processor(
 
     private fun createKotlinFileWithState(
         packageName: String,
+        imports: List<String>,
         composable: KSFunctionDeclaration,
         stateParameterName: String,
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>
     ): String {
-        val imports = extractImports(packageName, makeParameters, parameters, stateParameter)
+        val importsParsed = imports.joinToString("\n") { "import $it" }
         val code = """
             @file:Suppress("unused")
             package $packageName
@@ -199,7 +215,7 @@ internal class Processor(
             import androidx.compose.runtime.mutableStateOf
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
-            $imports
+            $importsParsed
 
             object ${composable.name()}UIViewController {
                 private val $stateParameterName = mutableStateOf<${stateParameter.type}?>(null)
@@ -215,7 +231,7 @@ internal class Processor(
                 }
             }
         """.trimIndent()
-        val updatedCode = indentParameters(code, imports)
+        val updatedCode = indentParameters(code, importsParsed)
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
@@ -225,14 +241,32 @@ internal class Processor(
         return updatedCode
     }
 
+    private fun buildExternalModuleParameter(moduleName: String, imports: List<String>): MutableMap<String, String> {
+        val result = mutableMapOf<String, String>()
+        val capitalized = moduleName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        val replaced = capitalized.replace("-", "_")
+        imports.forEach {
+            val type = it.split(".").last()
+            result[type] = "$replaced$type"
+        }
+        return result
+    }
+
     private fun createSwiftFileWithoutState(
         frameworkBaseName: List<String>,
         composable: KSFunctionDeclaration,
-        makeParameters: List<KSValueParameter>
+        makeParameters: List<KSValueParameter>,
+        externalParameters: Map<String, String>
     ): String {
         val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
-        val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
+        val letParameters = makeParameters.joinToString("\n") {
+            val type = kotlinTypeToSwift(it.type)
+            val finalType = if (externalParameters.containsKey(type)) {
+                externalParameters[type]
+            } else type
+            "let ${it.name()}: $finalType"
+        }
         val code = """
             import SwiftUI
             $frameworks
@@ -266,10 +300,17 @@ internal class Processor(
         stateParameterName: String,
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
+        externalParameters: Map<String, String>
     ): String {
         val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
-        val letParameters = makeParameters.joinToString("\n") { "let ${it.name()}: ${kotlinTypeToSwift(it.type)}" }
+        val letParameters = makeParameters.joinToString("\n") {
+            val type = kotlinTypeToSwift(it.type)
+            val finalType = if (externalParameters.containsKey(type)) {
+                externalParameters[type]
+            } else type
+            "let ${it.name()}: $finalType"
+        }
         val code = """
             import SwiftUI
             $frameworks

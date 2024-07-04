@@ -59,12 +59,12 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
     }.toList()
 }
 
-internal fun extractImports(
+internal fun extractImportsFromExternalPackages(
     packageName: String,
     makeParameters: List<KSValueParameter>,
     parameters: List<KSValueParameter>,
     stateParameter: KSValueParameter? = null
-): String {
+): List<String> {
     val parameterSet = setOf<KSValueParameter>()
         .plus(makeParameters)
         .plus(parameters)
@@ -83,7 +83,6 @@ internal fun extractImports(
             } else null
         }
         .distinct()
-        .joinToString("\n") { "import $it" }
 }
 
 internal fun extractFrameworkBaseNames(
