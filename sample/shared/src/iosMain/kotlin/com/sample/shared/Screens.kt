@@ -21,7 +21,7 @@ data class ScreenState(val startColor: Long, val endColor: Long) {
 
 @ComposeUIViewController
 @Composable
-internal fun GradientScreen(@ComposeUIViewControllerState state: ScreenStateExternal, randomize: (Long) -> Unit) {
+internal fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, randomize: (Long) -> Unit) {
     Box(contentAlignment = Alignment.Center) {
         Crossfade(targetState = state) {
             Gradient(it.colors)

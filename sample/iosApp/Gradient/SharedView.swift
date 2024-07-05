@@ -2,7 +2,7 @@ import SwiftUI
 import Composables
 
 struct SharedView: View {
-    @State private var screenState: Shared_modelsScreenStateExternal = Shared_modelsScreenStateExternal (
+    @State private var screenState: ScreenState = ScreenState (
         startColor: convertUIColorToKotlinLong(UIColor.red),
         endColor: convertUIColorToKotlinLong(UIColor.blue)
     )
@@ -19,7 +19,7 @@ struct SharedView: View {
             print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(milliseconds: millis)))", terminator: "\n")
             let randomIndexes = (0..<colors.count).shuffled().prefix(2)
             let randomColors = randomIndexes.map { colors[$0] }
-            screenState = Shared_modelsScreenStateExternal(
+            screenState = ScreenState(
                 startColor: convertUIColorToKotlinLong(randomColors[0]),
                 endColor: convertUIColorToKotlinLong(randomColors[1])
             )

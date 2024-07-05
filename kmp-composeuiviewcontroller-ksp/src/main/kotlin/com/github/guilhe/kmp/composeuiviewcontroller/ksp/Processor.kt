@@ -114,6 +114,29 @@ internal class Processor(
         return modules
     }
 
+    /**
+     * Theres an [actual limitation](https://kotlinlang.slack.com/archives/C3SGXARS6/p1719961104891399) on Kotlin Multiplatform where each binary framework is compiled as a "closed world“, meaning it's not possible to pass custom type between two frameworks even it’s the same in Kotlin.
+     *
+     * Let’s say I have two modules, `shared` and `shared-models`, each providing their own binary frameworks: “Shared” and “SharedModels” respectively. The `shared-models` contains a `data class Hello`, and the `shared` module `implements(project(":shared-models"))` and has a public method that takes `Hello` as a parameter.
+     *
+     * When these modules are exported to Swift, we see the following:
+     *
+     * SharedModels: `public class Hello : KotlinBase`
+     *
+     * Shared: `public class Shared_modelsHello : KotlinBase`
+     *
+     * Shared: `open func update(state: Shared_modelsHello)`
+     *
+     * Instead of:
+     *
+     * SharedModels: `public class Hello : KotlinBase`
+     *
+     * Shared: `open func update(state: Hello)`
+     *
+     * It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) sand will generate new types to reference those external types. That's why we endup having `Shared_modelsHello` instead of just `Hello`.
+     *
+     * [https://stackoverflow.com/a/78707072/1423773](https://stackoverflow.com/a/78707072/1423773)
+     */
     private fun buildExternalModuleParameters(modules: List<Module>, imports: List<String>): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
         imports.forEach { it ->
@@ -131,7 +154,7 @@ internal class Processor(
     }
 
     /**
-     * This exists because of KMP current implementation bla bla bla. When fixed this will become deprecated and substituted by [getFrameworkBaseNames]
+     * This will be needed until [buildExternalModuleParameters] is needed to. When (if) KPM limitation is addressed this will become deprecated and substituted by [getFrameworkBaseNames]
      */
     private fun trimFrameworkBaseNames(node: KSAnnotated, packageName: String): String {
         val metadata = getFrameworkMetadataFromJson()
