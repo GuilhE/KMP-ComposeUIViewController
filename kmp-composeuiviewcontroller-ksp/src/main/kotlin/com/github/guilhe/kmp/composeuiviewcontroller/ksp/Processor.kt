@@ -31,7 +31,6 @@ internal class Processor(
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
             node.containingFile?.let { file ->
-                val moduleName = findModuleNameFromPath(file)
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
                     it.annotations.any { annotation -> annotation.shortName.asString() == composeUIViewControllerAnnotationName.name() }
                 }) {
@@ -49,7 +48,8 @@ internal class Processor(
                     }
                     val packageName = file.packageName.asString()
                     val imports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
-                    val externalModuleTypes = buildExternalModuleParameters(moduleName, imports)
+                    val modules = getFrameworkMetadataFromJson()
+                    val externalModuleTypes = buildExternalModuleParameters(modules, imports)
 
                     if (stateParameter == null) {
                         createKotlinFileWithoutState(packageName, imports, composable, makeParameters, parameters).also {
@@ -83,12 +83,6 @@ internal class Processor(
         return emptyList()
     }
 
-    private fun findModuleNameFromPath(file: KSFile): String {
-        val pathParts = file.filePath.split(File.separator)
-        val srcIndex = pathParts.indexOf("src")
-        return if (srcIndex > 0) pathParts[srcIndex - 1] else throw UnkownModuleException(file)
-    }
-
     private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
         val stateParameters = parameters.filter {
             it.annotations
@@ -100,6 +94,32 @@ internal class Processor(
             stateParameters.size > 1 -> throw MultipleComposeUIViewControllerStateException(composable)
         }
         return stateParameters
+    }
+
+    private fun getFrameworkMetadataFromJson(): List<Module> {
+        val file = File("./build/$FILE_NAME_ARGS")
+        val modules = try {
+            Json.decodeFromString<List<Module>>(file.readText())
+        } catch (e: Exception) {
+            throw ModuleDecodeException()
+        }
+        return modules
+    }
+
+    private fun buildExternalModuleParameters(modules: List<Module>, imports: List<String>): MutableMap<String, String> {
+        val result = mutableMapOf<String, String>()
+        imports.forEach { it ->
+            val type = it.split(".").last()
+            val import = it.split(".$type").first()
+            modules
+                .filter { module -> module.packageName == import }
+                .forEach { module ->
+                    val capitalized = module.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                    val replaced = capitalized.replace("-", "_")
+                    result[type] = "$replaced$type"
+                }
+        }
+        return result
     }
 
     /**
@@ -140,16 +160,6 @@ internal class Processor(
         }
         frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
         return frameworkBaseNames
-    }
-
-    private fun getFrameworkMetadataFromJson(): List<Module> {
-        val file = File("./build/$FILE_NAME_ARGS")
-        val modules = try {
-            Json.decodeFromString<List<Module>>(file.readText())
-        } catch (e: Exception) {
-            throw ModuleDecodeException()
-        }
-        return modules
     }
 
     private fun getFrameworkBaseNameFromAnnotation(node: KSAnnotated): String? {
@@ -243,17 +253,6 @@ internal class Processor(
         return updatedCode
     }
 
-    private fun buildExternalModuleParameters(moduleName: String, imports: List<String>): MutableMap<String, String> {
-        val result = mutableMapOf<String, String>()
-        val capitalized = moduleName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-        val replaced = capitalized.replace("-", "_")
-        imports.forEach {
-            val type = it.split(".").last()
-            result[type] = "$replaced$type"
-        }
-        return result
-    }
-
     private fun createSwiftFileWithoutState(
         frameworkBaseName: List<String>,
         composable: KSFunctionDeclaration,
@@ -308,17 +307,16 @@ internal class Processor(
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
             val type = kotlinTypeToSwift(it.type)
-            val finalType = if (externalParameters.containsKey(type)) {
-                externalParameters[type]
-            } else type
+            val finalType = externalParameters[type] ?: type
             "let ${it.name()}: $finalType"
         }
+        val stateType = externalParameters[stateParameter.type.resolve().toString()] ?: stateParameter.type
         val code = """
             import SwiftUI
             $frameworks
 
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
-                @Binding var $stateParameterName: ${stateParameter.type}
+                @Binding var $stateParameterName: $stateType
                 $letParameters
 
                 public func makeUIViewController(context: Context) -> UIViewController {

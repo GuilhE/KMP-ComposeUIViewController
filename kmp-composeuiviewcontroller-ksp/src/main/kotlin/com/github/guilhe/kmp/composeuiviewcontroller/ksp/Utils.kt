@@ -150,10 +150,4 @@ internal class TypeResolutionError(parameter: KSValueParameter) : IllegalArgumen
     "Cannot resolve type for parameter ${parameter.name()} from ${parameter.location}. Check your file imports"
 )
 
-internal class UnkownModuleException(file: KSFile) : IllegalArgumentException(
-    "Cannot find the module for ${file.filePath}"
-)
-
 internal class ModuleDecodeException : IllegalArgumentException("Could not decode $FILE_NAME_ARGS file")
-
-internal class ModuleEmptyException : IllegalArgumentException("No module information in $FILE_NAME_ARGS file")

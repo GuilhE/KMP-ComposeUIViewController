@@ -41,7 +41,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 finalizeFrameworkTasks(this)
             }
             afterEvaluate {
-                writeArgsToDisk(configureCompileArgs(retrievePackage(), retrieveFrameworkBaseNames()))
+                writeArgsToDisk(configureModuleJson(retrievePackage(), retrieveFrameworkBaseNames()))
             }
         }
     }
@@ -96,7 +96,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         throw IllegalStateException("Cloud not determine project's package nor group")
     }
 
-    private fun Project.configureCompileArgs(packageName: String, frameworkNames: Set<String>): Map<String, String> {
+    private fun Project.configureModuleJson(packageName: String, frameworkNames: Set<String>): Map<String, String> {
         packageName.ifEmpty { return emptyMap() }
         frameworkNames.ifEmpty { return emptyMap() }
         val args = mutableMapOf<String, String>()
@@ -111,13 +111,14 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     private fun Project.writeArgsToDisk(args: Map<String, String>) {
-        val modules = mutableListOf<Module>()
-        args.forEach { (key, value) ->
-            modules.add(Module(name = rootDir.name.toString(), packageName = value, frameworkBaseName = key))
+        val file = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
+        val modules = try {
+            Json.decodeFromString<MutableSet<Module>>(file.readText())
+        } catch (e: Exception) {
+            mutableSetOf()
         }
-        val argsFile = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
-        argsFile.parentFile.mkdirs()
-        argsFile.writeText(Json.encodeToString(modules))
+        args.forEach { (key, value) -> modules.add(Module(name = name.toString(), packageName = value, frameworkBaseName = key)) }
+        file.writeText(Json.encodeToString(modules))
     }
 
     private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {

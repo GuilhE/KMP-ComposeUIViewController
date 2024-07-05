@@ -9,11 +9,11 @@
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
-		08C2EF971A4767F5ABB9B12E /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661A1AB332F33F8FCF0AC40A /* GradientScreenUIViewControllerRepresentable.swift */; };
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
 		5CB1570E2C355FB600D04C27 /* KMPObservableViewModelCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5CB1570D2C355FB600D04C27 /* KMPObservableViewModelCore */; };
 		5CB157102C355FB600D04C27 /* KMPObservableViewModelSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5CB1570F2C355FB600D04C27 /* KMPObservableViewModelSwiftUI */; };
 		7555FF83242A565900829871 /* SharedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* SharedView.swift */; };
+		92D6A601E8F5AAE8F21E203F /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D0FD04356CC55ECA5FC165 /* GradientScreenUIViewControllerRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,8 +32,8 @@
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		19D0FD04356CC55ECA5FC165 /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = Representables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* GradientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientApp.swift; sourceTree = "<group>"; };
-		661A1AB332F33F8FCF0AC40A /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = Representables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* SharedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -60,13 +60,21 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		6BA046EE93243B04045461F2 /* Representables */ = {
+			isa = PBXGroup;
+			children = (
+				19D0FD04356CC55ECA5FC165 /* GradientScreenUIViewControllerRepresentable.swift */,
+			);
+			name = Representables;
+			sourceTree = "<group>";
+		};
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
 				7555FF7D242A565900829871 /* Gradient */,
 				7555FF7C242A565900829871 /* Products */,
 				7555FFB0242A642200829871 /* Frameworks */,
-				BCCB492568475CF55158240F /* Representables */,
+				6BA046EE93243B04045461F2 /* Representables */,
 			);
 			sourceTree = "<group>";
 		};
@@ -95,14 +103,6 @@
 			children = (
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		BCCB492568475CF55158240F /* Representables */ = {
-			isa = PBXGroup;
-			children = (
-				661A1AB332F33F8FCF0AC40A /* GradientScreenUIViewControllerRepresentable.swift */,
-			);
-			name = Representables;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -209,7 +209,7 @@
 			files = (
 				2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */,
 				7555FF83242A565900829871 /* SharedView.swift in Sources */,
-				08C2EF971A4767F5ABB9B12E /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
+				92D6A601E8F5AAE8F21E203F /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

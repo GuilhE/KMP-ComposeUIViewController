@@ -115,7 +115,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Method configureCompileArgs adds frameworkBaseName as a KSP parameter`() {
+    fun `Method configureModuleJson creates and saves in disk modules metadata`() {
         with(project) {
             extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
                 group = "com.composables.module"
