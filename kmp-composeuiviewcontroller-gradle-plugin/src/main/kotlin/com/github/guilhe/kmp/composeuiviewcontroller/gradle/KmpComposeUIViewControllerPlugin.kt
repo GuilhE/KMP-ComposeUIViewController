@@ -161,11 +161,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
                 )
 
-            with(File("$rootDir/${FILE_NAME_SCRIPT_TEMP}")) {
+            with(File("${rootProject.layout.buildDirectory.asFile.get().path}/${FILE_NAME_SCRIPT_TEMP}")) {
                 writeText(modifiedScript)
                 setExecutable(true)
                 task.workingDir = project.rootDir
-                task.commandLine("bash", "-c", "./$FILE_NAME_SCRIPT_TEMP")
+                task.commandLine("bash", "-c", "./build/$FILE_NAME_SCRIPT_TEMP")
                 if (!keepScriptFile) {
                     task.doLast { delete() }
                 }

@@ -531,7 +531,7 @@ class ProcessorTest {
             import MyFramework
 
             public struct ScreenRepresentable: UIViewControllerRepresentable {
-                let data: Test_moduleData
+                let data: Module_dataData
 
                 public func makeUIViewController(context: Context) -> UIViewController {
                     ScreenUIViewController().make(data: data)
