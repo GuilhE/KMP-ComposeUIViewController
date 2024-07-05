@@ -4,9 +4,9 @@
 
 KSP library for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
-| Version                                                                                                                                                                                                                                                                                                                                                                                                                                                             |    Kotlin    |  KSP   | Compose Multiplatform |        Xcode        |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------:|:------:|:---------------------:|:-------------------:|
-| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) </br> [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp)| 2.0.20-Beta1 | 1.0.22 |        1.6.11         | 15.3.0, 16.0.0-Beta |
+| Version                                                                                                                                                                                                                                                                                                                                                                                                                                                         |    Kotlin    |  KSP   | Compose Multiplatform |        Xcode        |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------:|:------:|:---------------------:|:-------------------:|
+| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) </br> [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp/badge.svg)](https://search.maven.org/artifact/com.github.guilhe.kmp/kmp-composeuiviewcontroller-ksp) | 2.0.20-Beta1 | 1.0.22 |        1.6.11         | 15.3.0, 16.0.0-Beta |
 
 The suffix `-ALPHA` or `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
 
@@ -23,16 +23,14 @@ It can be used for **simple** and **advanced** use cases.
 ### Advanced
 `@Composable` UI state is managed by the iOS app.
 
-> [!NOTE]
-> This library takes care of the heavy lifting for you, but if you're interested in understanding how it works, the detailed approach is explained here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
-
 Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
 
-## Setup
+> [!TIP]
+> This library takes care of the heavy lifting for you, but if you're interested in understanding how it works, the detailed approach is explained here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
-### Automatic
+## Installation
 
-The recommended approach is to use the Gradle plugin in the shared module, where all configurations will be applied automatically. If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+By using the Gradle plugin all configurations will be applied automatically. If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
 
 ```kotlin
 plugins {
@@ -47,84 +45,6 @@ ComposeUiViewController {
 }
 ```
 
-### Manually
-
-<details>
-    <summary><b>Step 1 - </b>Dependencies setup</summary>
-
-#### KMP module
-
-First we need to import the KSP plugin:
-```kotlin
-plugins {
-    id("com.google.devtools.ksp") version "${Kotlin}-${KSP}"
-}
-```
-Then configure **iosMain** target to import `kmp-composeuiviewcontroller-annotations`:
-```kotlin
-kotlin {
-    sourceSets {
-        iosMain.dependencies {
-            implementation("com.github.guilhe.kmp:kmp-composeuiviewcontroller-annotations:${LASTEST_VERSION}")
-        }
-    }
-}
-```
-and also the `kmp-composeuiviewcontroller-ksp`:
-```kotlin
-listOf(iosArm64(), iosSimulatorArm64(), iosX64()).forEach { target ->
-    val targetName = target.name.replaceFirstChar { it.uppercaseChar() }
-    dependencies.add("ksp$targetName", "com.github.guilhe.kmp:kmp-composeuiviewcontroller-ksp:${LASTEST_VERSION}")
-}
-```
-Finish it by adding the following configuration in the end of the file:
-- If using XCFramework:
-```kotlin
-tasks.matching { it.name == "embedAndSignAppleFrameworkForXcode" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
-```
-- If using Cocoapods:
-```kotlin
-tasks.matching { it.name == "syncFramework" }.configureEach { finalizedBy(":addFilesToXcodeproj") }
-```
-You can find a full setup example [here](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/5ae770b84fc99cf29bc53bc6f4290511d8474251/sample/shared/build.gradle.kts).
-
-</details>
-
-<details>
-    <summary><b>Step 2 - </b>Setup auto export to Xcode</summary>
-
-#### Project root
-
-Having all the files created by KSP, the next step is to make sure all the `UIViewControllerRepresentable` files are referenced in `xcodeproj` for the desire `target`:
-
-1. Make sure you have [Xcodeproj](https://github.com/CocoaPods/Xcodeproj) installed;
-2. Copy the [exportToXcode.sh](kmp-composeuiviewcontroller-gradle-plugin/src/main/resources/exportToXcode.sh) file to the **project's root** and run `chmod +x ./exportToXcode.sh`
-3. Copy the following gradle task to the project's root `build.gradle.kts`:
-```kotlin
-tasks.register<Exec>("addFilesToXcodeproj") {
-    workingDir(layout.projectDirectory)
-    commandLine("bash", "-c", "./exportToXcode.sh")
-}
-```
-
-**Warning:** if you change the default names of **shared** module, **iosApp** folder, **iosApp.xcodeproj** file and **iosApp** target, you'll have to adjust the `exportToXcode.sh` accordingly (in `# DEFAULT VALUES` section).
-
-Occasionally, if you experience `iosApp/SharedRepresentables` files not being updated after a successful build, try to run the following command manually:
-
-`./gradlew addFilesToXcodeproj`
-
-This could be due to gradle caches not being properly invalidated upon file updates.
-
-If necessary, disable automatic files export to Xcode and instead include them manually, all while keeping the advantages of code generation. Simply comment the following line:
-```kotlin
-//...configureEach { finalizedBy(":addFilesToXcodeproj") }
-```
-You will find the generated files under `[module]/build/generated/ksp/`.
-
-**Warning:** avoid deleting `iosApp/SharedRepresentables` without first using Xcode to `Remove references`.
-
-</details>
-
 ## Code generation
 
 ### KMP module
@@ -134,18 +54,12 @@ Inside `iosMain` we can take advantage of two annotations:
 `@ComposeUIViewController`:  
 To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the  iOS app.
 
-> [!NOTE]
->  If you choose to opt-out of using the gradle `plugin-composeuiviewcontroller`, you will be responsible for ensuring that the `frameworkName` [parameter](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/kmp-composeuiviewcontroller-annotations/src/commonMain/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/Annotations.kt#L13) in all `@ComposeUIViewController` annotations, matches the KMP module framework's [base name](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/c821f0945c8a9e18da869df9d45dd5e7da1bbb83/sample/shared/build.gradle.kts#L25).
-
-
 `@ComposeUIViewControllerState`:  
 To annotate the parameter as the composable state variable (for **advanced** use cases).
 
-> [!NOTE]
+> [!IMPORTANT]
 >  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
-
-
-For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
+> For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
 #### Examples
 
@@ -251,6 +165,8 @@ struct SomeView: View {
     }
 }
 ```
+> [!NOTE]
+> Avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
 
 ## Sample
 For a working [sample](sample/iosApp/Gradient/SharedView.swift) run `iosApp` by opening `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
@@ -261,7 +177,7 @@ note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.k
 note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
 
-> Task :addFilesToXcodeproj
+> Task :CopyFilesToXcode
 > Copying files to iosApp/SharedRepresentables/
 > Checking for new references to be added to xcodeproj
 > GradientScreenUIViewControllerRepresentable.swift added!

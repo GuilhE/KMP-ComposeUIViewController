@@ -7,14 +7,12 @@ plugins {
 }
 
 ComposeUiViewController {
-    iosAppName = "Gradient"
-    targetName = "Gradient"
+    autoExport = false
 }
 
 kotlin {
-    jvm()
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-        target.binaries.framework { baseName = "Composables" }
+        target.binaries.framework { baseName = "Models" }
     }
     sourceSets {
         commonMain.dependencies {
@@ -23,7 +21,5 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
         }
-        jvmMain.dependencies { implementation(compose.preview) }
-        iosMain.dependencies { implementation(projects.sharedModels)}
     }
 }

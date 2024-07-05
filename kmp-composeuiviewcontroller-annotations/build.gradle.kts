@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
     `kmp-composeuiviewcontroller-publish`
+    alias(libs.plugins.kotlin.multiplatform)
 }
 
 kotlin {

@@ -1,9 +1,12 @@
 package composeuiviewcontroller
 
+import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
+import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ARG_KSP_FRAMEWORK_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KSP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_ANNOTATIONS_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_GROUP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_KSP_NAME
@@ -15,9 +18,8 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_TARGET
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.SCRIPT_FILE_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
-import com.google.devtools.ksp.gradle.KspExtension
+import kotlinx.serialization.json.Json
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.internal.impldep.junit.framework.TestCase.assertNotNull
 import org.gradle.testfixtures.ProjectBuilder
@@ -32,13 +34,14 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.test.assertTrue
 
-class KmpComposeUIViewControllerPluginTest {
+class PluginTest {
 
     private val project = ProjectBuilder.builder().build()
     private lateinit var projectDir: File
 
     @BeforeEach
     fun setup(@TempDir tempDir: File) {
+        File(project.layout.buildDirectory.asFile.get(), TEMP_FILES_FOLDER).apply { mkdirs() }
         project.pluginManager.apply(PLUGIN_KMP)
         project.pluginManager.apply(PLUGIN_KSP)
         project.pluginManager.apply(PLUGIN_ID)
@@ -114,20 +117,24 @@ class KmpComposeUIViewControllerPluginTest {
     }
 
     @Test
-    fun `Method configureCompileArgs adds frameworkBaseName as a KSP parameter`() {
+    fun `Method configureModuleJson creates and saves in disk modules metadata`() {
         with(project) {
             extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
+                group = "com.composables.module"
                 jvm()
                 iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
             }
 
             println("> $state")
-            (project as DefaultProject).evaluate()
+            (this as DefaultProject).evaluate()
             println("> $state")
-            println("> ${extensions.getByType(KspExtension::class.java).arguments}")
 
-            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsKey(ARG_KSP_FRAMEWORK_NAME))
-            assertTrue(extensions.getByType(KspExtension::class.java).arguments.containsValue("ComposablesFramework"))
+            val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
+            assertTrue(file.exists())
+
+            val module = Json.decodeFromString<List<Module>>(file.readText()).first()
+            assertTrue(module.frameworkBaseName == "ComposablesFramework")
+            assertTrue(module.packageName == "com.composables.module")
         }
     }
 
@@ -160,6 +167,8 @@ class KmpComposeUIViewControllerPluginTest {
                 exportFolderName = "Composables"
                 autoExport = true
             }
+            
+            group = "com.test"
         """.trimIndent()
         )
 
@@ -171,7 +180,10 @@ class KmpComposeUIViewControllerPluginTest {
 
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))
 
-        val modifiedScriptContent = File(projectDir, SCRIPT_FILE_NAME).readText()
+        val script = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
+        assertTrue(script.exists())
+
+        val modifiedScriptContent = script.readText()
         assertTrue(modifiedScriptContent.contains("$PARAM_KMP_MODULE=\"${projectDir.name}\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_FOLDER=\"iosFolder\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_APP_NAME=\"iosApp\""))

@@ -2,41 +2,54 @@
 
 package composeuiviewcontroller
 
+import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
+import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
+import com.github.guilhe.kmp.composeuiviewcontroller.ksp.EmptyFrameworkBaseNameException
+import com.github.guilhe.kmp.composeuiviewcontroller.ksp.InvalidParametersException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerAnnotationName
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerStateAnnotationName
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
-import com.tschuchort.compiletesting.kspArgs
 import com.tschuchort.compiletesting.kspIncremental
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 import kotlin.test.assertContains
 
 @OptIn(ExperimentalCompilerApi::class)
 class ProcessorTest {
 
-    @Rule
-    @JvmField
-    var temporaryFolder: TemporaryFolder = TemporaryFolder()
+    @get:Rule
+    val tempFolder = TemporaryFolder(File("build/tmp/test-module/src").also { it.mkdirs() })
 
-    private fun prepareCompilation(vararg sourceFiles: SourceFile, args: Map<String, String> = emptyMap()): KotlinCompilation {
+    private lateinit var tempArgs: File
+
+    private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
+        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //we need to reach module's ./build
+        File(build, TEMP_FILES_FOLDER).apply { mkdirs() }
+        tempArgs = File(build, "$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").apply { writeText("[]") }
         return KotlinCompilation().apply {
-            workingDir = temporaryFolder.root
+            workingDir = tempFolder.root
             inheritClassPath = true
             symbolProcessorProviders = listOf(ProcessorProvider())
             sources = sourceFiles.asList()
             verbose = false
             kspIncremental = false
-            kspArgs = args.toMutableMap()
         }
+    }
+
+    @After
+    fun clean() {
+        tempArgs.delete()
     }
 
     @Test
@@ -66,48 +79,21 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Empty frameworkName in @ComposeUIViewController throws IllegalStateException`() {
+    fun `When frameworkBaseName is provided via ModulesJson it overrides @ComposeUIViewController frameworkBaseName value`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
 
-            @ComposeUIViewController("")
+            data class ViewState(val field: Int)
+
+            @ComposeUIViewController("ComposablesFramework")
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
+
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        val result = compilation.compile()
-
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
-    }
-
-    @Test
-    fun `Empty frameworkBaseName in CompilerArgs throws IllegalStateException`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-
-            @ComposeUIViewController
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), args = mapOf("frameworkBaseName" to ""))
-        val result = compilation.compile()
-
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
-    }
-
-    @Test
-    fun `If frameworkBaseName is provided via compiler argument it will be used over default @ComposeUIViewController frameworkName value`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-
-            @ComposeUIViewController
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), args = mapOf("frameworkBaseName" to "MyFramework"))
+        tempArgs.writeText("""[{"name":"module-test","packageName":"com.mycomposable.test","frameworkBaseName":"MyFramework"}]""")
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -118,15 +104,63 @@ class ProcessorTest {
     }
 
     @Test
+    fun `Empty frameworkBaseName in ModulesJson falls back to frameworkBaseName in @ComposeUIViewController`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+
+            data class ViewState(val field: Int)
+
+            @ComposeUIViewController("ComposablesFramework")
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        tempArgs.writeText("""[{"name":"module-test","packageName":"com.mycomposable.test","frameworkBaseName":""}]""")
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+        assertContains(generatedSwiftFiles.first().readText(), "import ComposablesFramework")
+    }
+
+    @Test
+    fun `Empty frameworkBaseName in ModulesJson and @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+
+            data class ViewState(val field: Int)
+
+            @ComposeUIViewController
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
+    }
+
+    @Test
     fun `Not using @ComposeUIViewControllerState will generate files without state`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
-
-            @ComposeUIViewController("SharedComposables")
+            
+            data class SomeClass(val field: Int)
+            
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun Screen(data: SomeClass, value: Int, callBack: () -> Unit) { }
         """.trimIndent()
+
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
@@ -135,7 +169,7 @@ class ProcessorTest {
         val expectedKotlinOutput = """
             @file:Suppress("unused")
             package com.mycomposable.test
-             
+
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
 
@@ -157,17 +191,17 @@ class ProcessorTest {
 
         val expectedSwiftOutput = """
             import SwiftUI
-            import SharedComposables
-            
+            import MyFramework
+
             public struct ScreenRepresentable: UIViewControllerRepresentable {
                 let data: SomeClass
                 let value: KotlinInt
                 let callBack: () -> Void
-                
+
                 public func makeUIViewController(context: Context) -> UIViewController {
                     ScreenUIViewController().make(data: data, value: value, callBack: callBack)
                 }
-                
+
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
                     //unused
                 }
@@ -189,7 +223,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
         """.trimIndent()
@@ -206,7 +240,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
@@ -219,6 +253,7 @@ class ProcessorTest {
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertContains(result.messages, InvalidParametersException().message!!)
     }
 
     @Test
@@ -228,13 +263,16 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            private data class ViewAState(val field: Int)
+            private data class ViewBState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewAState) { }
             
             private fun dummy() 
             
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewBState) { }
         """.trimIndent()
@@ -257,20 +295,20 @@ class ProcessorTest {
         val expectedKotlinOutput = """
             @file:Suppress("unused")
             package com.mycomposable.test
-             
+
             import androidx.compose.runtime.mutableStateOf
             import androidx.compose.ui.window.ComposeUIViewController
             import platform.UIKit.UIViewController
 
             object ScreenAUIViewController {
                 private val state = mutableStateOf<ViewAState?>(null)
-                
+
                 fun make(): UIViewController {
                     return ComposeUIViewController {
                         state.value?.let { ScreenA(it) }
                     }
                 }
-                
+
                 fun update(state: ViewAState) {
                     this.state.value = state
                 }
@@ -284,7 +322,7 @@ class ProcessorTest {
 
         val expectedSwiftOutput = """
             import SwiftUI
-            import SharedComposables
+            import MyFramework
 
             public struct ScreenARepresentable: UIViewControllerRepresentable {
                 @Binding var state: ViewAState
@@ -292,7 +330,7 @@ class ProcessorTest {
                 public func makeUIViewController(context: Context) -> UIViewController {
                     ScreenAUIViewController().make()
                 }
-                
+
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
                     ScreenAUIViewController().update(state: state)
                 }
@@ -307,12 +345,17 @@ class ProcessorTest {
 
     @Test
     fun `Composable functions from different files are parsed once only once`() {
+        val data = """
+            package com.mycomposable.data
+            data class ViewState(val field: Int)
+        """.trimIndent()
         val codeA = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
-            
-            @ComposeUIViewController("SharedComposables")
+            import com.mycomposable.data.*
+
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
@@ -320,13 +363,14 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
-            
-            @ComposeUIViewController("SharedComposables")
+            import com.mycomposable.data.*
+
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-        val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB))
+        val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB), kotlin("Data.kt", data))
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -349,19 +393,21 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            @ComposeUIViewController("SharedComposables")
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
 
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit) { }
 
-            @ComposeUIViewController("SharedComposables")
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun ScreenC(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val compilation = prepareCompilation(kotlin("Screen.kt", code, isMultiplatformCommonSource = true))
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -384,8 +430,11 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.ViewState                       
             
-            @ComposeUIViewController("SharedComposables")
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
@@ -409,12 +458,12 @@ class ProcessorTest {
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
 
         val generatedSwiftFiles = compilation.kspSourcesDir.walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
             .toList()
         assertTrue(generatedSwiftFiles.isNotEmpty())
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
 
         val expectedSwiftTypes = listOf(
             "Void",
@@ -438,5 +487,59 @@ class ProcessorTest {
         for (expectedType in expectedSwiftTypes) {
             assertTrue(generatedCodeFile.contains(expectedType))
         }
+    }
+
+    @Test
+    fun `Types imported from different KMP modules will produce Swift files with composed types`() {
+        val data = """
+            package com.mycomposable.data
+            data class Data(val field: Int)
+        """.trimIndent()
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.Data
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(data: Data) { }
+        """.trimIndent()
+
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
+        tempArgs.writeText(
+            """
+                [
+                    {"name":"module-test","packageName":"com.mycomposable.test","frameworkBaseName":"MyFramework"},
+                    {"name":"module-data","packageName":"com.mycomposable.data","frameworkBaseName":"MyFramework2"}
+                ]
+                """.trimIndent()
+        )
+        val result = compilation.compile()
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftOutput = """
+            import SwiftUI
+            import MyFramework
+
+            public struct ScreenRepresentable: UIViewControllerRepresentable {
+                let data: Module_dataData
+
+                public func makeUIViewController(context: Context) -> UIViewController {
+                    ScreenUIViewController().make(data: data)
+                }
+
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    //unused
+                }
+            }
+        """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
     }
 }

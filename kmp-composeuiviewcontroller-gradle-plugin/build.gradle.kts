@@ -5,6 +5,7 @@ plugins {
     `kmp-composeuiviewcontroller-publish`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.gradle.publish)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
@@ -18,8 +19,11 @@ java {
 }
 
 dependencies {
-    implementation(libs.gradle.kotlin)
     implementation(libs.gradle.ksp)
+    implementation(libs.gradle.kotlin)
+    implementation(libs.kotlinx.serialization)
+    implementation(projects.kmpComposeuiviewcontrollerCommon)
+
     testImplementation(libs.test.kotlin)
     testImplementation(libs.test.junit.implementation)
     testRuntimeOnly(libs.test.junit.runtimeOnly)
@@ -29,7 +33,7 @@ tasks.test {
     useJUnitPlatform()
 }
 
-version = "1.1.1"
+version = "1.1.2"
 group = "io.github.guilhe.kmp"
 
 gradlePlugin {

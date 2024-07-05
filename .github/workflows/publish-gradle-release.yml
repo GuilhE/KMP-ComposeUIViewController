@@ -33,7 +33,7 @@ jobs:
           cache: gradle
 
       - name: Run Plugin tests
-        run: ./gradlew :kmp-composeuiviewcontroller-gradle-plugin:test --tests "composeuiviewcontroller.KmpComposeUIViewControllerPluginTest"
+        run: ./gradlew :kmp-composeuiviewcontroller-gradle-plugin:test --tests "composeuiviewcontroller.PluginTest"
 
       - name: Publish to Gradle Plugin Portal
         if: success()

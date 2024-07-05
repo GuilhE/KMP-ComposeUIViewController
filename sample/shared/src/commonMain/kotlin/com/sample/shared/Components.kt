@@ -1,4 +1,4 @@
-package com.sample.sharedui
+package com.sample.shared
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

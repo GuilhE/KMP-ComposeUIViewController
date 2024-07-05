@@ -2,7 +2,7 @@ import SwiftUI
 import Composables
 
 struct SharedView: View {
-    @State private var screenState: ScreenState = ScreenState(
+    @State private var screenState: ScreenState = ScreenState (
         startColor: convertUIColorToKotlinLong(UIColor.red),
         endColor: convertUIColorToKotlinLong(UIColor.blue)
     )
