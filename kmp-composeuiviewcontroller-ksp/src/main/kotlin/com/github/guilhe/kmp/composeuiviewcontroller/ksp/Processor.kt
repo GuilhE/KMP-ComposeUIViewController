@@ -18,7 +18,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.util.Locale
 
-class ProcessorProvider : SymbolProcessorProvider {
+public class ProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         return Processor(environment.codeGenerator, environment.logger)
     }

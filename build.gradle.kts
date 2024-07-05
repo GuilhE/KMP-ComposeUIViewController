@@ -17,6 +17,6 @@ allprojects {
 }
 
 tasks.register("publishLibraryModules") {
-    dependsOn(":kmp-composeuiviewcontroller-ksp:publishAllPublicationsToSonatypeRepository")
-    finalizedBy(":kmp-composeuiviewcontroller-annotations:publishAllPublicationsToSonatypeRepository")
+    dependsOn(":kmp-composeuiviewcontroller-annotations:publishAllPublicationsToSonatypeRepository")
+    finalizedBy(":kmp-composeuiviewcontroller-ksp:publishAllPublicationsToSonatypeRepository")
 }
