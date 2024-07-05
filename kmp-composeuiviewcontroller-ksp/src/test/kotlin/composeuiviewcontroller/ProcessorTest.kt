@@ -3,6 +3,7 @@
 package composeuiviewcontroller
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
+import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.EmptyFrameworkBaseNameException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.InvalidParametersException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider
@@ -33,12 +34,9 @@ class ProcessorTest {
     private lateinit var tempArgs: File
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
-        tempArgs = File(
-            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), //we need to reach module's ./build
-            FILE_NAME_ARGS
-        ).apply {
-            writeText("[]")
-        }
+        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //we need to reach module's ./build
+        File(build, TEMP_FILES_FOLDER).apply { mkdirs() }
+        tempArgs = File(build, "$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").apply { writeText("[]") }
         return KotlinCompilation().apply {
             workingDir = tempFolder.root
             inheritClassPath = true

@@ -2,6 +2,7 @@ package composeuiviewcontroller
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KSP
@@ -40,6 +41,7 @@ class PluginTest {
 
     @BeforeEach
     fun setup(@TempDir tempDir: File) {
+        File(project.layout.buildDirectory.asFile.get(), TEMP_FILES_FOLDER).apply { mkdirs() }
         project.pluginManager.apply(PLUGIN_KMP)
         project.pluginManager.apply(PLUGIN_KSP)
         project.pluginManager.apply(PLUGIN_ID)
@@ -127,7 +129,7 @@ class PluginTest {
             (this as DefaultProject).evaluate()
             println("> $state")
 
-            val file = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
+            val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
             assertTrue(file.exists())
 
             val module = Json.decodeFromString<List<Module>>(file.readText()).first()
@@ -178,7 +180,10 @@ class PluginTest {
 
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))
 
-        val modifiedScriptContent = File(projectDir, FILE_NAME_SCRIPT_TEMP).readText()
+        val script = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
+        assertTrue(script.exists())
+
+        val modifiedScriptContent = script.readText()
         assertTrue(modifiedScriptContent.contains("$PARAM_KMP_MODULE=\"${projectDir.name}\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_FOLDER=\"iosFolder\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_APP_NAME=\"iosApp\""))

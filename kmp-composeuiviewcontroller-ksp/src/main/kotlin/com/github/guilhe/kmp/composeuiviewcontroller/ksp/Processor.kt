@@ -2,6 +2,7 @@ package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -104,7 +105,7 @@ internal class Processor(
     }
 
     private fun getFrameworkMetadataFromJson(): List<Module> {
-        val file = File("./build/$FILE_NAME_ARGS")
+        val file = File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
         val modules = try {
             Json.decodeFromString<List<Module>>(file.readText())
         } catch (e: Exception) {

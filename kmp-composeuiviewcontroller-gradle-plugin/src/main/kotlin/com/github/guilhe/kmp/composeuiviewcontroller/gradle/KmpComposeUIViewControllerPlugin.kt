@@ -2,6 +2,7 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
@@ -33,6 +34,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             if (!plugins.hasPlugin(PLUGIN_KSP)) {
                 throw PluginInstantiationException(ERROR_MISSING_KSP)
             }
+
+            File(rootProject.layout.buildDirectory.asFile.get().path, TEMP_FILES_FOLDER).apply { mkdirs() }
 
             println("> $LOG_TAG:")
             setupTargets()
@@ -111,7 +114,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     private fun Project.writeArgsToDisk(args: Map<String, String>) {
-        val file = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
+        val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
         val modules = try {
             Json.decodeFromString<MutableSet<Module>>(file.readText())
         } catch (e: Exception) {
@@ -161,11 +164,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
                 )
 
-            with(File("${rootProject.layout.buildDirectory.asFile.get().path}/${FILE_NAME_SCRIPT_TEMP}")) {
+            with(File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SCRIPT_TEMP}")) {
                 writeText(modifiedScript)
                 setExecutable(true)
                 task.workingDir = project.rootDir
-                task.commandLine("bash", "-c", "./build/$FILE_NAME_SCRIPT_TEMP")
+                task.commandLine("bash", "-c", "./build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
                 if (!keepScriptFile) {
                     task.doLast { delete() }
                 }
