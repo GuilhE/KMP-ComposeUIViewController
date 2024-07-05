@@ -32,6 +32,8 @@ includeBuild("..") {
     }
 }
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 rootProject.name = "sample"
 include(":shared")
 include(":shared-models")

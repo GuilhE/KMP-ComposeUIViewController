@@ -1,5 +1,7 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
+import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
+import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -10,9 +12,9 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.util.Locale
-import java.util.Properties
 
 internal class Processor(
     private val codeGenerator: CodeGenerator,
@@ -104,13 +106,13 @@ internal class Processor(
      * This exists because of KMP current implementation bla bla bla. When fixed this will become deprecated and substituted by [getFrameworkBaseNames]
      */
     private fun trimFrameworkBaseNames(node: KSAnnotated, packageName: String): String {
-        val metadata = getFrameworkMetadataFromArgsProperties()
+        val metadata = getFrameworkMetadataFromJson()
         if (metadata.isEmpty()) {
             val framework = getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException()
             return framework
         } else {
             val framework =
-                metadata.firstOrNull { it.packageName == packageName }?.baseName?.removePrefix("$frameworkBaseNameAnnotationParameter-") ?: ""
+                metadata.firstOrNull { it.packageName == packageName }?.frameworkBaseName?: ""
             framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
             return framework
         }
@@ -127,7 +129,7 @@ internal class Processor(
         frameworkBaseNames.addAll(
             extractFrameworkBaseNames(
                 composable,
-                getFrameworkMetadataFromArgsProperties(),
+                getFrameworkMetadataFromJson(),
                 makeParameters,
                 parameters,
                 stateParameter
@@ -140,18 +142,14 @@ internal class Processor(
         return frameworkBaseNames
     }
 
-    private fun getFrameworkMetadataFromArgsProperties(): List<FrameworkMetadata> {
-        val paramsFile = File("./build/$FILE_NAME_ARGS")
-        val properties = Properties()
-        if (paramsFile.exists()) {
-            paramsFile.inputStream().use { properties.load(it) }
+    private fun getFrameworkMetadataFromJson(): List<Module> {
+        val file = File("./build/$FILE_NAME_ARGS")
+        val modules = try {
+            Json.decodeFromString<List<Module>>(file.readText())
+        } catch (e: Exception) {
+            throw ModuleDecodeException()
         }
-
-        val filteredProperties = properties.filter { (key, _) -> key.toString().startsWith("$frameworkBaseNameAnnotationParameter-") }
-        val metadata = filteredProperties.map { (key, value) ->
-            FrameworkMetadata(key.toString(), value.toString())
-        }
-        return metadata
+        return modules
     }
 
     private fun getFrameworkBaseNameFromAnnotation(node: KSAnnotated): String? {
@@ -341,9 +339,5 @@ internal class Processor(
                 extensionName = "swift"
             ).write(updatedCode.toByteArray())
         return updatedCode
-    }
-
-    internal companion object {
-        internal const val FILE_NAME_ARGS = "args.properties"
     }
 }

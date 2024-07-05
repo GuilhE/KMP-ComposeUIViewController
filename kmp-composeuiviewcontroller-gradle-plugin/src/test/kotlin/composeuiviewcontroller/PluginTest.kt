@@ -1,10 +1,10 @@
 package composeuiviewcontroller
 
+import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
+import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ARG_FRAMEWORK_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KSP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_ANNOTATIONS_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_GROUP
@@ -18,6 +18,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
+import kotlinx.serialization.json.Json
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.internal.impldep.junit.framework.TestCase.assertNotNull
 import org.gradle.testfixtures.ProjectBuilder
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import java.util.Properties
 import kotlin.test.assertTrue
 
 class PluginTest {
@@ -127,14 +127,12 @@ class PluginTest {
             (this as DefaultProject).evaluate()
             println("> $state")
 
-            val argsFile = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
-            assertTrue(argsFile.exists())
+            val file = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
+            assertTrue(file.exists())
 
-            val properties = Properties().apply {
-                argsFile.inputStream().use { load(it) }
-            }
-            assertTrue(properties.containsKey("$ARG_FRAMEWORK_NAME-ComposablesFramework"))
-            assertTrue(properties.containsValue("com.composables.module"))
+            val module = Json.decodeFromString<List<Module>>(file.readText()).first()
+            assertTrue(module.frameworkBaseName == "ComposablesFramework")
+            assertTrue(module.packageName == "com.composables.module")
         }
     }
 

@@ -2,6 +2,7 @@
 
 package composeuiviewcontroller
 
+import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.EmptyFrameworkBaseNameException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.InvalidParametersException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider
@@ -14,6 +15,7 @@ import com.tschuchort.compiletesting.kspIncremental
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -28,8 +30,15 @@ class ProcessorTest {
     @get:Rule
     val tempFolder = TemporaryFolder(File("build/tmp/test-module/src").also { it.mkdirs() })
 
-    private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
+    private lateinit var tempArgs: File
 
+    private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
+        tempArgs = File(
+            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), //we need to reach module's ./build
+            FILE_NAME_ARGS
+        ).apply {
+            writeText("[]")
+        }
         return KotlinCompilation().apply {
             workingDir = tempFolder.root
             inheritClassPath = true
@@ -38,6 +47,11 @@ class ProcessorTest {
             verbose = false
             kspIncremental = false
         }
+    }
+
+    @After
+    fun clean() {
+        tempArgs.delete()
     }
 
     @Test
@@ -67,7 +81,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `When frameworkBaseName is provided via ArgsProperties it overrides @ComposeUIViewController frameworkBaseName value`() {
+    fun `When frameworkBaseName is provided via ModulesJson it overrides @ComposeUIViewController frameworkBaseName value`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -79,16 +93,10 @@ class ProcessorTest {
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-        val args = File(
-            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), // we need to reach module's ./build
-            "args.properties"
-        ).apply {
-            writeText("frameworkBaseName-MyFramework=com.mycomposable.test")
-        }
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        tempArgs.writeText("""[{"name":"module-test","packageName":"com.mycomposable.test","frameworkBaseName":"MyFramework"}]""")
         val result = compilation.compile()
-        args.delete()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         val generatedSwiftFiles = compilation.kspSourcesDir
@@ -98,7 +106,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Empty frameworkBaseName in ArgsProperties falls back to frameworkBaseName in @ComposeUIViewController`() {
+    fun `Empty frameworkBaseName in ModulesJson falls back to frameworkBaseName in @ComposeUIViewController`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -111,14 +119,9 @@ class ProcessorTest {
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-        val args = File(
-            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), //we need to reach module's ./build
-            "args.properties"
-        ).apply { writeText("frameworkBaseName-=com.mycomposable.test") }
-
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        tempArgs.writeText("""[{"name":"module-test","packageName":"com.mycomposable.test","frameworkBaseName":""}]""")
         val result = compilation.compile()
-        args.delete()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
         val generatedSwiftFiles = compilation.kspSourcesDir
@@ -128,7 +131,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Empty frameworkBaseName in ArgsProperties and @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
+    fun `Empty frameworkBaseName in ModulesJson and @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -505,20 +508,16 @@ class ProcessorTest {
             fun Screen(data: Data) { }
         """.trimIndent()
 
-        val args = File(
-            File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path), //we need to reach module's ./build
-            "args.properties"
-        ).apply {
-            writeText(
-                """
-                frameworkBaseName-MyFramework=com.mycomposable.test
-                frameworkBaseName-MyFramework2=com.mycomposable.data
-            """.trimIndent()
-            )
-        }
         val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
+        tempArgs.writeText(
+            """
+                [
+                    {"name":"module-test","packageName":"com.mycomposable.test","frameworkBaseName":"MyFramework"},
+                    {"name":"module-data","packageName":"com.mycomposable.data","frameworkBaseName":"MyFramework2"}
+                ]
+                """.trimIndent()
+        )
         val result = compilation.compile()
-
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
 
         val generatedSwiftFiles = compilation.kspSourcesDir
@@ -544,6 +543,5 @@ class ProcessorTest {
             }
         """.trimIndent()
         assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
-        args.delete()
     }
 }

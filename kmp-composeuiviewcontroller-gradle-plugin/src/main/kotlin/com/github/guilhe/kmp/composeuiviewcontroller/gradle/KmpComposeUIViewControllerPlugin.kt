@@ -1,5 +1,9 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
+import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
+import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -13,7 +17,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
-import java.util.Properties
 
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
@@ -101,22 +104,20 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.targets.configureEach { target ->
             if (target.fromIosFamily()) {
-                val keyComposed = "$ARG_FRAMEWORK_NAME-$frameworkBaseName"
-                args[keyComposed] = packageName
+                args[frameworkBaseName] = packageName
             }
         }
         return args
     }
 
     private fun Project.writeArgsToDisk(args: Map<String, String>) {
-        val argsFile = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
-        val properties = Properties()
-        if (argsFile.exists()) {
-            argsFile.inputStream().use { properties.load(it) }
+        val modules = mutableListOf<Module>()
+        args.forEach { (key, value) ->
+            modules.add(Module(name = rootDir.name.toString(), packageName = value, frameworkBaseName = key))
         }
-        args.forEach { (key, value) -> properties[key] = value }
+        val argsFile = rootProject.layout.buildDirectory.file(FILE_NAME_ARGS).get().asFile
         argsFile.parentFile.mkdirs()
-        argsFile.outputStream().use { properties.store(it, null) }
+        argsFile.writeText(Json.encodeToString(modules))
     }
 
     private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {
@@ -185,8 +186,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val TASK_COPY_FILES_TO_XCODE = "copyFilesToXcode"
         internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
         internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
-        internal const val ARG_FRAMEWORK_NAME = "frameworkBaseName"
-        internal const val FILE_NAME_ARGS = "args.properties"
         private const val FILE_NAME_SCRIPT = "exportToXcode.sh"
         internal const val FILE_NAME_SCRIPT_TEMP = "temp.sh"
         internal const val PARAM_KEEP_FILE = "keepScriptFile"

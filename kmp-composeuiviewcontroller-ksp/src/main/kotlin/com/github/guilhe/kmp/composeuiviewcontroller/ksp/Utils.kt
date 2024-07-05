@@ -1,5 +1,7 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
+import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
+import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
@@ -73,7 +75,7 @@ internal fun extractImportsFromExternalPackages(
         .mapNotNull {
             val resolvedType = it.type.resolve()
             val typeName = resolvedType.declaration.simpleName.asString()
-            if(typeName == "<Error>") throw TypeResolutionError(it)
+            if (typeName == "<Error>") throw TypeResolutionError(it)
             val typeDeclaration = resolvedType.declaration
 //            println(">> Type: ${it.type}, Resolved: $resolvedType, Declaration: $typeDeclaration")
             val typePackage = (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
@@ -87,7 +89,7 @@ internal fun extractImportsFromExternalPackages(
 
 internal fun extractFrameworkBaseNames(
     composable: KSFunctionDeclaration,
-    frameworkMetadata: List<FrameworkMetadata>,
+    modules: List<Module>,
     makeParameters: List<KSValueParameter>,
     parameters: List<KSValueParameter>,
     stateParameter: KSValueParameter? = null
@@ -101,7 +103,7 @@ internal fun extractFrameworkBaseNames(
         .mapNotNull {
             val resolvedType = it.type.resolve()
             val typeName = resolvedType.declaration.simpleName.asString()
-            if(typeName == "<Error>") throw TypeResolutionError(it)
+            if (typeName == "<Error>") throw TypeResolutionError(it)
             (resolvedType.declaration as? KSClassDeclaration)?.packageName?.asString()
         }
         .filterNot { it.startsWith("kotlin") }
@@ -111,7 +113,7 @@ internal fun extractFrameworkBaseNames(
     parameterPackages.add(composable.packageName.asString())
 
     return parameterPackages.mapNotNull { pkg ->
-        frameworkMetadata.find { it.packageName == pkg }?.baseName?.removePrefix("$frameworkBaseNameAnnotationParameter-")
+        modules.find { it.packageName == pkg }?.frameworkBaseName
     }.distinct()
 }
 
@@ -130,8 +132,6 @@ internal fun List<KSValueParameter>.joinToString(): String = joinToString(", ") 
 internal fun KSFunctionDeclaration.name(): String = qualifiedName!!.getShortName()
 
 internal fun KSValueParameter.name(): String = name!!.getShortName()
-
-internal data class FrameworkMetadata(val baseName: String, val packageName: String)
 
 internal class EmptyFrameworkBaseNameException : IllegalArgumentException(
     "@${composeUIViewControllerAnnotationName.name()} requires a non-null and non-empty value for $frameworkBaseNameAnnotationParameter"
@@ -153,3 +153,7 @@ internal class TypeResolutionError(parameter: KSValueParameter) : IllegalArgumen
 internal class UnkownModuleException(file: KSFile) : IllegalArgumentException(
     "Cannot find the module for ${file.filePath}"
 )
+
+internal class ModuleDecodeException : IllegalArgumentException("Could not decode $FILE_NAME_ARGS file")
+
+internal class ModuleEmptyException : IllegalArgumentException("No module information in $FILE_NAME_ARGS file")

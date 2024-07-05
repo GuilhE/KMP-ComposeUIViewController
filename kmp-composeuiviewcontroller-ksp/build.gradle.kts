@@ -1,13 +1,17 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
     `kmp-composeuiviewcontroller-publish`
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 dependencies {
     implementation(libs.ksp.api)
+    implementation(libs.kotlinx.serialization)
+    implementation(projects.kmpComposeuiviewcontrollerCommon)
+
     testImplementation(libs.test.kotlin)
     testImplementation(libs.test.kotlinCompile)
     testImplementation(libs.test.kotlinCompileKsp)
     testImplementation(libs.test.junit.implementation)
-    testImplementation(project(":kmp-composeuiviewcontroller-annotations"))
+    testImplementation(projects.kmpComposeuiviewcontrollerAnnotations)
 }
