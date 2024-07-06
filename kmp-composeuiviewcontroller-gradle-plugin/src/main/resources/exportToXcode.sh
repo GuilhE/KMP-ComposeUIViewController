@@ -12,6 +12,9 @@ files_source="$kmp_module/build/generated/ksp/"
 group_name="Representables"
 files_destination="$iosApp_project_folder/$group_name/"
 copied_count=0
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../../" && pwd )"
+IOS_APP_DIR="$PROJECT_ROOT/$iosApp_project_folder"
 
 check_for_xcodeproj() {
   if ! gem spec xcodeproj > /dev/null 2>&1; then
@@ -80,13 +83,12 @@ add_file_references() {
 check_for_xcodeproj
 echo "> Copying files to $files_destination"
 copy_files "$files_source" "$files_destination"
+echo "> Checking for new references to be added to xcodeproj"
 if [ "$copied_count" -gt 0 ]; then
-  echo "> Checking for new references to be added to xcodeproj"
-  cd ..
-  cd ..
-  cd $iosApp_project_folder || exit
+  echo "> $copied_count new references detected"
+  cd "$IOS_APP_DIR" || exit
   add_file_references "$xcodeproj_path" "$iosApp_target_name" "$group_name"
   echo "> Done"
 else
-  echo "> No files were copied, skipping reference check"
+  echo "> No new references detected"
 fi

@@ -1,5 +1,10 @@
 # Changelog
 ---
+## [1.1.3]
+
+- Improves exportToXcode.sh
+
+---
 
 ## [1.1.2]
 
