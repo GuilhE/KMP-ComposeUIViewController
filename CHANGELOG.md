@@ -29,6 +29,7 @@
 > 
 > It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) sand will generate new types to reference those external types. That's why we endup having `Shared_modelsHello` instead of just `Hello`.
 
+Modules that provide external dependencies must include the plugin in their `build.gradle`.
 
 ---
 
