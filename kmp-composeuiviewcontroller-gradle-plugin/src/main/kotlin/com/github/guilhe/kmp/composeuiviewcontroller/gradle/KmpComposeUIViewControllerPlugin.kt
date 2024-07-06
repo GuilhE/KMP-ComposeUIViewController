@@ -1,7 +1,7 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
-import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -44,7 +44,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 finalizeFrameworkTasks(this)
             }
             afterEvaluate {
-                writeArgsToDisk(configureModuleJson(retrievePackage(), retrieveFrameworkBaseNames()))
+                writeModuleMetadataToDisk(configureFrameworkToPackage(retrieveModulePackageFromCommonMain(), retrieveFrameworkBaseNamesFromIosTargets()))
             }
         }
     }
@@ -65,7 +65,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.retrieveFrameworkBaseNames(): Set<String> {
+    private fun Project.retrieveFrameworkBaseNamesFromIosTargets(): Set<String> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val frameworkNames = mutableSetOf<String>()
         kmp.targets.configureEach { target ->
@@ -78,59 +78,48 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return frameworkNames
     }
 
-    private fun Project.retrievePackage(): String {
+    private fun Project.retrieveModulePackageFromCommonMain(): Set<String> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val commonMainSourceSet = kmp.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
-        val srcDirs = commonMainSourceSet.kotlin.srcDirs
-        for (srcDir in srcDirs) {
-            srcDir.walkTopDown().forEach { file ->
+        val packages = mutableSetOf<String>()
+        commonMainSourceSet.kotlin.srcDirs.forEach { dir ->
+            dir.walkTopDown().forEach { file ->
                 if (file.isFile && file.extension == "kt") {
-                    val relativePath = file.relativeTo(srcDir).parentFile?.path ?: ""
+                    val relativePath = file.relativeTo(dir).parentFile?.path ?: ""
                     val packagePath = relativePath.replace(File.separator, ".")
                     if (packagePath.isNotEmpty()) {
-                        return packagePath
+                        packages.add(packagePath)
                     }
                 }
             }
         }
-        if (group.toString().isNotEmpty()) {
-            return group.toString()
-        }
-        throw IllegalStateException("Cloud not determine project's package nor group")
+        return packages.ifEmpty { throw GradleException("Cloud not determine project's package") }
     }
 
-    private fun Project.configureModuleJson(packageName: String, frameworkNames: Set<String>): Map<String, String> {
-        packageName.ifEmpty { return emptyMap() }
+    private fun Project.configureFrameworkToPackage(packageNames: Set<String>, frameworkNames: Set<String>): Map<String, Set<String>> {
+        packageNames.ifEmpty { return emptyMap() }
         frameworkNames.ifEmpty { return emptyMap() }
-        val args = mutableMapOf<String, String>()
         val frameworkBaseName = frameworkNames.first() //let's assume for now all targets will have the same frameworkBaseName
-        val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
-        kotlin.targets.configureEach { target ->
-            if (target.fromIosFamily()) {
-                args[frameworkBaseName] = packageName
+        val map = mutableMapOf<String, Set<String>>()
+        extensions.getByType(KotlinMultiplatformExtension::class.java).run {
+            targets.configureEach { target ->
+                if (target.fromIosFamily()) {
+                    map[frameworkBaseName] = packageNames
+                }
             }
         }
-        return args
+        return map
     }
 
-    private fun Project.writeArgsToDisk(args: Map<String, String>) {
+    private fun Project.writeModuleMetadataToDisk(args: Map<String, Set<String>>) {
         val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
-        val modules = try {
-            Json.decodeFromString<MutableSet<Module>>(file.readText())
+        val moduleMetadata = try {
+            Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
         } catch (e: Exception) {
             mutableSetOf()
         }
-        args.forEach { (key, value) -> modules.add(Module(name = name.toString(), packageName = value, frameworkBaseName = key)) }
-        file.writeText(Json.encodeToString(modules))
-    }
-
-    private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {
-        tasks.matching { it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE || it.name == TASK_SYNC_FRAMEWORK }.configureEach { task ->
-            if (extensionParameters.autoExport) {
-                println("\n> $LOG_TAG:\n\t> ${task.name}will be finalizedBy $TASK_COPY_FILES_TO_XCODE task")
-                task.finalizedBy(TASK_COPY_FILES_TO_XCODE)
-            }
-        }
+        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name.toString(), packageName = value, frameworkBaseName = key)) }
+        file.writeText(Json.encodeToString(moduleMetadata))
     }
 
     private fun Project.registerCopyFilesToXcodeTask(project: Project, extensionParameters: ComposeUiViewControllerParameters) {
@@ -176,8 +165,17 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
+    private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {
+        tasks.matching { it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE || it.name == TASK_SYNC_FRAMEWORK }.configureEach { task ->
+            if (extensionParameters.autoExport) {
+                println("\n> $LOG_TAG:\n\t> ${task.name}will be finalizedBy $TASK_COPY_FILES_TO_XCODE task")
+                task.finalizedBy(TASK_COPY_FILES_TO_XCODE)
+            }
+        }
+    }
+
     internal companion object {
-        private const val VERSION_LIBRARY = "2.0.20-Beta1-1.6.11-BETA-4"
+        private const val VERSION_LIBRARY = "2.0.20-Beta1-1.6.11-BETA-5"
         private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
         internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
         internal const val PLUGIN_KSP = "com.google.devtools.ksp"

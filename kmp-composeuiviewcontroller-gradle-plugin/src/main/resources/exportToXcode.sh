@@ -83,6 +83,7 @@ copy_files "$files_source" "$files_destination"
 if [ "$copied_count" -gt 0 ]; then
   echo "> Checking for new references to be added to xcodeproj"
   cd ..
+  cd ..
   cd $iosApp_project_folder || exit
   add_file_references "$xcodeproj_path" "$iosApp_target_name" "$group_name"
   echo "> Done"

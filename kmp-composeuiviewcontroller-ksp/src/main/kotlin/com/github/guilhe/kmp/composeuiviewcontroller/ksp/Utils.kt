@@ -1,9 +1,8 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
-import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
@@ -89,7 +88,7 @@ internal fun extractImportsFromExternalPackages(
 
 internal fun extractFrameworkBaseNames(
     composable: KSFunctionDeclaration,
-    modules: List<Module>,
+    moduleMetadata: List<ModuleMetadata>,
     makeParameters: List<KSValueParameter>,
     parameters: List<KSValueParameter>,
     stateParameter: KSValueParameter? = null
@@ -112,9 +111,9 @@ internal fun extractFrameworkBaseNames(
 
     parameterPackages.add(composable.packageName.asString())
 
-    return parameterPackages.mapNotNull { pkg ->
-        modules.find { it.packageName == pkg }?.frameworkBaseName
-    }.distinct()
+    return parameterPackages
+        .mapNotNull { pkg -> moduleMetadata.find { it.packageName.contains(pkg) }?.frameworkBaseName }
+        .distinct()
 }
 
 internal fun String.name() = split(".").last()

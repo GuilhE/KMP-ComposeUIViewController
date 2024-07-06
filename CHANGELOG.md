@@ -1,6 +1,12 @@
 # Changelog
 ---
 
+## [2.0.20-Beta1-1.6.11-BETA-5]
+
+- Fixes EmptyFrameworkBaseNameException bug
+
+---
+
 ## [2.0.20-Beta1-1.6.11-BETA-4]
 
 - Adds experimental feature to import types from external modules.

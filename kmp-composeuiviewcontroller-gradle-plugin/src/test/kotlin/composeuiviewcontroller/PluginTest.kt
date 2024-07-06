@@ -1,7 +1,7 @@
 package composeuiviewcontroller
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
-import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
@@ -120,10 +120,19 @@ class PluginTest {
     fun `Method configureModuleJson creates and saves in disk modules metadata`() {
         with(project) {
             extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
-                group = "com.composables.module"
                 jvm()
                 iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
             }
+
+            val folder = File(projectDir.path, "src/commonMain/kotlin/com/composables/module").apply { mkdirs() }
+            val classFile = File(folder, "File.kt")
+            classFile.writeText(
+                """
+                com.composables.module
+                class Test()
+                """.trimIndent()
+            )
+            assertTrue(classFile.exists())
 
             println("> $state")
             (this as DefaultProject).evaluate()
@@ -132,9 +141,9 @@ class PluginTest {
             val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
             assertTrue(file.exists())
 
-            val module = Json.decodeFromString<List<Module>>(file.readText()).first()
-            assertTrue(module.frameworkBaseName == "ComposablesFramework")
-            assertTrue(module.packageName == "com.composables.module")
+            val moduleMetadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText()).first()
+            assertTrue(moduleMetadata.frameworkBaseName == "ComposablesFramework")
+            assertTrue(moduleMetadata.packageName.contains("com.composables.module"))
         }
     }
 
@@ -151,6 +160,16 @@ class PluginTest {
     @Test
     fun `Task CopyFilesToXcode will inject the extension parameters into exportToXcode file`(@TempDir tempDir: File) {
         projectDir = File(tempDir, "testProject").apply { mkdirs() }
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
         val buildFile = File(projectDir, "build.gradle.kts")
         buildFile.writeText(
             """
@@ -167,10 +186,9 @@ class PluginTest {
                 exportFolderName = "Composables"
                 autoExport = true
             }
-            
-            group = "com.test"
         """.trimIndent()
         )
+        assertTrue(buildFile.exists())
 
         val result = GradleRunner.create()
             .withProjectDir(projectDir)

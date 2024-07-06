@@ -1,7 +1,9 @@
+@file:Suppress("RedundantVisibilityModifier")
+
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
-import com.github.guilhe.kmp.composeuiviewcontroller.common.Module
+import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -55,30 +57,26 @@ internal class Processor(
                             .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                     }
                     val packageName = file.packageName.asString()
-                    val imports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
-                    val modules = getFrameworkMetadataFromJson()
-                    val externalModuleTypes = buildExternalModuleParameters(modules, imports)
+                    val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
+                    val modulesMetadata = getFrameworkMetadataFromDisk()
+                    val externalModuleTypes = buildExternalModuleParameters(modulesMetadata, externalImports)
+//                    val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
+                    val currentFramework = trimFrameworkBaseNames(node, modulesMetadata, packageName)
 
                     if (stateParameter == null) {
-                        createKotlinFileWithoutState(packageName, imports, composable, makeParameters, parameters).also {
+                        createKotlinFileWithoutState(packageName, externalImports, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-
-//                        val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
-                        val currentFramework = trimFrameworkBaseNames(node, packageName)
                         createSwiftFileWithoutState(listOf(currentFramework), composable, makeParameters, externalModuleTypes).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
                         val stateParameterName = stateParameter.name()
                         createKotlinFileWithState(
-                            packageName, imports, composable, stateParameterName, stateParameter, makeParameters, parameters
+                            packageName, externalImports, composable, stateParameterName, stateParameter, makeParameters, parameters
                         ).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-
-//                        val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
-                        val currentFramework = trimFrameworkBaseNames(node, packageName)
                         createSwiftFileWithState(
                             listOf(currentFramework), composable, stateParameterName, stateParameter, makeParameters, externalModuleTypes
                         ).also {
@@ -104,14 +102,14 @@ internal class Processor(
         return stateParameters
     }
 
-    private fun getFrameworkMetadataFromJson(): List<Module> {
+    private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
         val file = File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
-        val modules = try {
-            Json.decodeFromString<List<Module>>(file.readText())
+        val moduleMetadata = try {
+            Json.decodeFromString<List<ModuleMetadata>>(file.readText())
         } catch (e: Exception) {
             throw ModuleDecodeException()
         }
-        return modules
+        return moduleMetadata
     }
 
     /**
@@ -137,13 +135,13 @@ internal class Processor(
      *
      * [https://stackoverflow.com/a/78707072/1423773](https://stackoverflow.com/a/78707072/1423773)
      */
-    private fun buildExternalModuleParameters(modules: List<Module>, imports: List<String>): MutableMap<String, String> {
+    private fun buildExternalModuleParameters(moduleMetadata: List<ModuleMetadata>, imports: List<String>): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
         imports.forEach { it ->
             val type = it.split(".").last()
             val import = it.split(".$type").first()
-            modules
-                .filter { module -> module.packageName == import }
+            moduleMetadata
+                .filter { module -> module.packageName.contains(import) }
                 .forEach { module ->
                     val capitalized = module.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
                     val replaced = capitalized.replace("-", "_")
@@ -154,16 +152,14 @@ internal class Processor(
     }
 
     /**
-     * This will be needed until [buildExternalModuleParameters] is needed to. When (if) KPM limitation is addressed this will become deprecated and substituted by [getFrameworkBaseNames]
+     * This will be needed until [buildExternalModuleParameters] is needed too. When (if) KPM limitation is addressed this will become deprecated and substituted by [getFrameworkBaseNames]
      */
-    private fun trimFrameworkBaseNames(node: KSAnnotated, packageName: String): String {
-        val metadata = getFrameworkMetadataFromJson()
-        if (metadata.isEmpty()) {
+    private fun trimFrameworkBaseNames(node: KSAnnotated, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
+        if (moduleMetadata.isEmpty()) {
             val framework = getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException()
             return framework
         } else {
-            val framework =
-                metadata.firstOrNull { it.packageName == packageName }?.frameworkBaseName?: ""
+            val framework = moduleMetadata.firstOrNull { it.packageName.contains(packageName) }?.frameworkBaseName ?: ""
             framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
             return framework
         }
@@ -180,7 +176,7 @@ internal class Processor(
         frameworkBaseNames.addAll(
             extractFrameworkBaseNames(
                 composable,
-                getFrameworkMetadataFromJson(),
+                getFrameworkMetadataFromDisk(),
                 makeParameters,
                 parameters,
                 stateParameter

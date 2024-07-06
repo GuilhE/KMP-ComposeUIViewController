@@ -3,8 +3,7 @@
 
 ## [1.1.2]
 
-- Compatible with 2.0.20-Beta1-1.6.11-BETA-4
-
+- Compatible with 2.0.20-Beta1-1.6.11-BETA-5
 
 ---
 
