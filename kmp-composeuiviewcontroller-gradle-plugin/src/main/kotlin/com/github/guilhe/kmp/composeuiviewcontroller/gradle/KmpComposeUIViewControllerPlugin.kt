@@ -35,7 +35,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 throw PluginInstantiationException(ERROR_MISSING_KSP)
             }
 
-            File(rootProject.layout.buildDirectory.asFile.get().path, TEMP_FILES_FOLDER).apply { mkdirs() }
+            val tempFolder = File(rootProject.layout.buildDirectory.asFile.get().path, TEMP_FILES_FOLDER).apply { mkdirs() }
+            registerCleanTempFilesFolderTask(tempFolder)
 
             println("> $LOG_TAG:")
             setupTargets()
@@ -44,9 +45,28 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 finalizeFrameworkTasks(this)
             }
             afterEvaluate {
-                writeModuleMetadataToDisk(configureFrameworkToPackage(retrieveModulePackageFromCommonMain(), retrieveFrameworkBaseNamesFromIosTargets()))
+                writeModuleMetadataToDisk(
+                    configureFrameworkToPackage(
+                        retrieveModulePackageFromCommonMain(),
+                        retrieveFrameworkBaseNamesFromIosTargets()
+                    )
+                )
             }
         }
+    }
+
+    private fun Project.registerCleanTempFilesFolderTask(tempFolder: File) di{
+        tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) {
+            it.doLast {
+                if (tempFolder.exists()) {
+                    tempFolder.deleteRecursively()
+                    println("\n> $LOG_TAG:\n\t> Temp folder deleted")
+                } else {
+                    println("\n> $LOG_TAG:\n\t> Temp folder already deleted")
+                }
+            }
+        }
+        tasks.named("clean").configure { it.finalizedBy(TASK_CLEAN_TEMP_FILES_FOLDER) }
     }
 
     private fun Project.setupTargets() {
@@ -185,6 +205,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val LIB_ANNOTATIONS_NAME = "kmp-composeuiviewcontroller-annotations"
         private const val LIB_ANNOTATION = "$LIB_GROUP:$LIB_ANNOTATIONS_NAME:$VERSION_LIBRARY"
         private const val EXTENSION_PLUGIN = "ComposeUiViewController"
+        internal const val TASK_CLEAN_TEMP_FILES_FOLDER = "cleanTempFilesFolder"
         internal const val TASK_COPY_FILES_TO_XCODE = "copyFilesToXcode"
         internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
         internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
