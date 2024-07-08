@@ -168,7 +168,7 @@ struct SomeView: View {
     }
 }
 ```
-> [!NOTE]
+> [!IMPORTANT]
 > Avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
 
 ## Sample
