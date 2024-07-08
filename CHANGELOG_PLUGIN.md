@@ -1,5 +1,12 @@
 # Changelog
 ---
+
+## [1.1.4]
+
+- Adds clean up task to remove temp files
+- Compatible with 2.0.20-Beta1-1.6.11-BETA-6
+
+---
 ## [1.1.3]
 
 - Improves exportToXcode.sh
