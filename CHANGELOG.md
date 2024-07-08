@@ -3,7 +3,7 @@
 
 ## [2.0.20-Beta1-1.6.11-BETA-6]
 
-- Fixes EmptyFrameworkBaseNameException bug (using `contains`instead of `startsWith`)
+- Fixes EmptyFrameworkBaseNameException bug (incorrectly using `contains`instead of `startsWith`)
 
 ---
 
