@@ -141,7 +141,7 @@ internal class Processor(
             val type = it.split(".").last()
             val import = it.split(".$type").first()
             moduleMetadata
-                .filter { module -> module.packageName.contains(import) }
+                .filter { module -> module.packageNames.contains(import) }
                 .forEach { module ->
                     val capitalized = module.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
                     val replaced = capitalized.replace("-", "_")
@@ -159,7 +159,7 @@ internal class Processor(
             val framework = getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException()
             return framework
         } else {
-            val framework = moduleMetadata.firstOrNull { it.packageName.contains(packageName) }?.frameworkBaseName ?: ""
+            val framework = moduleMetadata.firstOrNull { it.packageNames.any { p -> p.startsWith(packageName) } }?.frameworkBaseName ?: ""
             framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
             return framework
         }

@@ -3,6 +3,7 @@
 ## [1.1.3]
 
 - Improves exportToXcode.sh
+- Compatible with 2.0.20-Beta1-1.6.11-BETA-6
 
 ---
 

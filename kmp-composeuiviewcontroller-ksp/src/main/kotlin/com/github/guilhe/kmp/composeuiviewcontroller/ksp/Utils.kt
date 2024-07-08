@@ -112,7 +112,7 @@ internal fun extractFrameworkBaseNames(
     parameterPackages.add(composable.packageName.asString())
 
     return parameterPackages
-        .mapNotNull { pkg -> moduleMetadata.find { it.packageName.contains(pkg) }?.frameworkBaseName }
+        .mapNotNull { pkg -> moduleMetadata.find { it.packageNames.any { packageName -> packageName.startsWith(pkg) } }?.frameworkBaseName }
         .distinct()
 }
 

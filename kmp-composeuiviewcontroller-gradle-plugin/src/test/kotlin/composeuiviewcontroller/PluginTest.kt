@@ -143,7 +143,7 @@ class PluginTest {
 
             val moduleMetadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText()).first()
             assertTrue(moduleMetadata.frameworkBaseName == "ComposablesFramework")
-            assertTrue(moduleMetadata.packageName.contains("com.composables.module"))
+            assertTrue(moduleMetadata.packageNames.any { p-> p.startsWith("com.composables.module") })
         }
     }
 

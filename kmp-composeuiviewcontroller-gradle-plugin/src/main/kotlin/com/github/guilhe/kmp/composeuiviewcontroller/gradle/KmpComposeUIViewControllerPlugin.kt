@@ -118,7 +118,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         } catch (e: Exception) {
             mutableSetOf()
         }
-        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name.toString(), packageName = value, frameworkBaseName = key)) }
+        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name.toString(), packageNames = value, frameworkBaseName = key)) }
         file.writeText(Json.encodeToString(moduleMetadata))
     }
 
@@ -175,7 +175,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     internal companion object {
-        private const val VERSION_LIBRARY = "2.0.20-Beta1-1.6.11-BETA-5"
+        private const val VERSION_LIBRARY = "2.0.20-Beta1-1.6.11-BETA-6"
         private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
         internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
         internal const val PLUGIN_KSP = "com.google.devtools.ksp"

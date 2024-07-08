@@ -93,7 +93,7 @@ class ProcessorTest {
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        tempArgs.writeText("""[{"name":"module-test","packageName":["com.mycomposable.test"],"frameworkBaseName":"MyFramework"}]""")
+        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework"}]""")
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -118,7 +118,7 @@ class ProcessorTest {
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        tempArgs.writeText("""[{"name":"module-test","packageName":["com.mycomposable.test"],"frameworkBaseName":""}]""")
+        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":""}]""")
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -510,8 +510,8 @@ class ProcessorTest {
         tempArgs.writeText(
             """
                 [
-                    {"name":"module-test","packageName":["com.mycomposable.test"],"frameworkBaseName":"MyFramework"},
-                    {"name":"module-data","packageName":["com.mycomposable.data"],"frameworkBaseName":"MyFramework2"}
+                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework"},
+                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"MyFramework2"}
                 ]
                 """.trimIndent()
         )
