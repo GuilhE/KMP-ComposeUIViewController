@@ -55,7 +55,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.registerCleanTempFilesFolderTask(tempFolder: File) di{
+    private fun Project.registerCleanTempFilesFolderTask(tempFolder: File) {
         tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) {
             it.doLast {
                 if (tempFolder.exists()) {
