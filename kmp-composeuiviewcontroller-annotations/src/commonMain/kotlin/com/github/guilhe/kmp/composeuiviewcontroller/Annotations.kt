@@ -15,7 +15,7 @@ import kotlin.native.HidesFromObjC
 public annotation class ComposeUIViewController(val frameworkBaseName: String = "")
 
 /**
- * Used to annotate the parameter as the composable state variable (for advanced use cases). Only 0 or 1 [ComposeUIViewControllerState] and an arbitrary number of parameter types (excluding [Composable] functions) are allowed in [ComposeUIViewController] functions.
+ * Used to annotate the parameter as the composable state variable (for [advanced](https://github.com/GuilhE/KMP-ComposeUIViewController?tab=readme-ov-file#advanced) use cases). Only 0 or 1 [ComposeUIViewControllerState] and an arbitrary number of parameter types (excluding Composable functions) are allowed in [ComposeUIViewController] functions.
  * [More here](https://github.com/GuilhE/KMP-ComposeUIViewController?tab=readme-ov-file#kmp-module)
  */
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION)
