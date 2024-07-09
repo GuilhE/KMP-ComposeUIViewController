@@ -2,8 +2,8 @@ name: Publish docs to Github Pages
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'docs-release-*'
 
 jobs:
   publish-docs:
@@ -35,7 +35,7 @@ jobs:
       - name: Build Dokka HTML
         run: ./gradlew dokkaHtmlMultiModule
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
