@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
 
+/**
+ * Heavy lifts gradle configurations when using [KMP-ComposeUIViewController](https://github.com/GuilhE/KMP-ComposeUIViewController) library.
+ */
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
@@ -138,7 +141,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         } catch (e: Exception) {
             mutableSetOf()
         }
-        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name.toString(), packageNames = value, frameworkBaseName = key)) }
+        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name, packageNames = value, frameworkBaseName = key)) }
         file.writeText(Json.encodeToString(moduleMetadata))
     }
 
