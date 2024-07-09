@@ -8,9 +8,11 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
 
 /**
- * @param type Kotlin type to be converted to Swift type
+ * Transforms Kotlin types into their Swift representation.
+ * [Apple framework generated framework headers](https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers)
+ *
+ * @param type [KSTypeReference] to be converted to Swift type
  * @return String with Swift type
- * @see https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers
  */
 @Suppress("KDocUnresolvedReference")
 internal fun kotlinTypeToSwift(type: KSTypeReference): String {
@@ -60,6 +62,15 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
     }.toList()
 }
 
+/**
+ * Iterates all parameters and returns package names that do not belong to the module's [packageName].
+ *
+ * @param packageName Module package name
+ * @param makeParameters List of parameters to be used in the [UIViewController] make function
+ * @param stateParameter Parameter representing [UIViewController] state (for advanced cases)
+ * @return List of package names that do not belong to the current module
+ * @throws [TypeResolutionError] If type not found or invalid
+ */
 internal fun extractImportsFromExternalPackages(
     packageName: String,
     makeParameters: List<KSValueParameter>,
@@ -86,6 +97,17 @@ internal fun extractImportsFromExternalPackages(
         .distinct()
 }
 
+/**
+ * Iterates all elements package names and returns the distinct and respective frameworkBaseName
+ *
+ * @param composable Composable [KSFunctionDeclaration]
+ * @param moduleMetadata List of [ModuleMetadata] containing all project's modules metadata
+ * @param makeParameters List of parameters to be used in the [UIViewController] make function
+ * @param parameters List of parameters to be used in Swift the [UIViewControllerRepresentable] file
+ * @param stateParameter Parameter representing [UIViewController] state (for advanced cases)
+ * @return List of frameworkBaseName
+ * @throws [TypeResolutionError] If type not found or invalid
+ */
 internal fun extractFrameworkBaseNames(
     composable: KSFunctionDeclaration,
     moduleMetadata: List<ModuleMetadata>,

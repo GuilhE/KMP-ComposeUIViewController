@@ -41,6 +41,7 @@ internal class Processor(
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
         for (node in trimmedCandidates) {
             node.containingFile?.let { file ->
+                val packageName = file.packageName.asString()
                 for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
                     it.annotations.any { annotation -> annotation.shortName.asString() == composeUIViewControllerAnnotationName.name() }
                 }) {
@@ -56,7 +57,6 @@ internal class Processor(
                             .filterComposableFunctions()
                             .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                     }
-                    val packageName = file.packageName.asString()
                     val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
                     val modulesMetadata = getFrameworkMetadataFromDisk()
                     val externalModuleTypes = buildExternalModuleParameters(modulesMetadata, externalImports)

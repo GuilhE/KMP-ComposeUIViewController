@@ -46,8 +46,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             }
             afterEvaluate {
                 writeModuleMetadataToDisk(
-                    configureFrameworkToPackage(
-                        retrieveModulePackageFromCommonMain(),
+                    buildFrameworkPackages(
+                        retrieveModulePackagesFromCommonMain(),
                         retrieveFrameworkBaseNamesFromIosTargets()
                     )
                 )
@@ -98,7 +98,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return frameworkNames
     }
 
-    private fun Project.retrieveModulePackageFromCommonMain(): Set<String> {
+    private fun Project.retrieveModulePackagesFromCommonMain(): Set<String> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val commonMainSourceSet = kmp.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
         val packages = mutableSetOf<String>()
@@ -116,7 +116,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return packages.ifEmpty { throw GradleException("Cloud not determine project's package") }
     }
 
-    private fun Project.configureFrameworkToPackage(packageNames: Set<String>, frameworkNames: Set<String>): Map<String, Set<String>> {
+    private fun Project.buildFrameworkPackages(packageNames: Set<String>, frameworkNames: Set<String>): Map<String, Set<String>> {
         packageNames.ifEmpty { return emptyMap() }
         frameworkNames.ifEmpty { return emptyMap() }
         val frameworkBaseName = frameworkNames.first() //let's assume for now all targets will have the same frameworkBaseName
