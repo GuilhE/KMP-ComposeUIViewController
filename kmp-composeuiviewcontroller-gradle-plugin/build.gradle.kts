@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.gradle.publish)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.kotlin.dokka)
 }
 
 kotlin {
