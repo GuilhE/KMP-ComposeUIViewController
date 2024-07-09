@@ -59,9 +59,10 @@ To annotate the parameter as the composable state variable (for **advanced** use
 
 > [!IMPORTANT]
 >  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
-> For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 >
-> The `@ComposeUIViewController` includes a `frameworkBaseName` parameter, allowing you to specify a framework name manually. While the plugin typically attempts to retrieve this name automatically, you can use this parameter to enforce a specific name if the automatic retrieval fails.
+> The `@ComposeUIViewController` includes a `frameworkBaseName` parameter, allowing you to specify a framework name manually. While the plugin typically attempts to retrieve this name automatically, you can use this parameter to enforce a specific name <ins>if the automatic retrieval fails</ins>.
+>
+> For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
 #### Examples
 
@@ -167,7 +168,7 @@ struct SomeView: View {
     }
 }
 ```
-> [!NOTE]
+> [!IMPORTANT]
 > Avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
 
 ## Sample
