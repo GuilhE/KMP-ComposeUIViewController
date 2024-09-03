@@ -172,7 +172,7 @@ struct SomeView: View {
 > Avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
 
 ## Sample
-For a working [sample](sample/iosApp/Gradient/SharedView.swift) run `iosApp` by opening `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
 
 ```bash
 > Task :shared:kspKotlinIosSimulatorArm64
