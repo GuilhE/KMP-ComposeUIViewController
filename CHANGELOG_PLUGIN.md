@@ -1,6 +1,12 @@
 # Changelog
 ---
 
+## [1.1.6]
+
+- Compatible with 2.0.20-1.7.0-alpha03-BETA-1
+
+---
+
 ## [1.1.5]
 
 - Adds flag to enable/disable experimental namespace feature ([2.0.20-Beta1-1.6.11-BETA-4])

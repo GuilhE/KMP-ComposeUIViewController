@@ -1,6 +1,11 @@
 # Changelog
 ---
 
+## [2.0.20-1.7.0-alpha03-BETA-1]
+
+- Kotlin 2.0.20
+- KSP 1.0.24
+
 ## [2.0.20-Beta1-1.6.11-BETA-7]
 
 - Adds `experimentalNamespaceFeature` flag to enable/disable experimental feature to import types from external modules. Read more in [CHANGELOG.md#2020-beta1-1611-beta-4](CHANGELOG.md#2020-beta1-1611-beta-4)
