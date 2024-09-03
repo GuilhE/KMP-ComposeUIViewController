@@ -59,7 +59,12 @@ internal class Processor(
                     }
                     val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
                     val modulesMetadata = getFrameworkMetadataFromDisk()
-                    val externalModuleTypes = buildExternalModuleParameters(modulesMetadata, externalImports)
+                    val experimentalFeature: Boolean = modulesMetadata.firstOrNull()?.experimentalNamespaceFeature ?: false
+                    val externalModuleTypes = if (experimentalFeature) {
+                        buildExternalModuleParameters(modulesMetadata, externalImports)
+                    } else {
+                        emptyMap()
+                    }
 //                    val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
                     val currentFramework = trimFrameworkBaseNames(node, modulesMetadata, packageName)
 
@@ -131,7 +136,7 @@ internal class Processor(
      *
      * Shared: `open func update(state: Hello)`
      *
-     * It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) sand will generate new types to reference those external types. That's why we endup having `Shared_modelsHello` instead of just `Hello`.
+     * It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) sand will generate new types to reference those external types. That's why we end up having `Shared_modelsHello` instead of just `Hello`.
      *
      * [https://stackoverflow.com/a/78707072/1423773](https://stackoverflow.com/a/78707072/1423773)
      */

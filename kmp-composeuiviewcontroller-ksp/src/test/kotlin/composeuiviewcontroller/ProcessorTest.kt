@@ -93,7 +93,7 @@ class ProcessorTest {
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework"}]""")
+        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -118,7 +118,7 @@ class ProcessorTest {
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":""}]""")
+        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
@@ -490,7 +490,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Types imported from different KMP modules will produce Swift files with composed types`() {
+    fun `Types imported from different KMP modules will not produce Swift files by default`() {
         val data = """
             package com.mycomposable.data
             data class Data(val field: Int)
@@ -510,8 +510,62 @@ class ProcessorTest {
         tempArgs.writeText(
             """
                 [
-                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework"},
-                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"MyFramework2"}
+                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework","experimentalNamespaceFeature":false},
+                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"MyFramework2","experimentalNamespaceFeature":false}
+                ]
+                """.trimIndent()
+        )
+        val result = compilation.compile()
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftOutput = """
+            import SwiftUI
+            import MyFramework
+
+            public struct ScreenRepresentable: UIViewControllerRepresentable {
+                let data: Data
+
+                public func makeUIViewController(context: Context) -> UIViewController {
+                    ScreenUIViewController().make(data: data)
+                }
+
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    //unused
+                }
+            }
+        """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+    }
+
+    @Test
+    fun `Types imported from different KMP modules will produce Swift files with composed types when experimentalNamespaceFeature flag is true`() {
+        val data = """
+            package com.mycomposable.data
+            data class Data(val field: Int)
+        """.trimIndent()
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.Data
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(data: Data) { }
+        """.trimIndent()
+
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
+        tempArgs.writeText(
+            """
+                [
+                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework","experimentalNamespaceFeature":true},
+                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"MyFramework2","experimentalNamespaceFeature":true}
                 ]
                 """.trimIndent()
         )

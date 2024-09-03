@@ -1,9 +1,15 @@
 # Changelog
 ---
 
+## [2.0.20-Beta1-1.6.11-BETA-7]
+
+- Adds `experimentalNamespaceFeature` flag to enable/disable experimental feature to import types from external modules. Read more in [CHANGELOG.md#2020-beta1-1611-beta-4](CHANGELOG.md#2020-beta1-1611-beta-4)
+
+---
+
 ## [2.0.20-Beta1-1.6.11-BETA-6]
 
-- Fixes EmptyFrameworkBaseNameException bug (incorrectly using `contains`instead of `startsWith`)
+- Fixes EmptyFrameworkBaseNameException bug (incorrectly using `contains` instead of `startsWith`)
 
 ---
 
@@ -33,7 +39,9 @@
 > SharedModels: `public class Hello : KotlinBase`  
 > Shared: `open func update(state: Hello)`
 > 
-> It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) sand will generate new types to reference those external types. That's why we endup having `Shared_modelsHello` instead of just `Hello`.
+> It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) and will generate new types to reference those external types. That's why we endup having `Shared_modelsHello` instead of just `Hello`.
+> 
+> To "solve" this issue we can use the export() function (inside binaries.framework configuration) to add a dependency to be exported in the framework.
 
 Modules that provide external dependencies must include the plugin in their `build.gradle`.
 

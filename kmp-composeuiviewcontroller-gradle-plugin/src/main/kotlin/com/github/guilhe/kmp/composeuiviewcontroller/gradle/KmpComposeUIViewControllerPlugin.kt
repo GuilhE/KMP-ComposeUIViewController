@@ -26,7 +26,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
-    private fun ComposeUiViewControllerParameters.toList() = listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
+    private fun ComposeUiViewControllerParameters.toList() = listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName, experimentalNamespaceFeature)
 
     override fun apply(project: Project) {
         with(project) {
@@ -46,14 +46,15 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             with(extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)) {
                 registerCopyFilesToXcodeTask(project, this)
                 finalizeFrameworkTasks(this)
-            }
-            afterEvaluate {
-                writeModuleMetadataToDisk(
-                    buildFrameworkPackages(
-                        retrieveModulePackagesFromCommonMain(),
-                        retrieveFrameworkBaseNamesFromIosTargets()
+                afterEvaluate {
+                    writeModuleMetadataToDisk(
+                        args = buildFrameworkPackages(
+                            retrieveModulePackagesFromCommonMain(),
+                            retrieveFrameworkBaseNamesFromIosTargets()
+                        ),
+                        extensionParameters = this
                     )
-                )
+                }
             }
         }
     }
@@ -134,14 +135,14 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return map
     }
 
-    private fun Project.writeModuleMetadataToDisk(args: Map<String, Set<String>>) {
+    private fun Project.writeModuleMetadataToDisk(args: Map<String, Set<String>>, extensionParameters: ComposeUiViewControllerParameters) {
         val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
         val moduleMetadata = try {
             Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
         } catch (e: Exception) {
             mutableSetOf()
         }
-        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name, packageNames = value, frameworkBaseName = key)) }
+        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name, packageNames = value, frameworkBaseName = key, experimentalNamespaceFeature = extensionParameters.experimentalNamespaceFeature)) }
         file.writeText(Json.encodeToString(moduleMetadata))
     }
 
@@ -198,7 +199,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     internal companion object {
-        private const val VERSION_LIBRARY = "2.0.20-Beta1-1.6.11-BETA-6"
+        private const val VERSION_LIBRARY = "2.0.20-Beta1-1.6.11-BETA-7"
         private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
         internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
         internal const val PLUGIN_KSP = "com.google.devtools.ksp"

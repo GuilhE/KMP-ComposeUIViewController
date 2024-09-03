@@ -33,4 +33,9 @@ public open class ComposeUiViewControllerParameters {
      *  Auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`. Warning: avoid deleting `[iosAppFolderName]/[exportFolderName]` without first using Xcode to Remove references.
      */
     public var autoExport: Boolean = true
+
+    /**
+     *  Enables experimental feature to import types from external modules. Read more in CHANGELOG.md#2020-beta1-1611-beta-4
+     */
+    public var experimentalNamespaceFeature: Boolean = false
 }

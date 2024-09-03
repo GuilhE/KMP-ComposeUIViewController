@@ -14,7 +14,9 @@ ComposeUiViewController {
 kotlin {
     jvm()
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-        target.binaries.framework { baseName = "Composables" }
+        target.binaries.framework {
+            baseName = "Composables"
+        }
     }
     sourceSets {
         commonMain.dependencies {

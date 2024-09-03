@@ -1,6 +1,13 @@
 # Changelog
 ---
 
+## [1.1.5]
+
+- Adds flag to enable/disable experimental namespace feature ([2.0.20-Beta1-1.6.11-BETA-4])
+- Compatible with 2.0.20-Beta1-1.6.11-BETA-7
+
+---
+
 ## [1.1.4]
 
 - Adds clean up task to remove temp files

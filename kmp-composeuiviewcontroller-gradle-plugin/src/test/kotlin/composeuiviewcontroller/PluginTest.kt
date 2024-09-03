@@ -184,7 +184,6 @@ class PluginTest {
                 iosAppName = "iosApp"
                 targetName = "iosTarget"
                 exportFolderName = "Composables"
-                autoExport = true
             }
         """.trimIndent()
         )
