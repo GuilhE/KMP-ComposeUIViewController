@@ -41,9 +41,26 @@
 > 
 > It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) and will generate new types to reference those external types. That's why we endup having `Shared_modelsHello` instead of just `Hello`.
 > 
-> To "solve" this issue we can use the export() function (inside binaries.framework configuration) to add a dependency to be exported in the framework.
+> A workaround to "solve" this limitation is to use the `export()` function (inside `binaries.framework` configuration) to add a dependency to be exported in the framework.
+> ```
+> iosTarget.binaries.framework {
+>    baseName = "Shared"
+>    export(projects.sharedModels)
+> }
+> ```
+> When using this approach this experimental feature should be disabled.
 
-Modules that provide external dependencies must include the plugin in their `build.gradle`.
+Modules that provide external dependencies must include the plugin in their `build.gradle`:
+
+```
+plugins {
+    id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
+}
+
+ComposeUiViewController {
+    autoExport = false
+}
+```
 
 ---
 
