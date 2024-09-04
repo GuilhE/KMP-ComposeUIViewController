@@ -4,9 +4,9 @@
 
 KSP library for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
-| Version                                                                                                                                                                                                                     |    Kotlin    |  KSP   | Compose Multiplatform |        Xcode        |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------:|:------:|:---------------------:|:-------------------:|
-| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.0.20-Beta1 | 1.0.22 |        1.6.11         | 15.3.0, 16.0.0-Beta |
+| Version                                                                                                                                                                                                                     | Kotlin |  KSP   | Compose Multiplatform |        Xcode        |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------:|:------:|:---------------------:|:-------------------:|
+| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.0.20 | 1.0.24 |     1.7.0-alpha03     | 15.3.0, 16.0.0-Beta |
 
 The suffix `-ALPHA` or `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
 
