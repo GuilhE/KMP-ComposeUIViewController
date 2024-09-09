@@ -1,6 +1,13 @@
 # Changelog
 ---
 
+## [2.0.20-1.7.0-beta01-BETA-2]
+
+- Adds exception print to ModuleDecodeException
+- Fixes `getFrameworkMetadataFromDisk()` throwing not found for cocoapods projects
+
+---
+
 ## [2.0.20-1.7.0-beta01-BETA-1]
 
 - CMP 1.7.0-beta01

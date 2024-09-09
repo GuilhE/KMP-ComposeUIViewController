@@ -108,11 +108,13 @@ internal class Processor(
     }
 
     private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
-        val file = File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
+        val file = if(System.getProperty("user.dir").endsWith("Pods")) {
+            File("../../build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
+        } else File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
         val moduleMetadata = try {
             Json.decodeFromString<List<ModuleMetadata>>(file.readText())
         } catch (e: Exception) {
-            throw ModuleDecodeException()
+            throw ModuleDecodeException(e)
         }
         return moduleMetadata
     }

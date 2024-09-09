@@ -171,4 +171,4 @@ internal class TypeResolutionError(parameter: KSValueParameter) : IllegalArgumen
     "Cannot resolve type for parameter ${parameter.name()} from ${parameter.location}. Check your file imports"
 )
 
-internal class ModuleDecodeException : IllegalArgumentException("Could not decode $FILE_NAME_ARGS file")
+internal class ModuleDecodeException(e: Exception) : IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
