@@ -34,7 +34,7 @@ tasks.test {
     useJUnitPlatform()
 }
 
-version = "1.1.8"
+version = "1.1.9"
 group = "io.github.guilhe.kmp"
 
 gradlePlugin {
