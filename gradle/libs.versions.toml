@@ -2,7 +2,7 @@
 
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.25"
-kotlinCompose = "1.7.0-rc01"
+kotlinCompose = "1.7.0"
 kotlinxSerialization = "1.7.1"
 kotlinxSerializationPlugin = "2.0.0"
 dokka = "1.9.20"
