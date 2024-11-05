@@ -14,10 +14,9 @@ import com.google.devtools.ksp.symbol.KSValueParameter
  * @param type [KSTypeReference] to be converted to Swift type
  * @return String with Swift type
  */
-@Suppress("KDocUnresolvedReference")
-internal fun kotlinTypeToSwift(type: KSTypeReference): String {
+internal fun kotlinTypeToSwift(type: KSValueParameter): String {
     val regex = "\\b(Unit|List|MutableList|Map|MutableMap|Byte|UByte|Short|UShort|Int|UInt|Long|ULong|Float|Double|Boolean)\\b".toRegex()
-    return regex.replace("$type") { matchResult ->
+    return regex.replace(type.resolveType()) { matchResult ->
         when (matchResult.value) {
             "Unit" -> "Void"
             "List" -> "Array"
@@ -66,8 +65,8 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
  * Iterates all parameters and returns package names that do not belong to the module's [packageName].
  *
  * @param packageName Module package name
- * @param makeParameters List of parameters to be used in the [UIViewController] make function
- * @param stateParameter Parameter representing [UIViewController] state (for advanced cases)
+ * @param makeParameters List of parameters to be used in the UIViewController make function
+ * @param stateParameter Parameter representing UIViewController state (for advanced cases)
  * @return List of package names that do not belong to the current module
  * @throws [TypeResolutionError] If type not found or invalid
  */
@@ -102,9 +101,9 @@ internal fun extractImportsFromExternalPackages(
  *
  * @param composable Composable [KSFunctionDeclaration]
  * @param moduleMetadata List of [ModuleMetadata] containing all project's modules metadata
- * @param makeParameters List of parameters to be used in the [UIViewController] make function
- * @param parameters List of parameters to be used in Swift the [UIViewControllerRepresentable] file
- * @param stateParameter Parameter representing [UIViewController] state (for advanced cases)
+ * @param makeParameters List of parameters to be used in the UIViewController make function
+ * @param parameters List of parameters to be used in Swift the UIViewControllerRepresentable file
+ * @param stateParameter Parameter representing UIViewController state (for advanced cases)
  * @return List of frameworkBaseName
  * @throws [TypeResolutionError] If type not found or invalid
  */
@@ -148,7 +147,26 @@ internal fun List<KSValueParameter>.toComposableParameters(): String = joinToStr
 internal fun List<KSValueParameter>.filterComposableFunctions(): List<KSValueParameter> =
     filter { it.annotations.none { annotation -> annotation.shortName.getShortName() == "Composable" } }
 
-internal fun List<KSValueParameter>.joinToString(): String = joinToString(", ") { "${it.name!!.getShortName()}: ${it.type}" }
+internal fun List<KSValueParameter>.joinToStringDeclaration(separator: CharSequence = ", "): String = joinToString(separator) {
+    "${it.name!!.getShortName()}: ${it.resolveType()}"
+}
+
+internal fun KSValueParameter.resolveType(): String {
+    //println(">> KSValueParameter type: ${type}")
+    val resolvedType = type.resolve()
+    return if (resolvedType.isFunctionType) {
+        buildString {
+            append("(")
+            append(resolvedType.arguments.dropLast(1).joinToString(", ") { arg ->
+                arg.type?.resolve()?.declaration?.simpleName?.asString() ?: "Unknown"
+            })
+            append(") -> ")
+            append(resolvedType.arguments.last().type?.resolve()?.declaration?.simpleName?.asString() ?: "Unit")
+        }
+    } else {
+        resolvedType.declaration.simpleName.asString()
+    }
+}
 
 internal fun KSFunctionDeclaration.name(): String = qualifiedName!!.getShortName()
 

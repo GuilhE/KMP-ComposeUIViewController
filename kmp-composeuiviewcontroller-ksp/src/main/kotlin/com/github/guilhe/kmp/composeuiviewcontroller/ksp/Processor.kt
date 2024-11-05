@@ -209,7 +209,7 @@ internal class Processor(
             $importsParsed
 
             object ${composable.name()}UIViewController {
-                fun make(${makeParameters.joinToString()}): UIViewController {
+                fun make(${makeParameters.joinToStringDeclaration()}): UIViewController {
                     return ComposeUIViewController {
                         ${composable.name()}(${parameters.toComposableParameters()})
                     }
@@ -248,7 +248,7 @@ internal class Processor(
             object ${composable.name()}UIViewController {
                 private val $stateParameterName = mutableStateOf<${stateParameter.type}?>(null)
 
-                fun make(${makeParameters.joinToString()}): UIViewController {
+                fun make(${makeParameters.joinToStringDeclaration()}): UIViewController {
                     return ComposeUIViewController {
                         state.value?.let { ${composable.name()}(${parameters.toComposableParameters(stateParameterName)}) }
                     }
@@ -278,7 +278,7 @@ internal class Processor(
         val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
-            val type = kotlinTypeToSwift(it.type)
+            val type = kotlinTypeToSwift(it)
             val finalType = if (externalParameters.containsKey(type)) {
                 externalParameters[type]
             } else type
@@ -322,7 +322,7 @@ internal class Processor(
         val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
-            val type = kotlinTypeToSwift(it.type)
+            val type = kotlinTypeToSwift(it)
             val finalType = externalParameters[type] ?: type
             "let ${it.name()}: $finalType"
         }

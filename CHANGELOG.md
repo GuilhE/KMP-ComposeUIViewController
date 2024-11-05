@@ -1,11 +1,17 @@
 # Changelog
 ---
+## [2.0.21-1.7.0-BETA-1]
+
+- Fixes  type resolve for Functions when `ksp.useKSP2=true`
+
+---
+
 ## [2.0.21-1.7.0-BETA]
 
 - CMP 1.7.0
 
-
 ---
+
 ## [2.0.21-1.7.0-rc01-BETA]
 
 - Kotlin 2.0.21
