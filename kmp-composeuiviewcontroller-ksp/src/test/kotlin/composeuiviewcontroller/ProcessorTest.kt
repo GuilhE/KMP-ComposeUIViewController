@@ -439,7 +439,7 @@ class ProcessorTest {
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
                     callBackA: () -> Unit,
-                    callBackB: (List<String>) -> Unit,
+                    callBackB: (List<Map<String, List<Int>>>) -> List<String>,
                     callBackC: (MutableList<String>) -> Unit,
                     callBackD: (Map<String, String>) -> Unit,
                     callBackE: (MutableMap<String, String>) -> Unit,
@@ -465,28 +465,39 @@ class ProcessorTest {
         assertTrue(generatedSwiftFiles.isNotEmpty())
         assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
 
-        val expectedSwiftTypes = listOf(
-            "Void",
-            "Array<String>",
-            "NSMutableArray",
-            "Dictionary<String, String>",
-            "NSMutableDictionary",
-            "KotlinByte",
-            "KotlinUByte",
-            "KotlinShort",
-            "KotlinUShort",
-            "KotlinInt",
-            "KotlinUInt",
-            "KotlinLong",
-            "KotlinULong",
-            "KotlinFloat",
-            "KotlinDouble",
-            "KotlinBoolean"
-        )
-        val generatedCodeFile = generatedSwiftFiles.first().readText()
-        for (expectedType in expectedSwiftTypes) {
-            assertTrue(generatedCodeFile.contains(expectedType))
-        }
+        val expectedSwiftOutput = """
+            import SwiftUI
+            import MyFramework
+
+            public struct ScreenRepresentable: UIViewControllerRepresentable {
+                @Binding var state: ViewState
+                let callBackA: () -> Void
+                let callBackB: (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>
+                let callBackC: (NSMutableArray<String>) -> Void
+                let callBackD: (Dictionary<String, String>) -> Void
+                let callBackE: (NSMutableDictionary<String, String>) -> Void
+                let callBackF: (KotlinByte) -> Void
+                let callBackG: (KotlinUByte) -> Void
+                let callBackH: (KotlinShort) -> Void
+                let callBackI: (KotlinUShort) -> Void
+                let callBackJ: (KotlinInt) -> Void
+                let callBackK: (KotlinUInt) -> Void
+                let callBackL: (KotlinLong) -> Void
+                let callBackM: (KotlinULong) -> Void
+                let callBackN: (KotlinFloat) -> Void
+                let callBackO: (KotlinDouble) -> Void
+                let callBackP: (KotlinBoolean) -> Void
+
+                public func makeUIViewController(context: Context) -> UIViewController {
+                    ScreenUIViewController().make(callBackA: callBackA, callBackB: callBackB, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
+                }
+
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    ScreenUIViewController().update(state: state)
+                }
+            }
+        """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
     }
 
     @Test
