@@ -4,38 +4,72 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.symbol.KSTypeReference
+import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
 
 /**
- * Transforms Kotlin types into their Swift representation.
- * [Apple framework generated framework headers](https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers)
- *
- * @param type [KSTypeReference] to be converted to Swift type
- * @return String with Swift type
+ * Resolves KSValueParameter type
+ * @param toSwift If true, transforms Kotlin types into their Swift representation. [Apple framework generated framework headers](https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers)
+ * @return String with type resolved
+ * @throws TypeResolutionError when type cannot be resolved
  */
-internal fun kotlinTypeToSwift(type: KSValueParameter): String {
-    val regex = "\\b(Unit|List|MutableList|Map|MutableMap|Byte|UByte|Short|UShort|Int|UInt|Long|ULong|Float|Double|Boolean)\\b".toRegex()
-    return regex.replace(type.resolveType()) { matchResult ->
-        when (matchResult.value) {
-            "Unit" -> "Void"
-            "List" -> "Array"
-            "MutableList" -> "NSMutableArray"
-            "Map" -> "Dictionary"
-            "MutableMap" -> "NSMutableDictionary"
-            "Byte" -> "KotlinByte"
-            "UByte" -> "KotlinUByte"
-            "Short" -> "KotlinShort"
-            "UShort" -> "KotlinUShort"
-            "Int" -> "KotlinInt"
-            "UInt" -> "KotlinUInt"
-            "Long" -> "KotlinLong"
-            "ULong" -> "KotlinULong"
-            "Float" -> "KotlinFloat"
-            "Double" -> "KotlinDouble"
-            "Boolean" -> "KotlinBoolean"
-            else -> "KotlinNumber"
+internal fun KSValueParameter.resolveType(toSwift: Boolean = false): String {
+    //println(">> KSValueParameter type: ${type}")
+    val resolvedType = type.resolve()
+    return if (resolvedType.isFunctionType) {
+        buildString {
+            append("(")
+            append(resolvedType.arguments.dropLast(1).joinToString(", ") { arg ->
+                val argType = arg.type?.resolve()
+                if (argType == null || argType.isError) {
+                    throw TypeResolutionException(resolvedType)
+                } else {
+                    convertGenericType(argType, toSwift)
+                }
+            })
+            append(") -> ")
+            val returnType = resolvedType.arguments.last().type?.resolve()
+            val returnTypeName = if (returnType == null || returnType.isError) {
+                throw TypeResolutionException(resolvedType)
+            } else {
+                convertGenericType(returnType, toSwift)
+            }
+            append(returnTypeName)
         }
+    } else {
+        convertGenericType(resolvedType, toSwift)
+    }
+}
+
+private fun convertGenericType(type: KSType, toSwift: Boolean): String {
+    val baseType = type.declaration.simpleName.asString()
+    val convertedBaseType = if (toSwift) convertToSwift(baseType) else baseType
+    if (type.arguments.isEmpty()) return convertedBaseType
+    val generics = type.arguments.joinToString(", ") { arg ->
+        arg.type?.resolve()?.let { convertGenericType(it, toSwift) } ?: "Unknown"
+    }
+    return "$convertedBaseType<$generics>"
+}
+
+private fun convertToSwift(baseType: String): String {
+    return when (baseType) {
+        "Unit" -> "Void"
+        "List" -> "Array"
+        "MutableList" -> "NSMutableArray"
+        "Map" -> "Dictionary"
+        "MutableMap" -> "NSMutableDictionary"
+        "Byte" -> "KotlinByte"
+        "UByte" -> "KotlinUByte"
+        "Short" -> "KotlinShort"
+        "UShort" -> "KotlinUShort"
+        "Int" -> "KotlinInt"
+        "UInt" -> "KotlinUInt"
+        "Long" -> "KotlinLong"
+        "ULong" -> "KotlinULong"
+        "Float" -> "KotlinFloat"
+        "Double" -> "KotlinDouble"
+        "Boolean" -> "KotlinBoolean"
+        else -> baseType
     }
 }
 
@@ -151,23 +185,6 @@ internal fun List<KSValueParameter>.joinToStringDeclaration(separator: CharSeque
     "${it.name!!.getShortName()}: ${it.resolveType()}"
 }
 
-internal fun KSValueParameter.resolveType(): String {
-    //println(">> KSValueParameter type: ${type}")
-    val resolvedType = type.resolve()
-    return if (resolvedType.isFunctionType) {
-        buildString {
-            append("(")
-            append(resolvedType.arguments.dropLast(1).joinToString(", ") { arg ->
-                arg.type?.resolve()?.declaration?.simpleName?.asString() ?: "Unknown"
-            })
-            append(") -> ")
-            append(resolvedType.arguments.last().type?.resolve()?.declaration?.simpleName?.asString() ?: "Unit")
-        }
-    } else {
-        resolvedType.declaration.simpleName.asString()
-    }
-}
-
 internal fun KSFunctionDeclaration.name(): String = qualifiedName!!.getShortName()
 
 internal fun KSValueParameter.name(): String = name!!.getShortName()
@@ -189,4 +206,7 @@ internal class TypeResolutionError(parameter: KSValueParameter) : IllegalArgumen
     "Cannot resolve type for parameter ${parameter.name()} from ${parameter.location}. Check your file imports"
 )
 
-internal class ModuleDecodeException(e: Exception) : IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
+internal class ModuleDecodeException(e: Exception) :
+    IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
+
+internal class TypeResolutionException(type: KSType) : IllegalArgumentException("Could not resolve function parameter: ${type}")

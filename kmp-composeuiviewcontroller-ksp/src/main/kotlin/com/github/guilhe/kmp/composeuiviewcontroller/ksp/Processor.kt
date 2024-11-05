@@ -278,7 +278,7 @@ internal class Processor(
         val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
-            val type = kotlinTypeToSwift(it)
+            val type = it.resolveType(toSwift = true)
             val finalType = if (externalParameters.containsKey(type)) {
                 externalParameters[type]
             } else type
@@ -322,7 +322,7 @@ internal class Processor(
         val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
-            val type = kotlinTypeToSwift(it)
+            val type = it.resolveType(toSwift = true)
             val finalType = externalParameters[type] ?: type
             "let ${it.name()}: $finalType"
         }

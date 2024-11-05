@@ -439,10 +439,10 @@ class ProcessorTest {
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
                     callBackA: () -> Unit,
-                    callBackB: (List) -> Unit,
-                    callBackC: (MutableList) -> Unit,
-                    callBackD: (Map) -> Unit,
-                    callBackE: (MutableMap) -> Unit,
+                    callBackB: (List<String>) -> Unit,
+                    callBackC: (MutableList<String>) -> Unit,
+                    callBackD: (Map<String, String>) -> Unit,
+                    callBackE: (MutableMap<String, String>) -> Unit,
                     callBackF: (Byte) -> Unit,
                     callBackG: (UByte) -> Unit,
                     callBackH: (Short) -> Unit,
@@ -467,9 +467,9 @@ class ProcessorTest {
 
         val expectedSwiftTypes = listOf(
             "Void",
-            "Array",
+            "Array<String>",
             "NSMutableArray",
-            "Dictionary",
+            "Dictionary<String, String>",
             "NSMutableDictionary",
             "KotlinByte",
             "KotlinUByte",
@@ -487,6 +487,31 @@ class ProcessorTest {
         for (expectedType in expectedSwiftTypes) {
             assertTrue(generatedCodeFile.contains(expectedType))
         }
+    }
+
+    @Test
+    fun `Function parameter with List, MutableList, Map or MutableMap without type specification will throw TypeResolutionError`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.ViewState                       
+            
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,                   
+                    callBackB: (List) -> Unit,
+                    callBackC: (MutableList) -> Unit,
+                    callBackD: (Map) -> Unit,
+                    callBackE: (MutableMap) -> Unit,                    
+            ) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val result = compilation.compile()
+        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
     }
 
     @Test
