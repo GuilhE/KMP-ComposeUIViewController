@@ -1,4 +1,4 @@
-@file:Suppress("TestFunctionName")
+@file:Suppress("TestFunctionName", "SpellCheckingInspection")
 
 package composeuiviewcontroller
 
@@ -16,40 +16,45 @@ import com.tschuchort.compiletesting.kspIncremental
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
 import java.io.File
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCompilerApi::class)
 class ProcessorTest {
 
-    @get:Rule
-    val tempFolder = TemporaryFolder(File("build/tmp/test-module/src").also { it.mkdirs() })
-
+    private lateinit var tempFolder: File
     private lateinit var tempArgs: File
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
-        val build = File(tempFolder.root.parentFile.parentFile.parentFile.parentFile.path) //we need to reach module's ./build
-        File(build, TEMP_FILES_FOLDER).apply { mkdirs() }
-        tempArgs = File(build, "$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").apply { writeText("[]") }
         return KotlinCompilation().apply {
-            workingDir = tempFolder.root
-            inheritClassPath = true
-            symbolProcessorProviders = listOf(ProcessorProvider())
+            symbolProcessorProviders += ProcessorProvider()
             sources = sourceFiles.asList()
+            workingDir = tempFolder
+            inheritClassPath = true
             verbose = false
             kspIncremental = false
         }
     }
 
-    @After
+    @BeforeTest
+    fun setup() {
+        val buildFolder = File("build/$TEMP_FILES_FOLDER").apply { mkdirs() }
+        tempFolder = File(buildFolder, "test/src").apply { mkdirs() }
+        tempArgs = File(buildFolder, FILE_NAME_ARGS).apply {
+            parentFile.mkdirs()
+            writeText("[]")
+        }
+    }
+
+    @AfterTest
     fun clean() {
         tempArgs.delete()
+        tempFolder.deleteRecursively()
     }
 
     @Test
@@ -68,7 +73,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertTrue(
             compilation.kspSourcesDir
                 .walkTopDown()
@@ -96,7 +101,7 @@ class ProcessorTest {
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"MyFramework","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
@@ -121,7 +126,7 @@ class ProcessorTest {
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
@@ -144,7 +149,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
     }
 
@@ -164,7 +169,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val expectedKotlinOutput = """
             @file:Suppress("unused")
@@ -230,7 +235,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
     }
 
     @Test
@@ -252,7 +257,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertContains(result.messages, InvalidParametersException().message!!)
     }
 
@@ -279,7 +284,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
             compilation.kspSourcesDir
                 .walkTopDown()
@@ -373,7 +378,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB), kotlin("Data.kt", data))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
                 .filter {
@@ -410,7 +415,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code, isMultiplatformCommonSource = true))
         val result = compilation.compile()
 
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
                 .filter {
@@ -425,7 +430,7 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Function parameter with Kotlin primitive type will map to Swift expected type`() {
+    fun `Function parameters with Kotlin types will map to Swift types`() {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -440,6 +445,7 @@ class ProcessorTest {
                     @ComposeUIViewControllerState state: ViewState,
                     callBackA: () -> Unit,
                     callBackB: (List<Map<String, List<Int>>>) -> List<String>,
+                    callBackS: (Set<Int>) -> Unit,
                     callBackC: (MutableList<String>) -> Unit,
                     callBackD: (Map<String, String>) -> Unit,
                     callBackE: (MutableMap<String, String>) -> Unit,
@@ -463,46 +469,48 @@ class ProcessorTest {
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
             .toList()
         assertTrue(generatedSwiftFiles.isNotEmpty())
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
+        println("$generatedSwiftFiles")
         val expectedSwiftOutput = """
-            import SwiftUI
-            import MyFramework
-
-            public struct ScreenRepresentable: UIViewControllerRepresentable {
-                @Binding var state: ViewState
-                let callBackA: () -> Void
-                let callBackB: (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>
-                let callBackC: (NSMutableArray<String>) -> Void
-                let callBackD: (Dictionary<String, String>) -> Void
-                let callBackE: (NSMutableDictionary<String, String>) -> Void
-                let callBackF: (KotlinByte) -> Void
-                let callBackG: (KotlinUByte) -> Void
-                let callBackH: (KotlinShort) -> Void
-                let callBackI: (KotlinUShort) -> Void
-                let callBackJ: (KotlinInt) -> Void
-                let callBackK: (KotlinUInt) -> Void
-                let callBackL: (KotlinLong) -> Void
-                let callBackM: (KotlinULong) -> Void
-                let callBackN: (KotlinFloat) -> Void
-                let callBackO: (KotlinDouble) -> Void
-                let callBackP: (KotlinBoolean) -> Void
-
-                public func makeUIViewController(context: Context) -> UIViewController {
-                    ScreenUIViewController().make(callBackA: callBackA, callBackB: callBackB, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
+                import SwiftUI
+                import MyFramework
+                
+                public struct ScreenRepresentable: UIViewControllerRepresentable {
+                    @Binding var state: ViewState
+                    let callBackA: () -> Void
+                    let callBackB: (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>
+                    let callBackS: (Set<KotlinInt>) -> Void
+                    let callBackC: (NSMutableArray<String>) -> Void
+                    let callBackD: (Dictionary<String, String>) -> Void
+                    let callBackE: (NSMutableDictionary<String, String>) -> Void
+                    let callBackF: (KotlinByte) -> Void
+                    let callBackG: (KotlinUByte) -> Void
+                    let callBackH: (KotlinShort) -> Void
+                    let callBackI: (KotlinUShort) -> Void
+                    let callBackJ: (KotlinInt) -> Void
+                    let callBackK: (KotlinUInt) -> Void
+                    let callBackL: (KotlinLong) -> Void
+                    let callBackM: (KotlinULong) -> Void
+                    let callBackN: (KotlinFloat) -> Void
+                    let callBackO: (KotlinDouble) -> Void
+                    let callBackP: (KotlinBoolean) -> Void
+                
+                    public func makeUIViewController(context: Context) -> UIViewController {
+                        ScreenUIViewController().make(callBackA: callBackA, callBackB: callBackB, callBackS: callBackS, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
+                    }
+                
+                    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                        ScreenUIViewController().update(state: state)
+                    }
                 }
-
-                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                    ScreenUIViewController().update(state: state)
-                }
-            }
         """.trimIndent()
         assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
     }
 
     @Test
-    fun `Function parameter with List, MutableList, Map or MutableMap without type specification will throw TypeResolutionError`() {
-        val code = """
+    fun `Collection or Map parameters without type specification will throw TypeResolutionError`() {
+        var code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -514,15 +522,107 @@ class ProcessorTest {
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,                   
-                    callBackB: (List) -> Unit,
-                    callBackC: (MutableList) -> Unit,
-                    callBackD: (Map) -> Unit,
-                    callBackE: (MutableMap) -> Unit,                    
+                    callBackB: (List) -> Unit
             ) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
-        val result = compilation.compile()
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        var compilation = prepareCompilation(kotlin("Screen.kt", code))
+        var result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+
+        code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.ViewState                       
+            
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,                   
+                    callBackC: (MutableList) -> Unit
+            ) { }
+        """.trimIndent()
+        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+
+        code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.ViewState                       
+            
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,                   
+                    callBackE: (Set) -> Unit
+            ) { }
+        """.trimIndent()
+        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+
+        code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.ViewState                       
+            
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,                   
+                    callBackD: (Map) -> Unit
+            ) { }
+        """.trimIndent()
+        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+
+        code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.ViewState                       
+            
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,                   
+                    callBackE: (MutableMap) -> Unit                   
+            ) { }
+        """.trimIndent()
+        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+
+        code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import com.mycomposable.data.ViewState                       
+            
+            private data class ViewState(val field: Int)
+
+            @ComposeUIViewController("MyFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,                   
+                    callBackB: (List<String>) -> List
+            ) { }
+        """.trimIndent()
+        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
     }
 
     @Test
@@ -552,7 +652,7 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
@@ -606,7 +706,7 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        assertEquals(result.exitCode, KotlinCompilation.ExitCode.OK)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()

@@ -26,12 +26,6 @@ dependencies {
     implementation(projects.kmpComposeuiviewcontrollerCommon)
 
     testImplementation(libs.test.kotlin)
-    testImplementation(libs.test.junit.implementation)
-    testRuntimeOnly(libs.test.junit.runtimeOnly)
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 version = "1.2.0"

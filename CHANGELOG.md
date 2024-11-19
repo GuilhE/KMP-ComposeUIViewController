@@ -2,7 +2,7 @@
 ---
 ## [2.0.21-1.7.0-BETA-1]
 
-- Fixes  type resolve for Functions when `ksp.useKSP2=true`
+- Fixes type resolve for Functions when `ksp.useKSP2=true`
 - Adds generics to List, Map, MutableList and MutableMap
 
 ---
