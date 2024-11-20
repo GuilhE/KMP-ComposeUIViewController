@@ -37,7 +37,6 @@ class ProcessorTest {
             workingDir = tempFolder
             inheritClassPath = true
             verbose = false
-            kspIncremental = false
         }
     }
 

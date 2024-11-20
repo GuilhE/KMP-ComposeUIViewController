@@ -1,5 +1,13 @@
 # Changelog
 ---
+## [2.1.0-1.7.1-BETA]
+
+- Removes junit dependencies
+- CMP 1.7.1
+- Kotlin 2.1.0
+- KSP 1.0.28
+
+---
 ## [2.0.21-1.7.0-BETA-1]
 
 - Fixes type resolve for Functions when `ksp.useKSP2=true`

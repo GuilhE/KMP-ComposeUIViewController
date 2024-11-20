@@ -1,6 +1,12 @@
 # Changelog
 ---
 
+## [1.2.1]
+
+Compatible with 2.1.0-1.7.1-BETA
+
+---
+
 ## [1.2.0]
 
 Compatible with 2.0.21-1.7.0-BETA-1

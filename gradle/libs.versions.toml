@@ -1,7 +1,7 @@
 [versions]
 
-kotlin = "2.0.21"
-ksp = "2.1.0-RC-1.0.27"
+kotlin = "2.1.0-RC2"
+ksp = "2.1.0-RC2-1.0.28"
 kotlinCompose = "1.7.1"
 kotlinxSerialization = "1.7.3"
 kotlinxSerializationPlugin = "2.0.20"

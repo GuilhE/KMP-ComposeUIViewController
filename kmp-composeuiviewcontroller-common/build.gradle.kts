@@ -6,7 +6,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 dependencies {
@@ -15,7 +15,7 @@ dependencies {
 
 kotlin {
     explicitApi()
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 java {

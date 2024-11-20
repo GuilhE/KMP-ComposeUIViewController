@@ -11,7 +11,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 java {
@@ -28,7 +28,7 @@ dependencies {
     testImplementation(libs.test.kotlin)
 }
 
-version = "1.2.0"
+version = "1.2.1"
 group = "io.github.guilhe.kmp"
 
 gradlePlugin {
