@@ -28,7 +28,7 @@ ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", v
 kotlinx-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 test-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
-test-kotlinCompileCore-tschuchort = { group = "com.github.tschuchortdev", name = "kotlin-compile-testing", version.ref = "compileTesting" }
-test-kotlinCompileKsp-tschuchort = { group = "com.github.tschuchortdev", name = "kotlin-compile-testing-ksp", version.ref = "compileTesting" }
+#test-kotlinCompileCore-tschuchort = { group = "com.github.tschuchortdev", name = "kotlin-compile-testing", version.ref = "compileTesting" }
+#test-kotlinCompileKsp-tschuchort = { group = "com.github.tschuchortdev", name = "kotlin-compile-testing-ksp", version.ref = "compileTesting" }
 test-kotlinCompileCore-zacsweers = { group = "dev.zacsweers.kctfork", name = "core", version.ref = "compileTestingZacSweers" }
 test-kotlinCompileKsp-zacsweers = { group = "dev.zacsweers.kctfork", name = "ksp", version.ref = "compileTestingZacSweers" }

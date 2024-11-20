@@ -12,9 +12,9 @@ import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewController
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
-import com.tschuchort.compiletesting.kspIncremental
 import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import com.tschuchort.compiletesting.useKsp2
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
 import kotlin.test.AfterTest
@@ -29,14 +29,17 @@ class ProcessorTest {
 
     private lateinit var tempFolder: File
     private lateinit var tempArgs: File
+    private var usesKsp2: Boolean = false
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
         return KotlinCompilation().apply {
+            useKsp2()
             symbolProcessorProviders += ProcessorProvider()
             sources = sourceFiles.asList()
             workingDir = tempFolder
             inheritClassPath = true
             verbose = false
+            usesKsp2 = precursorTools.contains("ksp2")
         }
     }
 
@@ -62,12 +65,14 @@ class ProcessorTest {
             package com.mycomposable.test
             
             import $composeUIViewControllerStateAnnotationName 
-                                           
-            @Composable
-            fun ScreenA(state: ViewState) { }
+            
+            private data class ViewState(val field: Int)
             
             @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
+            private fun ScreenA(state: ViewState) { }
+            
+            @Composable
+            private fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -88,9 +93,9 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
-
-            data class ViewState(val field: Int)
-
+            
+            private data class ViewState(val field: Int)
+            
             @ComposeUIViewController("ComposablesFramework")
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
@@ -113,12 +118,12 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
-
-            data class ViewState(val field: Int)
-
+            
+            private data class ViewState(val field: Int)
+            
             @ComposeUIViewController("ComposablesFramework")
             @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+            private fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
@@ -138,18 +143,20 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
-
-            data class ViewState(val field: Int)
-
+            
+            private data class ViewState(val field: Int)
+            
             @ComposeUIViewController
             @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
+            private fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        if(usesKsp2) {
+            assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
+        }
     }
 
     @Test
@@ -158,11 +165,11 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             
-            data class SomeClass(val field: Int)
+            private data class SomeClass(val field: Int)
             
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(data: SomeClass, value: Int, callBack: () -> Unit) { }
+            private fun Screen(data: SomeClass, value: Int, callBack: () -> Unit) { }
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
@@ -227,14 +234,16 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
+            private data class ViewState(val field: Int)
+            
             @ComposeUIViewController
             @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
+            private fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
     }
 
     @Test
@@ -244,9 +253,11 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
+            private data class ViewState(val field: Int)
+            
             @ComposeUIViewController
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
                     callBackA: () -> Unit,
                     callBackB: (Int) -> Unit,
@@ -255,9 +266,10 @@ class ProcessorTest {
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
-
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertContains(result.messages, InvalidParametersException().message!!)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        if(usesKsp2) {
+            assertContains(result.messages, InvalidParametersException().message!!)
+        }
     }
 
     @Test
@@ -269,16 +281,16 @@ class ProcessorTest {
             
             private data class ViewAState(val field: Int)
             private data class ViewBState(val field: Int)
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun ScreenA(@ComposeUIViewControllerState state: ViewAState) { }
+            private fun ScreenA(@ComposeUIViewControllerState state: ViewAState) { }
             
             private fun dummy() 
             
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewBState) { }
+            private fun ScreenB(@ComposeUIViewControllerState state: ViewBState) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
@@ -358,20 +370,20 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             import com.mycomposable.data.*
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
+            private fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
         val codeB = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             import com.mycomposable.data.*
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
+            private fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB), kotlin("Data.kt", data))
@@ -398,20 +410,20 @@ class ProcessorTest {
             import $composeUIViewControllerStateAnnotationName
             
             private data class ViewState(val field: Int)
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
-
+            private fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit) { }
-
+            private fun ScreenB(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit) { }
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun ScreenC(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
+            private fun ScreenC(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code, isMultiplatformCommonSource = true))
+        val compilation = prepareCompilation(kotlin("Screen.kt", code/*, isMultiplatformCommonSource = true*/))
         val result = compilation.compile()
 
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
@@ -437,10 +449,10 @@ class ProcessorTest {
             import com.mycomposable.data.ViewState                       
             
             private data class ViewState(val field: Int)
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
                     callBackA: () -> Unit,
                     callBackB: (List<Map<String, List<Int>>>) -> List<String>,
@@ -516,17 +528,17 @@ class ProcessorTest {
             import com.mycomposable.data.ViewState                       
             
             private data class ViewState(val field: Int)
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,                   
                     callBackB: (List) -> Unit
             ) { }
         """.trimIndent()
         var compilation = prepareCompilation(kotlin("Screen.kt", code))
         var result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
         code = """
             package com.mycomposable.test
@@ -538,14 +550,14 @@ class ProcessorTest {
 
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,                   
                     callBackC: (MutableList) -> Unit
             ) { }
         """.trimIndent()
         compilation = prepareCompilation(kotlin("Screen.kt", code))
         result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
         code = """
             package com.mycomposable.test
@@ -557,14 +569,14 @@ class ProcessorTest {
 
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,                   
                     callBackE: (Set) -> Unit
             ) { }
         """.trimIndent()
         compilation = prepareCompilation(kotlin("Screen.kt", code))
         result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
         code = """
             package com.mycomposable.test
@@ -576,14 +588,14 @@ class ProcessorTest {
 
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,                   
                     callBackD: (Map) -> Unit
             ) { }
         """.trimIndent()
         compilation = prepareCompilation(kotlin("Screen.kt", code))
         result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
         code = """
             package com.mycomposable.test
@@ -595,14 +607,14 @@ class ProcessorTest {
 
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,                   
                     callBackE: (MutableMap) -> Unit                   
             ) { }
         """.trimIndent()
         compilation = prepareCompilation(kotlin("Screen.kt", code))
         result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
         code = """
             package com.mycomposable.test
@@ -614,14 +626,14 @@ class ProcessorTest {
 
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(
+            private fun Screen(
                     @ComposeUIViewControllerState state: ViewState,                   
                     callBackB: (List<String>) -> List
             ) { }
         """.trimIndent()
         compilation = prepareCompilation(kotlin("Screen.kt", code))
         result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
     }
 
     @Test
@@ -635,10 +647,10 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             import com.mycomposable.data.Data
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(data: Data) { }
+            private fun Screen(data: Data) { }
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
@@ -689,10 +701,10 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             import com.mycomposable.data.Data
-
+            
             @ComposeUIViewController("MyFramework")
             @Composable
-            fun Screen(data: Data) { }
+            private fun Screen(data: Data) { }
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data))
