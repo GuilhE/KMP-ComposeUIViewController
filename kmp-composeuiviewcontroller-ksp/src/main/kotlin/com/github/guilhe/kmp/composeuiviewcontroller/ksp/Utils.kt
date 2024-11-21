@@ -196,10 +196,7 @@ internal class MultipleComposeUIViewControllerStateException(composable: KSFunct
     "The composable ${composable.name()} has more than one parameter annotated with @${composeUIViewControllerStateAnnotationName.name()}."
 )
 
-internal class InvalidParametersException : IllegalArgumentException(
-    "Only 1 @${composeUIViewControllerStateAnnotationName.name()} and " +
-            "N high-order function parameters (excluding @Composable content: () -> Unit) are allowed."
-)
+internal class InvalidParametersException : IllegalArgumentException("@Composable functions are not allowed as parameter")
 
 internal class ValueParameterResolutionError(parameter: KSValueParameter) : IllegalArgumentException(
     "Cannot resolve type for parameter ${parameter.name()} from ${parameter.location}. Check your file imports"
