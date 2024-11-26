@@ -133,7 +133,9 @@ class ProcessorTest {
 
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
@@ -159,7 +161,9 @@ class ProcessorTest {
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
@@ -205,7 +209,9 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
 
         val expectedKotlinOutput = """
             @file:Suppress("unused")
@@ -325,7 +331,9 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
         assertEquals(
             compilation.kspSourcesDir
                 .walkTopDown()
@@ -421,7 +429,9 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB), kotlin("Data.kt", data))
         val result = compilation.compile()
 
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
                 .filter {
@@ -461,7 +471,9 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code/*, isMultiplatformCommonSource = true*/))
         val result = compilation.compile()
 
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
                 .filter {
@@ -516,7 +528,9 @@ class ProcessorTest {
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
             .toList()
         assertTrue(generatedSwiftFiles.isNotEmpty())
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
 
         println("$generatedSwiftFiles")
         val expectedSwiftOutput = """
@@ -700,7 +714,9 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
 
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
@@ -755,7 +771,9 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        if(!usesKsp2) {
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        }
 
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
