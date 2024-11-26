@@ -13,7 +13,6 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
 import com.tschuchort.compiletesting.kspSourcesDir
-import com.tschuchort.compiletesting.kspWithCompilation
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import com.tschuchort.compiletesting.useKsp2
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -28,9 +27,6 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCompilerApi::class)
 class ProcessorTest {
 
-    private var usesKsp2: Boolean = false
-    private lateinit var tempFolder: File
-    private lateinit var tempArgs: File
     private val jarPackages: List<File> = TestUtils.findFiles(
         basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
         packages = listOf(
@@ -44,18 +40,20 @@ class ProcessorTest {
         basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
         packages = listOf(
             "org.jetbrains.compose",
-            "org.jetbrains.kotlin.multiplatform",
             "org.jetbrains.kotlin.plugin.compose",
         ),
         extension = "plugin"
     )
+    private var usesKsp2: Boolean = false
+    private lateinit var tempFolder: File
+    private lateinit var tempArgs: File
 
 //    import androidx.compose.ui.window.ComposeUIViewController
 //    import platform.UIKit.UIViewController
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
         return KotlinCompilation().apply {
-//            useKsp2()
+            useKsp2()
             symbolProcessorProviders += ProcessorProvider()
             sources = sourceFiles.asList()
             workingDir = tempFolder
@@ -83,8 +81,8 @@ class ProcessorTest {
 
     @AfterTest
     fun clean() {
-//        tempArgs.delete()
-//        tempFolder.deleteRecursively()
+        tempArgs.delete()
+        tempFolder.deleteRecursively()
     }
 
     @Test
@@ -135,7 +133,6 @@ class ProcessorTest {
 
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
-
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
