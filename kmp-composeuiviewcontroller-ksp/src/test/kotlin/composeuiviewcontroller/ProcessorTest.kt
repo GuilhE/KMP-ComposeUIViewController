@@ -13,6 +13,7 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
 import com.tschuchort.compiletesting.kspSourcesDir
+import com.tschuchort.compiletesting.kspWithCompilation
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import com.tschuchort.compiletesting.useKsp2
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -27,19 +28,46 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCompilerApi::class)
 class ProcessorTest {
 
+    private var usesKsp2: Boolean = false
     private lateinit var tempFolder: File
     private lateinit var tempArgs: File
-    private var usesKsp2: Boolean = false
+    private val jarPackages: List<File> = TestUtils.findFiles(
+        basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
+        packages = listOf(
+            "org.jetbrains.compose.runtime",
+            "org.jetbrains.compose.ui",
+        ),
+        extension = "jar",
+        exclude = listOf("sources", "metadata")
+    )
+    private val pluginPackages: List<File> = TestUtils.findFiles(
+        basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
+        packages = listOf(
+            "org.jetbrains.compose",
+            "org.jetbrains.kotlin.multiplatform",
+            "org.jetbrains.kotlin.plugin.compose",
+        ),
+        extension = "plugin"
+    )
+
+//    import androidx.compose.ui.window.ComposeUIViewController
+//    import platform.UIKit.UIViewController
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
         return KotlinCompilation().apply {
-            useKsp2()
+//            useKsp2()
             symbolProcessorProviders += ProcessorProvider()
             sources = sourceFiles.asList()
             workingDir = tempFolder
             inheritClassPath = true
             verbose = false
             usesKsp2 = precursorTools.contains("ksp2")
+            if (usesKsp2) {
+                classpaths += jarPackages
+                pluginClasspaths += pluginPackages
+            } else {
+                languageVersion = "1.9"
+            }
         }
     }
 
@@ -55,8 +83,8 @@ class ProcessorTest {
 
     @AfterTest
     fun clean() {
-        tempArgs.delete()
-        tempFolder.deleteRecursively()
+//        tempArgs.delete()
+//        tempFolder.deleteRecursively()
     }
 
     @Test
@@ -64,7 +92,9 @@ class ProcessorTest {
         val code = """
             package com.mycomposable.test
             
-            import $composeUIViewControllerStateAnnotationName 
+            import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
+            
             data class ViewState(val field: Int)
             
             @Composable
@@ -76,7 +106,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertTrue(
             compilation.kspSourcesDir
                 .walkTopDown()
@@ -92,6 +122,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewState(val field: Int)
             
@@ -101,10 +132,11 @@ class ProcessorTest {
         """.trimIndent()
 
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
+
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
@@ -117,6 +149,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewState(val field: Int)
             
@@ -129,7 +162,7 @@ class ProcessorTest {
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
@@ -163,6 +196,7 @@ class ProcessorTest {
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class SomeClass(val field: Int)
             
@@ -174,7 +208,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val expectedKotlinOutput = """
             @file:Suppress("unused")
@@ -258,12 +292,13 @@ class ProcessorTest {
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
+                    callback: () -> Unit,
                     @Composable content: () -> Unit
             ) { }
         """.trimIndent()
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
-//        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         if (usesKsp2) {
             assertContains(result.messages, InvalidParametersException().message!!)
         }
@@ -275,6 +310,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewAState(val field: Int)
             data class ViewBState(val field: Int)
@@ -292,7 +328,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
             compilation.kspSourcesDir
                 .walkTopDown()
@@ -366,6 +402,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             import com.mycomposable.data.*
             
             @ComposeUIViewController("ComposablesFramework")
@@ -376,6 +413,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             import com.mycomposable.data.*
             
             @ComposeUIViewController("ComposablesFramework")
@@ -386,7 +424,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB), kotlin("Data.kt", data))
         val result = compilation.compile()
 
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
                 .filter {
@@ -405,6 +443,9 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.ui.window.ComposeUIViewController
+            import platform.UIKit.UIViewController
+            import androidx.compose.runtime.*
             
             data class ViewState(val field: Int)
             
@@ -423,7 +464,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code/*, isMultiplatformCommonSource = true*/))
         val result = compilation.compile()
 
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
             compilation.kspSourcesDir.walkTopDown()
                 .filter {
@@ -443,6 +484,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             import com.mycomposable.data.ViewState                       
             
             data class ViewState(val field: Int)
@@ -477,7 +519,7 @@ class ProcessorTest {
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
             .toList()
         assertTrue(generatedSwiftFiles.isNotEmpty())
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         println("$generatedSwiftFiles")
         val expectedSwiftOutput = """
@@ -643,6 +685,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             import com.mycomposable.data.Data
             
             @ComposeUIViewController("ComposablesFramework")
@@ -660,7 +703,7 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()
@@ -697,6 +740,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             import com.mycomposable.data.Data
             
             @ComposeUIViewController("ComposablesFramework")
@@ -714,7 +758,7 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        //assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val generatedSwiftFiles = compilation.kspSourcesDir
             .walkTopDown()

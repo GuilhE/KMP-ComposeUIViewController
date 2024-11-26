@@ -10,10 +10,8 @@ dependencies {
     implementation(projects.kmpComposeuiviewcontrollerCommon)
 
     testImplementation(libs.test.kotlin)
-//    testImplementation(libs.test.kotlinCompileCore.tschuchort)
-//    testImplementation(libs.test.kotlinCompileKsp.tschuchort)
-    testImplementation(libs.test.kotlinCompileCore.zacsweers)
-    testImplementation(libs.test.kotlinCompileKsp.zacsweers)
+    testImplementation(libs.test.compile.core)
+    testImplementation(libs.test.compile.ksp)
     testImplementation(projects.kmpComposeuiviewcontrollerAnnotations)
 }
 

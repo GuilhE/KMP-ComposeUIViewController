@@ -177,8 +177,14 @@ internal fun List<KSValueParameter>.toComposableParameters(stateParameterName: S
 
 internal fun List<KSValueParameter>.toComposableParameters(): String = joinToString(", ") { it.name() }
 
-internal fun List<KSValueParameter>.filterComposableFunctions(): List<KSValueParameter> =
-    filter { it.annotations.none { annotation -> annotation.shortName.getShortName() == "Composable" } }
+internal fun List<KSValueParameter>.filterNotComposableFunctions(): List<KSValueParameter> =
+    filter { valueParameter ->
+        valueParameter.annotations.none { annotation ->
+            val isComposableByName = annotation.shortName.getShortName() == "Composable"
+            val isErrorType = annotation.annotationType.resolve().isError
+            isComposableByName || isErrorType
+        }
+    }
 
 internal fun List<KSValueParameter>.joinToStringDeclaration(separator: CharSequence = ", "): String = joinToString(separator) {
     "${it.name!!.getShortName()}: ${it.resolveType()}"
