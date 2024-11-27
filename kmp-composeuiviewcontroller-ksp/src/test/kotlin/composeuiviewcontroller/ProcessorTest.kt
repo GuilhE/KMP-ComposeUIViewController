@@ -29,27 +29,20 @@ class ProcessorTest {
 
     private val jarPackages: List<File> = TestUtils.findFiles(
         basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
-        packages = listOf(
-            "org.jetbrains.compose.runtime",
-            "org.jetbrains.compose.ui",
-        ),
+        packages = listOf("org.jetbrains.compose.runtime", "org.jetbrains.compose.ui"),
         extension = "jar",
         exclude = listOf("sources", "metadata")
     )
     private val pluginPackages: List<File> = TestUtils.findFiles(
         basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
-        packages = listOf(
-            "org.jetbrains.compose",
-            "org.jetbrains.kotlin.plugin.compose",
-        ),
+        packages = listOf("org.jetbrains.compose", "org.jetbrains.kotlin.plugin.compose"),
         extension = "plugin"
     )
-    private var usesKsp2: Boolean = false
     private lateinit var tempFolder: File
     private lateinit var tempArgs: File
 
-//    import androidx.compose.ui.window.ComposeUIViewController
-//    import platform.UIKit.UIViewController
+    //https://kotlinlang.slack.com/archives/C013BA8EQSE/p1732453625647829
+    private var usesKsp2: Boolean = false
 
     private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
         return KotlinCompilation().apply {
@@ -133,7 +126,7 @@ class ProcessorTest {
 
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
         val generatedSwiftFiles = compilation.kspSourcesDir
@@ -161,7 +154,7 @@ class ProcessorTest {
         tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","experimentalNamespaceFeature":false}]""")
         val result = compilation.compile()
 
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
         val generatedSwiftFiles = compilation.kspSourcesDir
@@ -209,7 +202,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
 
@@ -331,7 +324,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code))
         val result = compilation.compile()
 
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
         assertEquals(
@@ -429,7 +422,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB), kotlin("Data.kt", data))
         val result = compilation.compile()
 
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
         assertEquals(
@@ -471,7 +464,7 @@ class ProcessorTest {
         val compilation = prepareCompilation(kotlin("Screen.kt", code/*, isMultiplatformCommonSource = true*/))
         val result = compilation.compile()
 
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
         assertEquals(
@@ -528,7 +521,7 @@ class ProcessorTest {
             .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
             .toList()
         assertTrue(generatedSwiftFiles.isNotEmpty())
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
 
@@ -714,7 +707,7 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
 
@@ -771,7 +764,7 @@ class ProcessorTest {
                 """.trimIndent()
         )
         val result = compilation.compile()
-        if(!usesKsp2) {
+        if (!usesKsp2) {
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
 
