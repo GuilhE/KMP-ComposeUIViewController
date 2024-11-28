@@ -28,17 +28,6 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCompilerApi::class)
 class ProcessorTest {
 
-    private val jarPackages: List<File> = TestUtils.findFiles(
-        basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
-        packages = listOf("org.jetbrains.compose.runtime", "org.jetbrains.compose.ui"),
-        extension = "jar",
-        exclude = listOf("sources", "metadata")
-    )
-    private val pluginPackages: List<File> = TestUtils.findFiles(
-        basePath = System.getProperty("user.home") + "/.gradle/caches/modules-2/files-2.1",
-        packages = listOf("org.jetbrains.compose", "org.jetbrains.kotlin.plugin.compose"),
-        extension = "plugin"
-    )
     private lateinit var tempFolder: File
     private lateinit var tempArgs: File
     private var usesKsp2: Boolean = false
@@ -52,10 +41,7 @@ class ProcessorTest {
             inheritClassPath = true
             verbose = false
             usesKsp2 = precursorTools.contains("ksp2")
-            if (usesKsp2) {
-                classpaths += jarPackages
-                pluginClasspaths += pluginPackages
-            } else {
+            if (!usesKsp2) {
                 languageVersion = "1.9"
             }
         }
@@ -85,7 +71,7 @@ class ProcessorTest {
             import $composeUIViewControllerStateAnnotationName
             import androidx.compose.runtime.Composable
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @Composable
             fun ScreenA(state: ViewState) { }
@@ -93,7 +79,7 @@ class ProcessorTest {
             @Composable
             fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code))
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
@@ -115,7 +101,7 @@ class ProcessorTest {
             import $composeUIViewControllerStateAnnotationName
             import androidx.compose.runtime.Composable
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController("MyFramework")
             @Composable
@@ -141,7 +127,7 @@ class ProcessorTest {
             import $composeUIViewControllerStateAnnotationName
             import androidx.compose.runtime.Composable
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -165,7 +151,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController
             @Composable
@@ -255,7 +241,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -274,7 +260,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -383,7 +369,7 @@ class ProcessorTest {
     fun `Composable functions from different files are parsed once only once`() {
         val data = """
             package com.mycomposable.data
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
         """.trimIndent()
         val codeA = """
             package com.mycomposable.test
@@ -436,7 +422,7 @@ class ProcessorTest {
             import platform.UIKit.UIViewController
             import androidx.compose.runtime.*
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -476,7 +462,7 @@ class ProcessorTest {
             import androidx.compose.runtime.Composable
             import com.mycomposable.test.ViewState                       
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -554,7 +540,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
             
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -573,7 +559,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
 
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -591,7 +577,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
 
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -609,7 +595,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
 
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -627,7 +613,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
 
             @ComposeUIViewController("ComposablesFramework")
             @Composable
@@ -645,7 +631,7 @@ class ProcessorTest {
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             
-            data class ViewState(val field: Int)
+            data class ViewState(val field: Int = 0)
 
             @ComposeUIViewController("ComposablesFramework")
             @Composable

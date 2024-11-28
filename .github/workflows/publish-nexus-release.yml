@@ -33,7 +33,7 @@ jobs:
           cache: gradle
 
       - name: Run Processor tests
-        run: ./gradlew clean :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest" --info
+        run: ./gradlew clean :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest"
 
       - name: Publish to Nexus
         if: success()
