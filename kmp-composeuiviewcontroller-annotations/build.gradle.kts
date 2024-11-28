@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     `kmp-composeuiviewcontroller-publish`
@@ -8,7 +8,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    jvmToolchain(11)
+    jvmToolchain(17)
 
     macosX64()
     macosArm64()

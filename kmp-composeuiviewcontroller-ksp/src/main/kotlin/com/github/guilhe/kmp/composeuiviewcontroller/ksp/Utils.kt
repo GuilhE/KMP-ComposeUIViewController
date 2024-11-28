@@ -11,7 +11,7 @@ import com.google.devtools.ksp.symbol.KSValueParameter
  * Resolves KSValueParameter type
  * @param toSwift If true, transforms Kotlin types into their Swift representation. [Apple framework generated framework headers](https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers)
  * @return String with type resolved
- * @throws TypeResolutionError when type cannot be resolved
+ * @throws ValueParameterResolutionError when type cannot be resolved
  */
 internal fun KSValueParameter.resolveType(toSwift: Boolean = false): String {
     //println(">> KSValueParameter type: ${type}")
@@ -22,7 +22,7 @@ internal fun KSValueParameter.resolveType(toSwift: Boolean = false): String {
             append(resolvedType.arguments.dropLast(1).joinToString(", ") { arg ->
                 val argType = arg.type?.resolve()
                 if (argType == null || argType.isError) {
-                    throw TypeResolutionException(resolvedType)
+                    throw ValueParameterResolutionError(this@resolveType)
                 } else {
                     convertGenericType(argType, toSwift)
                 }
@@ -30,7 +30,7 @@ internal fun KSValueParameter.resolveType(toSwift: Boolean = false): String {
             append(") -> ")
             val returnType = resolvedType.arguments.last().type?.resolve()
             val returnTypeName = if (returnType == null || returnType.isError) {
-                throw TypeResolutionException(resolvedType)
+                throw ValueParameterResolutionError(this@resolveType)
             } else {
                 convertGenericType(returnType, toSwift)
             }
@@ -46,7 +46,7 @@ private fun convertGenericType(type: KSType, toSwift: Boolean): String {
     val convertedBaseType = if (toSwift) convertToSwift(baseType) else baseType
     if (type.arguments.isEmpty()) return convertedBaseType
     val generics = type.arguments.joinToString(", ") { arg ->
-        arg.type?.resolve()?.let { convertGenericType(it, toSwift) } ?: "Unknown"
+        arg.type?.resolve()?.let { convertGenericType(it, toSwift) } ?: throw TypeResolutionError(type)
     }
     return "$convertedBaseType<$generics>"
 }
@@ -56,6 +56,7 @@ private fun convertToSwift(baseType: String): String {
         "Unit" -> "Void"
         "List" -> "Array"
         "MutableList" -> "NSMutableArray"
+        "Set" -> "Set"
         "Map" -> "Dictionary"
         "MutableMap" -> "NSMutableDictionary"
         "Byte" -> "KotlinByte"
@@ -102,7 +103,7 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
  * @param makeParameters List of parameters to be used in the UIViewController make function
  * @param stateParameter Parameter representing UIViewController state (for advanced cases)
  * @return List of package names that do not belong to the current module
- * @throws [TypeResolutionError] If type not found or invalid
+ * @throws [ValueParameterResolutionError] If type not found or invalid
  */
 internal fun extractImportsFromExternalPackages(
     packageName: String,
@@ -117,8 +118,7 @@ internal fun extractImportsFromExternalPackages(
     return parameterSet
         .mapNotNull {
             val resolvedType = it.type.resolve()
-            val typeName = resolvedType.declaration.simpleName.asString()
-            if (typeName == "<Error>") throw TypeResolutionError(it)
+            if (resolvedType.isError) throw ValueParameterResolutionError(it)
             val typeDeclaration = resolvedType.declaration
 //            println(">> Type: ${it.type}, Resolved: $resolvedType, Declaration: $typeDeclaration")
             val typePackage = (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
@@ -139,7 +139,7 @@ internal fun extractImportsFromExternalPackages(
  * @param parameters List of parameters to be used in Swift the UIViewControllerRepresentable file
  * @param stateParameter Parameter representing UIViewController state (for advanced cases)
  * @return List of frameworkBaseName
- * @throws [TypeResolutionError] If type not found or invalid
+ * @throws [ValueParameterResolutionError] If type not found or invalid
  */
 internal fun extractFrameworkBaseNames(
     composable: KSFunctionDeclaration,
@@ -156,8 +156,7 @@ internal fun extractFrameworkBaseNames(
     val parameterPackages = parameterSet
         .mapNotNull {
             val resolvedType = it.type.resolve()
-            val typeName = resolvedType.declaration.simpleName.asString()
-            if (typeName == "<Error>") throw TypeResolutionError(it)
+            if (resolvedType.isError) throw ValueParameterResolutionError(it)
             (resolvedType.declaration as? KSClassDeclaration)?.packageName?.asString()
         }
         .filterNot { it.startsWith("kotlin") }
@@ -178,8 +177,14 @@ internal fun List<KSValueParameter>.toComposableParameters(stateParameterName: S
 
 internal fun List<KSValueParameter>.toComposableParameters(): String = joinToString(", ") { it.name() }
 
-internal fun List<KSValueParameter>.filterComposableFunctions(): List<KSValueParameter> =
-    filter { it.annotations.none { annotation -> annotation.shortName.getShortName() == "Composable" } }
+internal fun List<KSValueParameter>.filterNotComposableFunctions(): List<KSValueParameter> =
+    filter { valueParameter ->
+        valueParameter.annotations.none { annotation ->
+            val isComposableByName = annotation.shortName.getShortName() == "Composable"
+            val isErrorType = annotation.annotationType.resolve().isError
+            isComposableByName || isErrorType
+        }
+    }
 
 internal fun List<KSValueParameter>.joinToStringDeclaration(separator: CharSequence = ", "): String = joinToString(separator) {
     "${it.name!!.getShortName()}: ${it.resolveType()}"
@@ -197,16 +202,13 @@ internal class MultipleComposeUIViewControllerStateException(composable: KSFunct
     "The composable ${composable.name()} has more than one parameter annotated with @${composeUIViewControllerStateAnnotationName.name()}."
 )
 
-internal class InvalidParametersException : IllegalArgumentException(
-    "Only 1 @${composeUIViewControllerStateAnnotationName.name()} and " +
-            "N high-order function parameters (excluding @Composable content: () -> Unit) are allowed."
-)
+internal class InvalidParametersException : IllegalArgumentException("@Composable functions are not allowed as parameter")
 
-internal class TypeResolutionError(parameter: KSValueParameter) : IllegalArgumentException(
+internal class ValueParameterResolutionError(parameter: KSValueParameter) : IllegalArgumentException(
     "Cannot resolve type for parameter ${parameter.name()} from ${parameter.location}. Check your file imports"
 )
 
+internal class TypeResolutionError(parameter: KSType) : IllegalArgumentException("Cannot resolve type for parameter $parameter.")
+
 internal class ModuleDecodeException(e: Exception) :
     IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
-
-internal class TypeResolutionException(type: KSType) : IllegalArgumentException("Could not resolve function parameter: ${type}")

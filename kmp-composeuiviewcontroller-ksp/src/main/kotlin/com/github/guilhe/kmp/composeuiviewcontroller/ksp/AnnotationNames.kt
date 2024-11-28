@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 private const val packageName = "com.github.guilhe.kmp.composeuiviewcontroller"

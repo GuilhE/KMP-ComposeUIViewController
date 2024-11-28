@@ -49,12 +49,12 @@ internal class Processor(
                     val stateParameter = getStateParameter(parameters, composable).firstOrNull()
                     val makeParameters = if (stateParameter == null) {
                         parameters
-                            .filterComposableFunctions()
+                            .filterNotComposableFunctions()
                             .also { if (parameters.size != it.size) throw InvalidParametersException() }
                     } else {
                         parameters
                             .filterNot { it.type == stateParameter.type }
-                            .filterComposableFunctions()
+                            .filterNotComposableFunctions()
                             .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                     }
                     val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)

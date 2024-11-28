@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package composeuiviewcontroller
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
@@ -19,7 +21,11 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
+import java.io.File
 import kotlinx.serialization.json.Json
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertTrue
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.internal.impldep.junit.framework.TestCase.assertNotNull
 import org.gradle.testfixtures.ProjectBuilder
@@ -28,23 +34,28 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.io.File
-import kotlin.test.assertTrue
+import kotlin.test.AfterTest
 
 class PluginTest {
 
     private val project = ProjectBuilder.builder().build()
     private lateinit var projectDir: File
 
-    @BeforeEach
-    fun setup(@TempDir tempDir: File) {
-        File(project.layout.buildDirectory.asFile.get(), TEMP_FILES_FOLDER).apply { mkdirs() }
+    @BeforeTest
+    fun setup() {
+        val tempDir = File(project.layout.buildDirectory.asFile.get(), TEMP_FILES_FOLDER).apply { mkdirs() }
+        projectDir = File(tempDir, "testProject").apply { mkdirs() }
         project.pluginManager.apply(PLUGIN_KMP)
         project.pluginManager.apply(PLUGIN_KSP)
         project.pluginManager.apply(PLUGIN_ID)
+    }
+
+    @AfterTest
+    fun cleanupTestKitDirectories() {
+        val testKitDir = project.layout.buildDirectory.asFile.get()
+        if (testKitDir.exists()) {
+            testKitDir.deleteRecursively()
+        }
     }
 
     @Test
@@ -53,8 +64,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Plugin throws exception if KSP plugin is not applied`(@TempDir tempDir: File) {
-        projectDir = File(tempDir, "testProject").apply { mkdirs() }
+    fun `Plugin throws exception if KSP plugin is not applied`() {
         File(projectDir, "build.gradle.kts").writeText(
             """
             plugins {
@@ -73,8 +83,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Plugin throws exception if Kotlin Multiplatform plugin is not applied`(@TempDir tempDir: File) {
-        projectDir = File(tempDir, "testProject").apply { mkdirs() }
+    fun `Plugin throws exception if Kotlin Multiplatform plugin is not applied`() {
         File(projectDir, "build.gradle.kts").writeText(
             """
             plugins {
@@ -143,7 +152,7 @@ class PluginTest {
 
             val moduleMetadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText()).first()
             assertTrue(moduleMetadata.frameworkBaseName == "ComposablesFramework")
-            assertTrue(moduleMetadata.packageNames.any { p-> p.startsWith("com.composables.module") })
+            assertTrue(moduleMetadata.packageNames.any { p -> p.startsWith("com.composables.module") })
         }
     }
 
@@ -158,8 +167,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Task CopyFilesToXcode will inject the extension parameters into exportToXcode file`(@TempDir tempDir: File) {
-        projectDir = File(tempDir, "testProject").apply { mkdirs() }
+    fun `Task CopyFilesToXcode will inject the extension parameters into exportToXcode file`() {
         val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
         val classFile = File(folder, "File.kt")
         classFile.writeText(
@@ -189,10 +197,19 @@ class PluginTest {
         )
         assertTrue(buildFile.exists())
 
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText(
+            """
+            rootProject.name = "testProject"
+            """.trimIndent()
+        )
+        assertTrue(settingsFile.exists())
+
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments(TASK_COPY_FILES_TO_XCODE, "-P$PARAM_KEEP_FILE=true", "--stacktrace")
+            .forwardOutput()
             .build()
 
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))

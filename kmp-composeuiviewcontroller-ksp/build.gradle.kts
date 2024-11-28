@@ -10,15 +10,14 @@ dependencies {
     implementation(projects.kmpComposeuiviewcontrollerCommon)
 
     testImplementation(libs.test.kotlin)
-    testImplementation(libs.test.kotlinCompile)
-    testImplementation(libs.test.kotlinCompileKsp)
-    testImplementation(libs.test.junit.implementation)
+    testImplementation(libs.test.compile.core)
+    testImplementation(libs.test.compile.ksp)
     testImplementation(projects.kmpComposeuiviewcontrollerAnnotations)
 }
 
 kotlin {
     explicitApi()
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 java {

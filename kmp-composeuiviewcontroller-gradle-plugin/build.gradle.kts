@@ -11,7 +11,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 java {
@@ -26,15 +26,9 @@ dependencies {
     implementation(projects.kmpComposeuiviewcontrollerCommon)
 
     testImplementation(libs.test.kotlin)
-    testImplementation(libs.test.junit.implementation)
-    testRuntimeOnly(libs.test.junit.runtimeOnly)
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
-version = "1.2.0"
+version = "1.2.1"
 group = "io.github.guilhe.kmp"
 
 gradlePlugin {
