@@ -4,18 +4,13 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-kotlin {
-    explicitApi()
-    jvmToolchain(17)
-}
-
 dependencies {
     implementation(libs.kotlinx.serialization)
 }
 
 kotlin {
     explicitApi()
-    jvmToolchain(17)
+    jvmToolchain(11)
 }
 
 java {

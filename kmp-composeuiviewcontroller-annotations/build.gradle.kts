@@ -8,7 +8,7 @@ plugins {
 
 kotlin {
     explicitApi()
-    jvmToolchain(17)
+    jvmToolchain(11)
 
     macosX64()
     macosArm64()
