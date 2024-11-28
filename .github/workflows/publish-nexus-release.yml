@@ -29,11 +29,11 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '18'
+          java-version: '17'
           cache: gradle
 
       - name: Run Processor tests
-        run: ./gradlew :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest"
+        run: ./gradlew clean :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest" --info
 
       - name: Publish to Nexus
         if: success()
