@@ -1,27 +1,32 @@
 # Changelog
+
+## [1.2.2]
+
+- Changed file creation logic from `registerCopyFilesToXcodeTask`
+
 ---
 
 ## [1.2.1]
 
-Compatible with 2.1.0-1.7.1-BETA
+- Compatible with 2.1.0-1.7.1-BETA
 
 ---
 
 ## [1.2.0]
 
-Compatible with 2.0.21-1.7.0-BETA-1
+- Compatible with 2.0.21-1.7.0-BETA-1
 
 ---
 
 ## [1.1.11]
 
-Compatible with 2.0.21-1.7.0-BETA
+- Compatible with 2.0.21-1.7.0-BETA
 
 ---
 
 ## [1.1.10]
 
-Compatible with 2.0.21-1.7.0-rc01-BETA
+- Compatible with 2.0.21-1.7.0-rc01-BETA
 
 ---
 

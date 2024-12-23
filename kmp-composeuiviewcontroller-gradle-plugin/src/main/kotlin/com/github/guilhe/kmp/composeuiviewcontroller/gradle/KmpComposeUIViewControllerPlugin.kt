@@ -28,7 +28,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
-    private fun ComposeUiViewControllerParameters.toList() = listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName, experimentalNamespaceFeature)
+    private fun ComposeUiViewControllerParameters.toList() =
+        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName, experimentalNamespaceFeature)
 
     override fun apply(project: Project) {
         with(project) {
@@ -65,8 +66,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) {
             it.doLast {
                 if (tempFolder.exists()) {
-                    tempFolder.deleteRecursively()
-                    println("\n> $LOG_TAG:\n\t> Temp folder deleted")
+                    println("\n> $LOG_TAG:\n\t> Temp folder deleted: ${tempFolder.deleteRecursively()}")
                 } else {
                     println("\n> $LOG_TAG:\n\t> Temp folder already deleted")
                 }
@@ -144,7 +144,16 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         } catch (e: Exception) {
             mutableSetOf()
         }
-        args.forEach { (key, value) -> moduleMetadata.add(ModuleMetadata(name = name, packageNames = value, frameworkBaseName = key, experimentalNamespaceFeature = extensionParameters.experimentalNamespaceFeature)) }
+        args.forEach { (key, value) ->
+            moduleMetadata.add(
+                ModuleMetadata(
+                    name = name,
+                    packageNames = value,
+                    frameworkBaseName = key,
+                    experimentalNamespaceFeature = extensionParameters.experimentalNamespaceFeature
+                )
+            )
+        }
         file.writeText(Json.encodeToString(moduleMetadata))
     }
 
@@ -179,14 +188,26 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
                 )
 
-            with(File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SCRIPT_TEMP}")) {
-                writeText(modifiedScript)
-                setExecutable(true)
-                task.workingDir = project.rootDir
-                task.commandLine("bash", "-c", "./build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
-                if (!keepScriptFile) {
-                    task.doLast { delete() }
+            val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SCRIPT_TEMP}")
+                .also { it.createNewFile() }
+            if (tempFile.exists()) {
+                with(tempFile) {
+                    writeText(modifiedScript)
+                    setExecutable(true)
+                    task.workingDir = project.rootDir
+                    try {
+                        task.commandLine("bash", "-c", tempFile.absolutePath)
+                        if (!keepScriptFile) {
+                            task.doLast {
+                                delete()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        println("\t> Error running script: ${e.message}")
+                    }
                 }
+            } else {
+                println("\t> Error creating $FILE_NAME_SCRIPT_TEMP")
             }
         }
     }
