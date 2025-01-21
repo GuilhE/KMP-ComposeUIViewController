@@ -1,5 +1,11 @@
 # Changelog
+
+## [2.1.0-1.7.2-BETA]
+
+- CMP 1.7.2
+
 ---
+
 ## [2.1.0-1.7.1-BETA]
 
 - Kotlin 2.1.0
@@ -9,6 +15,7 @@
 - Migrates to [ZacSweers/kotlin-compile-testing](https://github.com/ZacSweers/kotlin-compile-testing)
 
 ---
+
 ## [2.0.21-1.7.0-BETA-1]
 
 - Fixes type resolve for Functions when `ksp.useKSP2=true`
