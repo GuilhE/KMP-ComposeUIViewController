@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-1.8.0-alpha02-BETA]
+
+- CMP 1.8.0-alpha02
+- Serialization 1.8.0
+
+---
+
 ## [2.1.0-1.7.2-BETA]
 
 - CMP 1.7.2
