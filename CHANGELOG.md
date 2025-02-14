@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.10-1.8.0-alpha03-BETA]
+
+- Kotlin 2.1.10
+- KSP 1.0.30
+- CMP 1.8.0-alpha03
+
+---
+
 ## [2.1.0-1.8.0-alpha02-BETA]
 
 - CMP 1.8.0-alpha02
