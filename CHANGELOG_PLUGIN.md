@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.8]
+
+- Compatible with 2.1.20-1.8.0-beta02-BETA
+
+---
+
 ## [1.2.7]
 
 - Compatible with 2.1.20-1.8.0-beta01-BETA
