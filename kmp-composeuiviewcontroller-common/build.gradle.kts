@@ -23,11 +23,3 @@ tasks.compileKotlin.configure {
         freeCompilerArgs = listOf("-Xjvm-default=all")
     }
 }
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-        }
-    }
-}
