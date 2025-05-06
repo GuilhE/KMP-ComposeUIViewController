@@ -6,7 +6,7 @@ KSP library for generating `ComposeUIViewController` and `UIViewControllerRepres
 
 | Version                                                                                                                                                                                                                     | Kotlin |  KSP  | Compose Multiplatform | Xcode  |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------:|:-----:|:---------------------:|:------:|
-| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.1.20 | 2.0.0 |     1.8.0-beta02      | 16.3.0 |
+| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.1.20 | 2.0.0 |      1.8.0-rc01       | 16.3.0 |
 
 The suffix `-BETA` will be added to reflect JetBrain's [Compose Multiplatform iOS stability level](https://www.jetbrains.com/help/kotlin-multiplatform-dev/supported-platforms.html#current-platform-stability-levels-for-compose-multiplatform-ui-framework), until it becomes `STABLE`.
 
