@@ -7,8 +7,8 @@ ext["signing.keyId"] = null
 ext["signing.password"] = null
 ext["signing.secretKey"] = null
 ext["signing.secretKeyRingFile"] = null
-ext["ossrhUsername"] = null
-ext["ossrhToken"] = null
+ext["mavenUsername"] = null
+ext["mavenPassword"] = null
 val localPropsFile = project.rootProject.file("local.properties")
 if (localPropsFile.exists()) {
     localPropsFile.reader()
@@ -19,8 +19,8 @@ if (localPropsFile.exists()) {
     ext["signing.password"] = System.getenv("SIGNING_PASSWORD")
     ext["signing.secretKey"] = System.getenv("SIGNING_SECRET_KEY")
     ext["signing.secretKeyRingFile"] = System.getenv("SIGNING_SECRET_KEY_RING_FILE")
-    ext["ossrhUsername"] = System.getenv("OSSRH_USERNAME")
-    ext["ossrhToken"] = System.getenv("OSSRH_TOKEN")
+    ext["mavenUsername"] = System.getenv("OSSRH_USERNAME")
+    ext["mavenPassword"] = System.getenv("OSSRH_TOKEN")
 }
 
 fun getExtraString(name: String) = ext[name]?.toString()
@@ -33,8 +33,8 @@ publishing {
             name = "sonatype"
             setUrl("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
-                username = getExtraString("ossrhUsername")
-                password = getExtraString("ossrhToken")
+                username = getExtraString("mavenUsername")
+                password = getExtraString("mavenPassword")
             }
         }
     }
