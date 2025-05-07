@@ -1,4 +1,4 @@
-name: Nexus release
+name: Maven release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - 'library-release-*'
 
 jobs:
-  publish-to-nexus:
+  publish-to-maven:
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -37,7 +37,7 @@ jobs:
 
       - name: Publish to Nexus
         if: success()
-        run: ./gradlew publishLibraryModules
+        run: ./gradlew publishLibraryModules --no-configuration-cache
         env:
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
         ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}

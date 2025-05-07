@@ -17,7 +17,7 @@ project.extra.set("mavenUsername", getExtraString("mavenUsername"))
 project.extra.set("mavenPassword", getExtraString("mavenPassword") ?: getExtraString("mavenPassword"))
 
 mavenPublishing {
-    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
     signAllPublications()
 
     pom {
