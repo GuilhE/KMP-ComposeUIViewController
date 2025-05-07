@@ -13,8 +13,8 @@ fun getExtraString(name: String) = ext[name]?.toString()
 project.extra.set("signing.keyId", getExtraString("signing.keyId"))
 project.extra.set("signing.password", getExtraString("signing.password"))
 project.extra.set("signing.secretKey", getExtraString("signing.secretKey"))
-project.extra.set("ossrhUsername", getExtraString("ossrhUsername"))
-project.extra.set("ossrhPassword", getExtraString("ossrhToken") ?: getExtraString("ossrhPassword"))
+project.extra.set("mavenUsername", getExtraString("mavenUsername"))
+project.extra.set("mavenPassword", getExtraString("mavenPassword") ?: getExtraString("mavenPassword"))
 
 mavenPublishing {
     publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)

@@ -5,6 +5,12 @@
 
 ---
 
+## [1.2.9]
+- 
+- Compatible with 2.1.20-1.8.0
+
+---
+
 ## [1.2.8]
 
 - Compatible with 2.1.20-1.8.0-beta02-BETA
