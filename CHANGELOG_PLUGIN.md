@@ -1,12 +1,7 @@
 # Changelog
-## [1.2.9]
-
-- Compatible with 2.1.20-1.8.0-rc01-BETA
-
----
 
 ## [1.2.9]
-- 
+
 - Compatible with 2.1.20-1.8.0
 
 ---
