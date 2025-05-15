@@ -1,7 +1,0 @@
-$dokka.format:html-v1
-$dokka.linkExtension:html
-
-module:kmp-composeuiviewcontroller-annotations
-com.github.guilhe.kmp.composeuiviewcontroller
-module:kmp-composeuiviewcontroller-gradle-plugin
-com.github.guilhe.kmp.composeuiviewcontroller.gradle
