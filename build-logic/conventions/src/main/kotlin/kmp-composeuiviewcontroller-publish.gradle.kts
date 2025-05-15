@@ -34,14 +34,11 @@ mavenPublishing {
             developer {
                 id.set("GuilhE")
                 name.set("Guilherme Delgado")
-                email.set("gdelgado@bliss.pt")
-                url.set("https://github.com/GuilhE")
+                email.set("guilherme.delgado@gmail.com")
             }
         }
         scm {
             url.set("https://github.com/GuilhE/KMP-ComposeUIViewController")
-            connection.set("scm:git:github.com/GuilhE/KMP-ComposeUIViewController.git")
-            developerConnection.set("scm:git:ssh://github.com/GuilhE/KMP-ComposeUIViewController.git")
         }
     }
 }

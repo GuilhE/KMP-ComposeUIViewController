@@ -2,7 +2,7 @@
 
 plugins {
     `java-gradle-plugin`
-    `kmp-composeuiviewcontroller-publish`
+    id("kmp-composeuiviewcontroller-publish")
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.gradle.publish)
     alias(libs.plugins.kotlinx.serialization)
@@ -51,6 +51,13 @@ gradlePlugin {
                 "uiviewcontroller",
                 "uiviewcontrollerrepresentable"
             )
+        }
+        create("kmpComposeUIViewControllerPublish") {
+            id = "$group.plugin-composeuiviewcontroller-publish"
+            implementationClass = "com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPublishPlugin"
+            displayName = "KMP-ComposeUIViewController Publish"
+            description = "Configura publicação Maven Central para KMP-ComposeUIViewController."
+            tags = listOf("maven", "publish", "central", "kmp", "composeuiviewcontroller")
         }
     }
 }
