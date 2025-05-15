@@ -4,6 +4,16 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
+    companion object {
+        private const val LIB_NAME = "KMP-ComposeUIViewController"
+        private const val LIB_DESCRIPTION = "KSP library for generating ComposeUIViewController and UIViewControllerRepresentable files when using Compose Multiplatform for iOS"
+        private const val LIB_URL = "https://github.com/GuilhE/KMP-ComposeUIViewController"
+        private const val DEV_ID = "GuilhE"
+        private const val DEV_NAME = "Guilherme Delgado"
+        private const val DEV_EMAIL = "gdelgado@bliss.pt"
+        private const val LICENSE_NAME = "The Apache License, Version 2.0"
+        private const val LICENSE_URL = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+    }
     override fun apply(project: Project) {
         project.plugins.apply("com.vanniktech.maven.publish")
 
@@ -19,7 +29,7 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
         project.extensions.extraProperties["signing.password"] = getExtraString("signing.password")
         project.extensions.extraProperties["signing.secretKey"] = getExtraString("signing.secretKey")
         project.extensions.extraProperties["mavenUsername"] = getExtraString("mavenUsername")
-        project.extensions.extraProperties["mavenPassword"] = getExtraString("mavenPassword") ?: getExtraString("mavenPassword")
+        project.extensions.extraProperties["mavenPassword"] = getExtraString("mavenPassword")
 
         val mavenPublishing = project.extensions.getByName("mavenPublishing")
         mavenPublishing.javaClass.getMethod("publishToMavenCentral", SonatypeHost::class.java, Boolean::class.java)
@@ -30,14 +40,14 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             @Suppress("unused")
             fun doCall(pom: Any) {
                 pom.javaClass.getMethod("getName").invoke(pom).javaClass.getMethod("set", Any::class.java)
-                    .invoke(pom.javaClass.getMethod("getName").invoke(pom), "KMP-ComposeUIViewController")
+                    .invoke(pom.javaClass.getMethod("getName").invoke(pom), LIB_NAME)
                 pom.javaClass.getMethod("getDescription").invoke(pom).javaClass.getMethod("set", Any::class.java)
                     .invoke(
                         pom.javaClass.getMethod("getDescription").invoke(pom),
-                        "KSP library for generating ComposeUIViewController and UIViewControllerRepresentable files when using Compose Multiplatform for iOS"
+                        LIB_DESCRIPTION
                     )
                 pom.javaClass.getMethod("getUrl").invoke(pom).javaClass.getMethod("set", Any::class.java)
-                    .invoke(pom.javaClass.getMethod("getUrl").invoke(pom), "https://github.com/GuilhE/KMP-ComposeUIViewController")
+                    .invoke(pom.javaClass.getMethod("getUrl").invoke(pom), LIB_URL)
 
                 pom.javaClass.getMethod("licenses", Closure::class.java).invoke(pom, object : Closure<Unit>(this, this) {
                     @Suppress("unused")
@@ -46,9 +56,9 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                             @Suppress("unused")
                             fun doCall(license: Any) {
                                 license.javaClass.getMethod("getName").invoke(license).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(license.javaClass.getMethod("getName").invoke(license), "The Apache License, Version 2.0")
+                                    .invoke(license.javaClass.getMethod("getName").invoke(license), LICENSE_NAME)
                                 license.javaClass.getMethod("getUrl").invoke(license).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(license.javaClass.getMethod("getUrl").invoke(license), "http://www.apache.org/licenses/LICENSE-2.0.txt")
+                                    .invoke(license.javaClass.getMethod("getUrl").invoke(license), LICENSE_URL)
                             }
                         })
                     }
@@ -60,11 +70,11 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                             @Suppress("unused")
                             fun doCall(developer: Any) {
                                 developer.javaClass.getMethod("getId").invoke(developer).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(developer.javaClass.getMethod("getId").invoke(developer), "GuilhE")
+                                    .invoke(developer.javaClass.getMethod("getId").invoke(developer), DEV_ID)
                                 developer.javaClass.getMethod("getName").invoke(developer).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(developer.javaClass.getMethod("getName").invoke(developer), "Guilherme Delgado")
+                                    .invoke(developer.javaClass.getMethod("getName").invoke(developer), DEV_NAME)
                                 developer.javaClass.getMethod("getEmail").invoke(developer).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(developer.javaClass.getMethod("getEmail").invoke(developer), "guilherme.delgado@gmail.com")
+                                    .invoke(developer.javaClass.getMethod("getEmail").invoke(developer), DEV_EMAIL)
                             }
                         })
                     }
@@ -73,7 +83,7 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                     @Suppress("unused")
                     fun doCall(scm: Any) {
                         scm.javaClass.getMethod("getUrl").invoke(scm).javaClass.getMethod("set", Any::class.java)
-                            .invoke(scm.javaClass.getMethod("getUrl").invoke(scm), "https://github.com/GuilhE/KMP-ComposeUIViewController")
+                            .invoke(scm.javaClass.getMethod("getUrl").invoke(scm), LIB_URL)
                     }
                 })
             }
