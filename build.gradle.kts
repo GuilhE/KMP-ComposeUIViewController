@@ -2,8 +2,8 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.gradle.publish) apply false
-    alias(libs.plugins.kotlin.dokka) apply false
     alias(libs.plugins.vanniktech.maven) apply false //https://github.com/vanniktech/gradle-maven-publish-plugin/issues/670#issuecomment-1839097676
+    alias(libs.plugins.kotlin.dokka)
 }
 
 buildscript {
