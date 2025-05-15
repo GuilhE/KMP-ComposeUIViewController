@@ -4,10 +4,11 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
-    
+
     companion object {
         private const val LIB_NAME = "KMP-ComposeUIViewController"
-        private const val LIB_DESCRIPTION = "KSP library for generating ComposeUIViewController and UIViewControllerRepresentable files when using Compose Multiplatform for iOS"
+        private const val LIB_DESCRIPTION =
+            "KSP library for generating ComposeUIViewController and UIViewControllerRepresentable files when using Compose Multiplatform for iOS"
         private const val LIB_URL = "https://github.com/GuilhE/KMP-ComposeUIViewController"
         private const val DEV_ID = "GuilhE"
         private const val DEV_NAME = "Guilherme Delgado"
@@ -34,9 +35,9 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                 .onEach { (name, value) -> project.extensions.extraProperties[name.toString()] = value }
         }
 
-        val hasSigning =
-            project.extensions.extraProperties["signing.keyId"] != null ||
-            project.extensions.extraProperties["signingInMemoryKeyId"] != null
+        val hasSigning = project.extensions.extraProperties["signing.keyId"] != null ||
+                project.extensions.extraProperties["signingInMemoryKeyId"] != null ||
+                System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId") != null
 
         if (!hasSigning) {
             project.logger.lifecycle(">> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
