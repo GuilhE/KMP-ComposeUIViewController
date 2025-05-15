@@ -1,4 +1,4 @@
-name: Nexus release
+name: Maven release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - 'library-release-*'
 
 jobs:
-  publish-to-nexus:
+  publish-to-maven:
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -37,10 +37,10 @@ jobs:
 
       - name: Publish to Nexus
         if: success()
-        run: ./gradlew publishLibraryModules
+        run: ./gradlew publishLibraryModules --no-configuration-cache
         env:
-          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          SIGNING_SECRET_KEY: ${{ secrets.SIGNING_SECRET_KEY }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
