@@ -77,6 +77,6 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                     }
                 })
             }
-        } /* as groovy.lang.Closure<*> */)
+        })
     }
 }
