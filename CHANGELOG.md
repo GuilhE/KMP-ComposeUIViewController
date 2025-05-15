@@ -1,11 +1,12 @@
 # Changelog
 
-## [2.1.20-1.8.0]
+## [2.1.21-1.8.0]
 
 - CMP 1.8.0 is [stable](https://blog.jetbrains.com/kotlin/2025/05/compose-multiplatform-1-8-0-released-compose-multiplatform-for-ios-is-stable-and-production-ready/) for iOS 🎉
 - KSP 2.0.1
+- Kotlin 2.1.21
 - Serialization 1.8.1
-- SerializationPlugin 2.1.20
+- SerializationPlugin 2.1.21
 
 ---
 
