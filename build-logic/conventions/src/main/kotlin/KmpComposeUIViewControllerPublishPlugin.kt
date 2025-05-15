@@ -15,8 +15,6 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
         private const val LICENSE_URL = "http://www.apache.org/licenses/LICENSE-2.0.txt"
     }
     override fun apply(project: Project) {
-        project.plugins.apply("com.vanniktech.maven.publish")
-
         val localPropsFile = project.rootProject.file("local.properties")
         if (localPropsFile.exists()) {
             localPropsFile.reader()
@@ -49,6 +47,8 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
         project.extensions.extraProperties["mavenPassword"] = getLocalOrEnv(
             "mavenPassword", listOf("ORG_GRADLE_PROJECT_mavenCentralPassword")
         )
+
+        project.plugins.apply("com.vanniktech.maven.publish")
 
         val mavenPublishing = project.extensions.getByName("mavenPublishing")
         mavenPublishing.javaClass.getMethod("publishToMavenCentral", SonatypeHost::class.java, Boolean::class.java)
