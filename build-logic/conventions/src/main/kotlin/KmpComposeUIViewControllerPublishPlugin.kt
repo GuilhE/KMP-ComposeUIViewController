@@ -18,30 +18,38 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
     }
 
     override fun apply(project: Project) {
-        project.extensions.extraProperties["signing.keyId"] = null
-        project.extensions.extraProperties["signing.password"] = null
-        project.extensions.extraProperties["signing.secretKey"] = null
-        project.extensions.extraProperties["signing.secretKeyRingFile"] = null
-        project.extensions.extraProperties["signingInMemoryKeyId"] = null
-        project.extensions.extraProperties["signingInMemoryKeyPassword"] = null
-        project.extensions.extraProperties["signingInMemoryKey"] = null
-        project.extensions.extraProperties["mavenCentralUsername"] = null
-        project.extensions.extraProperties["mavenCentralPassword"] = null
-
         val localPropsFile = project.rootProject.file("local.properties")
         if (localPropsFile.exists()) {
-            localPropsFile.reader()
-                .use { java.util.Properties().apply { load(it) } }
-                .onEach { (name, value) -> project.extensions.extraProperties[name.toString()] = value }
+            val props = java.util.Properties()
+            localPropsFile.inputStream().use { props.load(it) }
+            props.forEach { (k, v) ->
+                if (project.findProperty(k.toString()) == null) {
+                    project.extensions.extraProperties[k.toString()] = v
+                }
+            }
         }
 
-        val hasSigning = project.extensions.extraProperties["signing.keyId"] != null ||
-                project.extensions.extraProperties["signingInMemoryKeyId"] != null ||
+        val hasSigning = project.findProperty("signing.keyId") != null ||
+                project.findProperty("signingInMemoryKeyId") != null ||
                 System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId") != null
 
         if (!hasSigning) {
             project.logger.lifecycle(">> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
             return
+        }
+
+        listOf(
+            "signing.keyId",
+            "signing.password",
+            "signing.secretKey",
+            "signing.secretKeyRingFile",
+            "signingInMemoryKeyId",
+            "signingInMemoryKeyPassword",
+            "signingInMemoryKey",
+            "mavenCentralUsername",
+            "mavenCentralPassword"
+        ).forEach { key ->
+            project.logger.lifecycle(">> $key = ${project.findProperty(key)?.let { "***" } ?: "null"}")
         }
 
         project.plugins.apply("com.vanniktech.maven.publish")
