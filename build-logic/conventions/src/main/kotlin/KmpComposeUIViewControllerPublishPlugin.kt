@@ -24,12 +24,31 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                 .onEach { (name, value) -> project.extensions.extraProperties[name.toString()] = value }
         }
 
-        fun getExtraString(name: String) = project.extensions.extraProperties[name]?.toString()
-        project.extensions.extraProperties["signing.keyId"] = getExtraString("signing.keyId")
-        project.extensions.extraProperties["signing.password"] = getExtraString("signing.password")
-        project.extensions.extraProperties["signing.secretKey"] = getExtraString("signing.secretKey")
-        project.extensions.extraProperties["mavenUsername"] = getExtraString("mavenUsername")
-        project.extensions.extraProperties["mavenPassword"] = getExtraString("mavenPassword")
+        fun getLocalOrEnv(name: String, envNames: List<String> = emptyList()): String? {
+            val local = project.extensions.extraProperties[name]?.toString() ?: project.findProperty(name)?.toString()
+            if (!local.isNullOrBlank()) return local
+            for (env in envNames) {
+                val envValue = System.getenv(env)
+                if (!envValue.isNullOrBlank()) return envValue
+            }
+            return null
+        }
+
+        project.extensions.extraProperties["signing.keyId"] = getLocalOrEnv(
+            "signing.keyId", listOf("ORG_GRADLE_PROJECT_signingKeyId", "ORG_GRADLE_PROJECT_signingInMemoryKeyId")
+        )
+        project.extensions.extraProperties["signing.password"] = getLocalOrEnv(
+            "signing.password", listOf("ORG_GRADLE_PROJECT_signingPassword", "ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+        )
+        project.extensions.extraProperties["signing.secretKey"] = getLocalOrEnv(
+            "signing.secretKey", listOf("ORG_GRADLE_PROJECT_signingSecretKey", "ORG_GRADLE_PROJECT_signingInMemoryKey")
+        )
+        project.extensions.extraProperties["mavenUsername"] = getLocalOrEnv(
+            "mavenUsername", listOf("ORG_GRADLE_PROJECT_mavenCentralUsername")
+        )
+        project.extensions.extraProperties["mavenPassword"] = getLocalOrEnv(
+            "mavenPassword", listOf("ORG_GRADLE_PROJECT_mavenCentralPassword")
+        )
 
         val mavenPublishing = project.extensions.getByName("mavenPublishing")
         mavenPublishing.javaClass.getMethod("publishToMavenCentral", SonatypeHost::class.java, Boolean::class.java)
