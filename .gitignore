@@ -263,3 +263,4 @@ gradle-app.setting
 **/build/
 
 # End of https://www.toptal.com/developers/gitignore/api/swift,xcode,gradle,kotlin,intellij,cocoapods
+/buildSrc/

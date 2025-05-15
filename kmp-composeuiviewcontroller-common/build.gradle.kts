@@ -14,7 +14,6 @@ kotlin {
 }
 
 java {
-    withJavadocJar()
     withSourcesJar()
 }
 

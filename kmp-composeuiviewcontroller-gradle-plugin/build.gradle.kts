@@ -15,7 +15,6 @@ kotlin {
 }
 
 java {
-    withJavadocJar()
     withSourcesJar()
 }
 
@@ -51,13 +50,6 @@ gradlePlugin {
                 "uiviewcontroller",
                 "uiviewcontrollerrepresentable"
             )
-        }
-        create("kmpComposeUIViewControllerPublish") {
-            id = "$group.plugin-composeuiviewcontroller-publish"
-            implementationClass = "com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPublishPlugin"
-            displayName = "KMP-ComposeUIViewController Publish"
-            description = "Configura publicação Maven Central para KMP-ComposeUIViewController."
-            tags = listOf("maven", "publish", "central", "kmp", "composeuiviewcontroller")
         }
     }
 }
