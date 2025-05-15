@@ -38,20 +38,6 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             return
         }
 
-        listOf(
-            "signing.keyId",
-            "signing.password",
-            "signing.secretKey",
-            "signing.secretKeyRingFile",
-            "signingInMemoryKeyId",
-            "signingInMemoryKeyPassword",
-            "signingInMemoryKey",
-            "mavenCentralUsername",
-            "mavenCentralPassword"
-        ).forEach { key ->
-            project.logger.lifecycle(">> $key = ${project.findProperty(key)?.let { "***" } ?: "null"}")
-        }
-
         project.plugins.apply("com.vanniktech.maven.publish")
 
         val mavenPublishing = project.extensions.getByName("mavenPublishing")
