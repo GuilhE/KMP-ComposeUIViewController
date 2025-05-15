@@ -29,77 +29,75 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                 .use { java.util.Properties().apply { load(it) } }
                 .onEach { (name, value) -> project.extensions.extraProperties[name.toString()] = value }
         } else {
-            project.extensions.extraProperties["signing.keyId"] = System.getenv("SIGNING_KEY_ID")
-            project.extensions.extraProperties["signing.password"] = System.getenv("SIGNING_PASSWORD")
-            project.extensions.extraProperties["signing.secretKey"] = System.getenv("SIGNING_SECRET_KEY")
-            project.extensions.extraProperties["mavenUsername"] = System.getenv("MAVEN_CENTRAL_USERNAME")
-            project.extensions.extraProperties["mavenPassword"] = System.getenv("MAVEN_CENTRAL_PASSWORD")
+            project.extensions.extraProperties["signing.keyId"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId")
+            project.extensions.extraProperties["signing.password"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+            project.extensions.extraProperties["signing.secretKey"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey")
+            project.extensions.extraProperties["mavenUsername"] = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername")
+            project.extensions.extraProperties["mavenPassword"] = System.getenv("ORG_GRADLE_PROJECT_mavenCentralPassword")
         }
 
-        val signPublications = project.extensions.extraProperties["signing.keyId"]?.toString() != null
-        if (!signPublications) {
+        if (project.extensions.extraProperties["signing.keyId"] == null) {
             project.logger.lifecycle("[kmp-composeuiviewcontroller-publish] No signing configuration found, skipping publish setup.")
-            return
+        } else {
+            project.plugins.apply("com.vanniktech.maven.publish")
+
+            val mavenPublishing = project.extensions.getByName("mavenPublishing")
+            mavenPublishing.javaClass.getMethod("publishToMavenCentral", SonatypeHost::class.java, Boolean::class.java)
+                .invoke(mavenPublishing, SonatypeHost.CENTRAL_PORTAL, false)
+            mavenPublishing.javaClass.getMethod("signAllPublications").invoke(mavenPublishing)
+            val pomMethod = mavenPublishing.javaClass.methods.first { it.name == "pom" && it.parameterTypes.size == 1 }
+            pomMethod.invoke(mavenPublishing, object : Closure<Unit>(this, this) {
+                @Suppress("unused")
+                fun doCall(pom: Any) {
+                    pom.javaClass.getMethod("getName").invoke(pom).javaClass.getMethod("set", Any::class.java)
+                        .invoke(pom.javaClass.getMethod("getName").invoke(pom), LIB_NAME)
+                    pom.javaClass.getMethod("getDescription").invoke(pom).javaClass.getMethod("set", Any::class.java)
+                        .invoke(
+                            pom.javaClass.getMethod("getDescription").invoke(pom),
+                            LIB_DESCRIPTION
+                        )
+                    pom.javaClass.getMethod("getUrl").invoke(pom).javaClass.getMethod("set", Any::class.java)
+                        .invoke(pom.javaClass.getMethod("getUrl").invoke(pom), LIB_URL)
+
+                    pom.javaClass.getMethod("licenses", Closure::class.java).invoke(pom, object : Closure<Unit>(this, this) {
+                        @Suppress("unused")
+                        fun doCall(licenses: Any) {
+                            licenses.javaClass.getMethod("license", Closure::class.java).invoke(licenses, object : Closure<Unit>(this, this) {
+                                @Suppress("unused")
+                                fun doCall(license: Any) {
+                                    license.javaClass.getMethod("getName").invoke(license).javaClass.getMethod("set", Any::class.java)
+                                        .invoke(license.javaClass.getMethod("getName").invoke(license), LICENSE_NAME)
+                                    license.javaClass.getMethod("getUrl").invoke(license).javaClass.getMethod("set", Any::class.java)
+                                        .invoke(license.javaClass.getMethod("getUrl").invoke(license), LICENSE_URL)
+                                }
+                            })
+                        }
+                    })
+                    pom.javaClass.getMethod("developers", Closure::class.java).invoke(pom, object : Closure<Unit>(this, this) {
+                        @Suppress("unused")
+                        fun doCall(developers: Any) {
+                            developers.javaClass.getMethod("developer", Closure::class.java).invoke(developers, object : Closure<Unit>(this, this) {
+                                @Suppress("unused")
+                                fun doCall(developer: Any) {
+                                    developer.javaClass.getMethod("getId").invoke(developer).javaClass.getMethod("set", Any::class.java)
+                                        .invoke(developer.javaClass.getMethod("getId").invoke(developer), DEV_ID)
+                                    developer.javaClass.getMethod("getName").invoke(developer).javaClass.getMethod("set", Any::class.java)
+                                        .invoke(developer.javaClass.getMethod("getName").invoke(developer), DEV_NAME)
+                                    developer.javaClass.getMethod("getEmail").invoke(developer).javaClass.getMethod("set", Any::class.java)
+                                        .invoke(developer.javaClass.getMethod("getEmail").invoke(developer), DEV_EMAIL)
+                                }
+                            })
+                        }
+                    })
+                    pom.javaClass.getMethod("scm", Closure::class.java).invoke(pom, object : Closure<Unit>(this, this) {
+                        @Suppress("unused")
+                        fun doCall(scm: Any) {
+                            scm.javaClass.getMethod("getUrl").invoke(scm).javaClass.getMethod("set", Any::class.java)
+                                .invoke(scm.javaClass.getMethod("getUrl").invoke(scm), LIB_URL)
+                        }
+                    })
+                }
+            })
         }
-
-        project.plugins.apply("com.vanniktech.maven.publish")
-
-        val mavenPublishing = project.extensions.getByName("mavenPublishing")
-        mavenPublishing.javaClass.getMethod("publishToMavenCentral", SonatypeHost::class.java, Boolean::class.java)
-            .invoke(mavenPublishing, SonatypeHost.CENTRAL_PORTAL, true)
-        mavenPublishing.javaClass.getMethod("signAllPublications").invoke(mavenPublishing)
-        val pomMethod = mavenPublishing.javaClass.methods.first { it.name == "pom" && it.parameterTypes.size == 1 }
-        pomMethod.invoke(mavenPublishing, object : Closure<Unit>(this, this) {
-            @Suppress("unused")
-            fun doCall(pom: Any) {
-                pom.javaClass.getMethod("getName").invoke(pom).javaClass.getMethod("set", Any::class.java)
-                    .invoke(pom.javaClass.getMethod("getName").invoke(pom), LIB_NAME)
-                pom.javaClass.getMethod("getDescription").invoke(pom).javaClass.getMethod("set", Any::class.java)
-                    .invoke(
-                        pom.javaClass.getMethod("getDescription").invoke(pom),
-                        LIB_DESCRIPTION
-                    )
-                pom.javaClass.getMethod("getUrl").invoke(pom).javaClass.getMethod("set", Any::class.java)
-                    .invoke(pom.javaClass.getMethod("getUrl").invoke(pom), LIB_URL)
-
-                pom.javaClass.getMethod("licenses", Closure::class.java).invoke(pom, object : Closure<Unit>(this, this) {
-                    @Suppress("unused")
-                    fun doCall(licenses: Any) {
-                        licenses.javaClass.getMethod("license", Closure::class.java).invoke(licenses, object : Closure<Unit>(this, this) {
-                            @Suppress("unused")
-                            fun doCall(license: Any) {
-                                license.javaClass.getMethod("getName").invoke(license).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(license.javaClass.getMethod("getName").invoke(license), LICENSE_NAME)
-                                license.javaClass.getMethod("getUrl").invoke(license).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(license.javaClass.getMethod("getUrl").invoke(license), LICENSE_URL)
-                            }
-                        })
-                    }
-                })
-                pom.javaClass.getMethod("developers", Closure::class.java).invoke(pom, object : Closure<Unit>(this, this) {
-                    @Suppress("unused")
-                    fun doCall(developers: Any) {
-                        developers.javaClass.getMethod("developer", Closure::class.java).invoke(developers, object : Closure<Unit>(this, this) {
-                            @Suppress("unused")
-                            fun doCall(developer: Any) {
-                                developer.javaClass.getMethod("getId").invoke(developer).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(developer.javaClass.getMethod("getId").invoke(developer), DEV_ID)
-                                developer.javaClass.getMethod("getName").invoke(developer).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(developer.javaClass.getMethod("getName").invoke(developer), DEV_NAME)
-                                developer.javaClass.getMethod("getEmail").invoke(developer).javaClass.getMethod("set", Any::class.java)
-                                    .invoke(developer.javaClass.getMethod("getEmail").invoke(developer), DEV_EMAIL)
-                            }
-                        })
-                    }
-                })
-                pom.javaClass.getMethod("scm", Closure::class.java).invoke(pom, object : Closure<Unit>(this, this) {
-                    @Suppress("unused")
-                    fun doCall(scm: Any) {
-                        scm.javaClass.getMethod("getUrl").invoke(scm).javaClass.getMethod("set", Any::class.java)
-                            .invoke(scm.javaClass.getMethod("getUrl").invoke(scm), LIB_URL)
-                    }
-                })
-            }
-        })
     }
 }

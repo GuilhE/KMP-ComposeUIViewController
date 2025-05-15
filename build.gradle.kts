@@ -18,7 +18,7 @@ allprojects {
 }
 
 tasks.register("publishLibraryModules") {
-    dependsOn(":kmp-composeuiviewcontroller-common:publishAndReleaseToMavenCentral")
-    dependsOn(":kmp-composeuiviewcontroller-annotations:publishAndReleaseToMavenCentral")
-    finalizedBy(":kmp-composeuiviewcontroller-ksp:publishAndReleaseToMavenCentral")
+    dependsOn(":kmp-composeuiviewcontroller-common:publishToMavenCentral")
+    dependsOn(":kmp-composeuiviewcontroller-annotations:publishToMavenCentral")
+    finalizedBy(":kmp-composeuiviewcontroller-ksp:publishToMavenCentral")
 }
