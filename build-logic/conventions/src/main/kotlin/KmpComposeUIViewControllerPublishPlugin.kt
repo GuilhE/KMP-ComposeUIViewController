@@ -32,8 +32,8 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             project.extensions.extraProperties["signing.keyId"] = System.getenv("SIGNING_KEY_ID")
             project.extensions.extraProperties["signing.password"] = System.getenv("SIGNING_PASSWORD")
             project.extensions.extraProperties["signing.secretKey"] = System.getenv("SIGNING_SECRET_KEY")
-            project.extensions.extraProperties["mavenUsername"] = System.getenv("OSSRH_USERNAME")
-            project.extensions.extraProperties["mavenPassword"] = System.getenv("OSSRH_TOKEN")
+            project.extensions.extraProperties["mavenUsername"] = System.getenv("MAVEN_CENTRAL_USERNAME")
+            project.extensions.extraProperties["mavenPassword"] = System.getenv("MAVEN_CENTRAL_PASSWORD")
         }
 
         val signPublications = project.extensions.extraProperties["signing.keyId"]?.toString() != null
