@@ -49,7 +49,7 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             project.extensions.extraProperties["signingInMemoryKeyId"] != null
 
         if (!hasSigning) {
-            project.logger.lifecycle("[kmp-composeuiviewcontroller-publish] ${project.name} No signing configuration found, skipping publish setup.")
+            project.logger.lifecycle(">> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
             return
         }
 
@@ -57,7 +57,7 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
 
         val mavenPublishing = project.extensions.getByName("mavenPublishing")
         mavenPublishing.javaClass.getMethod("publishToMavenCentral", SonatypeHost::class.java, Boolean::class.java)
-            .invoke(mavenPublishing, SonatypeHost.CENTRAL_PORTAL, true)
+            .invoke(mavenPublishing, SonatypeHost.CENTRAL_PORTAL, false)
         mavenPublishing.javaClass.getMethod("signAllPublications").invoke(mavenPublishing)
         val pomMethod = mavenPublishing.javaClass.methods.first { it.name == "pom" && it.parameterTypes.size == 1 }
         pomMethod.invoke(mavenPublishing, object : Closure<Unit>(this, this) {

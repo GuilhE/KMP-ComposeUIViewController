@@ -35,7 +35,7 @@ jobs:
       - name: Run Processor tests
         run: ./gradlew clean :kmp-composeuiviewcontroller-ksp:test --tests "composeuiviewcontroller.ProcessorTest"
 
-      - name: Publish to Nexus
+      - name: Publish to Maven Central
         if: success()
         run: ./gradlew publishLibraryModules --no-configuration-cache
         env:
