@@ -21,6 +21,9 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
         project.extensions.extraProperties["signing.password"] = null
         project.extensions.extraProperties["signing.secretKey"] = null
         project.extensions.extraProperties["signing.secretKeyRingFile"] = null
+        project.extensions.extraProperties["signingInMemoryKeyId"] = null
+        project.extensions.extraProperties["signingInMemoryKeyPassword"] = null
+        project.extensions.extraProperties["signingInMemoryKey"] = null
         project.extensions.extraProperties["mavenCentralUsername"] = null
         project.extensions.extraProperties["mavenCentralPassword"] = null
 
@@ -29,10 +32,24 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             localPropsFile.reader()
                 .use { java.util.Properties().apply { load(it) } }
                 .onEach { (name, value) -> project.extensions.extraProperties[name.toString()] = value }
+        } else {
+            project.extensions.extraProperties["signing.keyId"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId")
+            project.extensions.extraProperties["signing.password"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+            project.extensions.extraProperties["signing.secretKey"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey")
+            project.extensions.extraProperties["mavenCentralUsername"] = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername")
+            project.extensions.extraProperties["mavenCentralPassword"] = System.getenv("ORG_GRADLE_PROJECT_mavenCentralPassword")
+//            project.extensions.extraProperties["signing.secretKeyRingFile"] = System.getenv("SIGNING_SECRET_KEY_RING_FILE")
+            project.extensions.extraProperties["signingInMemoryKeyId"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId")
+            project.extensions.extraProperties["signingInMemoryKeyPassword"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+            project.extensions.extraProperties["signingInMemoryKey"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey")
         }
 
-        if (project.extensions.extraProperties["signing.keyId"] == null) {
-            project.logger.lifecycle("[kmp-composeuiviewcontroller-publish] No signing configuration found, skipping publish setup.")
+        val hasSigning =
+            project.extensions.extraProperties["signing.keyId"] != null ||
+            project.extensions.extraProperties["signingInMemoryKeyId"] != null
+
+        if (!hasSigning) {
+            project.logger.lifecycle("[kmp-composeuiviewcontroller-publish] ${project.name} No signing configuration found, skipping publish setup.")
             return
         }
 
