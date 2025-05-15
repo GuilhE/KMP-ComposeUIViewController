@@ -2,7 +2,7 @@
 
 ## [1.2.9]
 
-- Compatible with 2.1.20-1.8.0
+- Compatible with 2.1.21-1.8.0
 
 ---
 
