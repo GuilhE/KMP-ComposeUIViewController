@@ -32,16 +32,6 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             localPropsFile.reader()
                 .use { java.util.Properties().apply { load(it) } }
                 .onEach { (name, value) -> project.extensions.extraProperties[name.toString()] = value }
-        } else {
-            project.extensions.extraProperties["signing.keyId"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId")
-            project.extensions.extraProperties["signing.password"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
-            project.extensions.extraProperties["signing.secretKey"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey")
-            project.extensions.extraProperties["mavenCentralUsername"] = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername")
-            project.extensions.extraProperties["mavenCentralPassword"] = System.getenv("ORG_GRADLE_PROJECT_mavenCentralPassword")
-//            project.extensions.extraProperties["signing.secretKeyRingFile"] = System.getenv("SIGNING_SECRET_KEY_RING_FILE")
-            project.extensions.extraProperties["signingInMemoryKeyId"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId")
-            project.extensions.extraProperties["signingInMemoryKeyPassword"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
-            project.extensions.extraProperties["signingInMemoryKey"] = System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey")
         }
 
         val hasSigning =
