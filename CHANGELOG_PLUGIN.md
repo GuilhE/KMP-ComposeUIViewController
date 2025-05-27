@@ -1,7 +1,13 @@
 # Changelog
 
+## [1.2.10]
+
+- Compatible with 2.1.21-1.8.1
+
+---
+
 ## [1.2.9]
-- 
+
 - Compatible with 2.1.21-1.8.0
 
 ---
