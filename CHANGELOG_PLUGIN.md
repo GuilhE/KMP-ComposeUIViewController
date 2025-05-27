@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.21-1.8.1]
+
+From now on `KMP-ComposeUIViewController` gradle plugin's version will map `Kotlin` and `Compose Multiplatform` versions
+
+- Compatible with 2.1.21-1.8.1
+
+---
+
 ## [1.2.10]
 
 - Compatible with 2.1.21-1.8.1
