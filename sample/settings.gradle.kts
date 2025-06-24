@@ -34,6 +34,6 @@ includeBuild("..") {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "sample"
+rootProject.name = "Gradient"
 include(":shared")
 include(":shared-models")

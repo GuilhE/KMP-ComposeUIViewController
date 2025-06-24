@@ -27,6 +27,7 @@ Pods/
 
 # Generated files
 .idea/**/contentModel.xml
+/kotlin-js-store/
 
 # Sensitive or high-churn files
 .idea/**/dataSources/

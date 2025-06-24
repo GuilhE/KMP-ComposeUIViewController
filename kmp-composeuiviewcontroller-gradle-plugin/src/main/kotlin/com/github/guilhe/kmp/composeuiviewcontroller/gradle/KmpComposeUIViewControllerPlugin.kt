@@ -215,7 +215,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {
         tasks.matching { it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE || it.name == TASK_SYNC_FRAMEWORK }.configureEach { task ->
             if (extensionParameters.autoExport) {
-                println("\n> $LOG_TAG:\n\t> ${task.name}will be finalizedBy $TASK_COPY_FILES_TO_XCODE task")
+                println("\n> $LOG_TAG:\n\t> ${task.name} will be finalizedBy $TASK_COPY_FILES_TO_XCODE task")
                 task.finalizedBy(TASK_COPY_FILES_TO_XCODE)
             }
         }
