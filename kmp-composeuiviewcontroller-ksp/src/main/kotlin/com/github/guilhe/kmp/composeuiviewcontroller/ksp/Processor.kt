@@ -18,7 +18,6 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import kotlinx.serialization.json.Json
 import java.io.File
-import java.util.Locale
 
 public class ProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
@@ -59,20 +58,23 @@ internal class Processor(
                     }
                     val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
                     val modulesMetadata = getFrameworkMetadataFromDisk()
-                    val experimentalFeature: Boolean = modulesMetadata.firstOrNull()?.experimentalNamespaceFeature ?: false
-                    val externalModuleTypes = if (experimentalFeature) {
+                    val swiftExportEnabled: Boolean = modulesMetadata.firstOrNull()?.swiftExport ?: false
+                    val externalModuleTypes = if (swiftExportEnabled) {
                         buildExternalModuleParameters(modulesMetadata, externalImports)
                     } else {
                         emptyMap()
                     }
-//                    val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
-                    val currentFramework = trimFrameworkBaseNames(node, modulesMetadata, packageName)
+                    val frameworkBaseNames = if(swiftExportEnabled) {
+                        getFrameworkBaseNames(composable, node, makeParameters, parameters)
+                    } else {
+                        listOf(trimFrameworkBaseNames(node, modulesMetadata, packageName))
+                    }
 
                     if (stateParameter == null) {
                         createKotlinFileWithoutState(packageName, externalImports, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithoutState(listOf(currentFramework), composable, makeParameters, externalModuleTypes).also {
+                        createSwiftFileWithoutState(frameworkBaseNames, composable, makeParameters, externalModuleTypes).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
@@ -83,7 +85,7 @@ internal class Processor(
                             logger.info("${composable.name()}UIViewController created!")
                         }
                         createSwiftFileWithState(
-                            listOf(currentFramework), composable, stateParameterName, stateParameter, makeParameters, externalModuleTypes
+                            frameworkBaseNames, composable, stateParameterName, stateParameter, makeParameters, externalModuleTypes
                         ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
@@ -108,7 +110,7 @@ internal class Processor(
     }
 
     private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
-        val file = if(System.getProperty("user.dir").endsWith("Pods")) {
+        val file = if (System.getProperty("user.dir").endsWith("Pods")) {
             File("../../build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
         } else File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
         val moduleMetadata = try {
@@ -119,11 +121,6 @@ internal class Processor(
         return moduleMetadata
     }
 
-    /**
-     * Theres an [actual limitation](https://kotlinlang.slack.com/archives/C3SGXARS6/p1719961104891399) on Kotlin Multiplatform where each binary framework is compiled as a "closed world“, meaning it's not possible to pass custom type between two frameworks even it’s the same in Kotlin.
-     * For more information refer to CHANGELOG.md#2020-beta1-1611-beta-4
-     * [https://stackoverflow.com/a/78707072/1423773](https://stackoverflow.com/a/78707072/1423773)
-     */
     private fun buildExternalModuleParameters(moduleMetadata: List<ModuleMetadata>, imports: List<String>): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
         imports.forEach { it ->
@@ -131,18 +128,11 @@ internal class Processor(
             val import = it.split(".$type").first()
             moduleMetadata
                 .filter { module -> module.packageNames.contains(import) }
-                .forEach { module ->
-                    val capitalized = module.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-                    val replaced = capitalized.replace("-", "_")
-                    result[type] = "$replaced$type"
-                }
+                .forEach { module -> result[type] = type }
         }
         return result
     }
 
-    /**
-     * This will be needed until [buildExternalModuleParameters] is needed too. When (if) KPM limitation is addressed this will become deprecated and substituted by [getFrameworkBaseNames]
-     */
     private fun trimFrameworkBaseNames(node: KSAnnotated, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
         if (moduleMetadata.isEmpty()) {
             val framework = getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException()
@@ -171,9 +161,8 @@ internal class Processor(
                 stateParameter
             )
         )
-        frameworkBaseNames.ifEmpty {
-            getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) }
-        }
+        frameworkBaseNames.removeIf { it.isBlank() }
+        frameworkBaseNames.ifEmpty { getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) } }
         frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
         return frameworkBaseNames
     }

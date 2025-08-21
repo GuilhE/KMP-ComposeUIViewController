@@ -157,11 +157,13 @@ class PluginTest {
     }
 
     @Test
-    fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or syncFramework with CopyFilesToXcode task`() {
+    fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or embedSwiftExportForXcode or syncFramework with CopyFilesToXcode task`() {
         with(KmpComposeUIViewControllerPlugin.Companion) {
-            val embedTask = project.tasks.register(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE) {}
+            val embedObjCTask = project.tasks.register(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE) {}
+            val embedSwiftTask = project.tasks.register(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE) {}
             val syncTask = project.tasks.register(TASK_SYNC_FRAMEWORK) {}
-            assertTrue(embedTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size == 1)
+            assertTrue(embedObjCTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size == 1)
+            assertTrue(embedSwiftTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size == 1)
             assertTrue(syncTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size == 1)
         }
     }

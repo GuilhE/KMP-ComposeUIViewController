@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
+
 plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.kotlin.multiplatform)
@@ -6,13 +8,13 @@ plugins {
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
 }
 
-ComposeUiViewController {
-    autoExport = false
-}
-
 kotlin {
-    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-        target.binaries.framework { baseName = "Models" }
+    iosArm64()
+    iosSimulatorArm64()
+    @OptIn(ExperimentalSwiftExportDsl::class)
+    swiftExport {
+        moduleName = "Models"
+        flattenPackage = "com.sample.shared.models"
     }
     sourceSets {
         commonMain.dependencies {

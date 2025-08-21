@@ -9,7 +9,7 @@ public data class ModuleMetadata(
     val name: String,
     val packageNames: Set<String>,
     val frameworkBaseName: String,
-    val experimentalNamespaceFeature: Boolean
+    val swiftExport: Boolean
 )
 
 public const val TEMP_FILES_FOLDER: String = "composeuiviewcontroller"

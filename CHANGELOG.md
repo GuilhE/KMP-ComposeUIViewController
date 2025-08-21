@@ -3,6 +3,7 @@
 ## [2.2.20-RC-1.9.0-beta03]
 
 - Kotlin 2.2.20-RC
+- Adds `swiftExport` flag to enable/disable experimental feature. This must be used in conjunction with KMP swift export feature.
 
 ---
 

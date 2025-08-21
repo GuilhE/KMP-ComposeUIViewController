@@ -94,7 +94,7 @@ class ProcessorTest {
 
     @Test
     fun `When frameworkBaseName is provided via ModulesJson it overrides @ComposeUIViewController frameworkBaseName value`() {
-        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false}]""")
+        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","swiftExport":false}]""")
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -120,7 +120,7 @@ class ProcessorTest {
 
     @Test
     fun `Empty frameworkBaseName in ModulesJson falls back to frameworkBaseName in @ComposeUIViewController`() {
-        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","experimentalNamespaceFeature":false}]""")
+        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","swiftExport":false}]""")
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
@@ -650,8 +650,8 @@ class ProcessorTest {
         tempArgs.writeText(
             """
                 [
-                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false},
-                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","experimentalNamespaceFeature":false}
+                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","swiftExport":false},
+                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","swiftExport":false}
                 ]
                 """.trimIndent()
         )
@@ -701,12 +701,12 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Types imported from different KMP modules will produce Swift files with composed types when experimentalNamespaceFeature flag is true`() {
+    fun `Types imported from different KMP modules will produce Swift files with composed types when swiftExport flag is true`() {
         tempArgs.writeText(
             """
                 [
-                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":true},
-                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","experimentalNamespaceFeature":true}
+                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","swiftExport":true},
+                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","swiftExport":true}
                 ]
                 """.trimIndent()
         )
@@ -738,10 +738,11 @@ class ProcessorTest {
 
         val expectedSwiftOutput = """
             import SwiftUI
+            import ComposablesFramework2
             import ComposablesFramework
-
+            
             public struct ScreenRepresentable: UIViewControllerRepresentable {
-                let data: Module_dataData
+                let data: Data
 
                 public func makeUIViewController(context: Context) -> UIViewController {
                     ScreenUIViewController().make(data: data)

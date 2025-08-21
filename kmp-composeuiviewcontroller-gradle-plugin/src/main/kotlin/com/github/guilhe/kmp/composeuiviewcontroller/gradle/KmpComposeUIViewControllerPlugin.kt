@@ -5,7 +5,6 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -29,7 +28,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
     private fun ComposeUiViewControllerParameters.toList() =
-        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName, experimentalNamespaceFeature)
+        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName, swiftExport)
 
     override fun apply(project: Project) {
         with(project) {
@@ -150,7 +149,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     name = name,
                     packageNames = value,
                     frameworkBaseName = key,
-                    experimentalNamespaceFeature = extensionParameters.experimentalNamespaceFeature
+                    swiftExport = extensionParameters.swiftExport
                 )
             )
         }
@@ -213,7 +212,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     private fun Project.finalizeFrameworkTasks(extensionParameters: ComposeUiViewControllerParameters) {
-        tasks.matching { it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE || it.name == TASK_SYNC_FRAMEWORK }.configureEach { task ->
+        tasks.matching {
+            it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE ||
+                    it.name == TASK_EMBED_SWIFT_EXPORT_FOR_XCODE ||
+                    it.name == TASK_SYNC_FRAMEWORK
+        }.configureEach { task ->
             if (extensionParameters.autoExport) {
                 println("\n> $LOG_TAG:\n\t> ${task.name} will be finalizedBy $TASK_COPY_FILES_TO_XCODE task")
                 task.finalizedBy(TASK_COPY_FILES_TO_XCODE)
@@ -235,6 +238,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val TASK_CLEAN_TEMP_FILES_FOLDER = "cleanTempFilesFolder"
         internal const val TASK_COPY_FILES_TO_XCODE = "copyFilesToXcode"
         internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
+        internal const val TASK_EMBED_SWIFT_EXPORT_FOR_XCODE = "embedSwiftExportForXcode"
         internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
         private const val FILE_NAME_SCRIPT = "exportToXcode.sh"
         internal const val FILE_NAME_SCRIPT_TEMP = "temp.sh"
