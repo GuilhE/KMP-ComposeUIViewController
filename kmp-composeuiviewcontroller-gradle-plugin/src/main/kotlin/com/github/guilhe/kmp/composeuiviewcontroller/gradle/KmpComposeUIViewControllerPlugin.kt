@@ -222,7 +222,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     internal companion object {
-        private const val VERSION_LIBRARY = "2.2.10-1.9.0-beta03"
+        private const val VERSION_LIBRARY = "2.2.20-RC-1.9.0-beta03"
         private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
         internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
         internal const val PLUGIN_KSP = "com.google.devtools.ksp"
