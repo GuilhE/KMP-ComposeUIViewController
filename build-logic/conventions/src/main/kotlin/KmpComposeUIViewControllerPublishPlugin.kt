@@ -1,5 +1,6 @@
+@file:Suppress("unused")
+
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SonatypeHost
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -39,7 +40,7 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
 
         project.plugins.apply("com.vanniktech.maven.publish")
         project.extensions.getByType(MavenPublishBaseExtension::class.java).apply {
-            publishToMavenCentral(host = SonatypeHost.CENTRAL_PORTAL, automaticRelease = false)
+            publishToMavenCentral(automaticRelease = false)
             signAllPublications()
             pom {
                 name.set(LIB_NAME)
