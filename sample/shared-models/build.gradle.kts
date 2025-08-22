@@ -11,11 +11,6 @@ plugins {
 kotlin {
     iosArm64()
     iosSimulatorArm64()
-    @OptIn(ExperimentalSwiftExportDsl::class)
-    swiftExport {
-        moduleName = "Models"
-        flattenPackage = "com.sample.shared.models"
-    }
     sourceSets {
         commonMain.dependencies {
             implementation(compose.ui)

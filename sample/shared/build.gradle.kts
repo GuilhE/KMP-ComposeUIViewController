@@ -11,6 +11,7 @@ plugins {
 ComposeUiViewController {
     iosAppName = "Gradient"
     targetName = "Gradient"
+    swiftExport = true
 }
 
 kotlin {
