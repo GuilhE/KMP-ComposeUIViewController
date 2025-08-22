@@ -10,6 +10,8 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
  * @property exportFolderName Name of the destination folder inside iOS project ([iosAppFolderName]) where the Composable files will be copied to when [autoExport] is `true`
  * @property autoExport Enables auto export generated files to Xcode project. If set to false, you will find the generated files under /build/generated/ksp/. Warning: avoid deleting [iosAppFolderName]/[exportFolderName] without first using Xcode to Remove references
  * @property swiftExport Enables experimental feature enable Swift export instead of Objective-C export.
+ * @property moduleName When swiftExport is enabled moduleName must be set for modules that do not configure it in their own swiftExport block.
+ * ```
  */
 public open class ComposeUiViewControllerParameters {
     /**
@@ -41,4 +43,10 @@ public open class ComposeUiViewControllerParameters {
      *  Enables experimental feature of Swift Export.
      */
     public var swiftExport: Boolean = false
+
+    /**
+     *  When swiftExport is enabled [moduleName] must be set for modules that do not configure it in their own `swiftExport` block.
+     *  NOTE: it has to match the `moduleName` set in the `swiftExport` block of the module that is exporting it.
+     */
+    public var moduleName: String? = null
 }

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension
 import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
@@ -52,7 +53,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     writeModuleMetadataToDisk(
                         args = buildFrameworkPackages(
                             retrieveModulePackagesFromCommonMain(),
-                            retrieveFrameworkBaseNamesFromIosTargets()
+                            retrieveFrameworkBaseNamesFromIosTargets(this)
                         ),
                         extensionParameters = this
                     )
@@ -90,15 +91,20 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.retrieveFrameworkBaseNamesFromIosTargets(): Set<String> {
+    private fun Project.retrieveFrameworkBaseNamesFromIosTargets(extensionParameters: ComposeUiViewControllerParameters): Set<String> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val frameworkNames = mutableSetOf<String>()
-        kmp.targets.configureEach { target ->
-            if (target.fromIosFamily()) {
-                (target as KotlinNativeTarget).binaries.withType(Framework::class.java).configureEach { framework ->
-                    frameworkNames += framework.baseName
+        if (!extensionParameters.swiftExport) {
+            kmp.targets.configureEach { target ->
+                if (target.fromIosFamily()) {
+                    (target as KotlinNativeTarget).binaries.withType(Framework::class.java).configureEach { framework ->
+                        frameworkNames += framework.baseName
+                    }
                 }
             }
+        } else {
+            val swiftExport = kmp.extensions.getByType(SwiftExportExtension::class.java)
+            frameworkNames += swiftExport.moduleName.orNull ?: extensionParameters.moduleName ?: "[no-module-name]"
         }
         return frameworkNames
     }
@@ -140,7 +146,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
         val moduleMetadata = try {
             Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             mutableSetOf()
         }
         args.forEach { (key, value) ->

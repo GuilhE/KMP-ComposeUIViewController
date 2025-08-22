@@ -64,7 +64,8 @@ internal class Processor(
                     } else {
                         emptyMap()
                     }
-                    val frameworkBaseNames = if(swiftExportEnabled) {
+
+                    val frameworkBaseNames = if (swiftExportEnabled) {
                         getFrameworkBaseNames(composable, node, makeParameters, parameters)
                     } else {
                         listOf(trimFrameworkBaseNames(node, modulesMetadata, packageName))
@@ -134,14 +135,9 @@ internal class Processor(
     }
 
     private fun trimFrameworkBaseNames(node: KSAnnotated, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
-        if (moduleMetadata.isEmpty()) {
-            val framework = getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException()
-            return framework
-        } else {
-            val framework = moduleMetadata.firstOrNull { it.packageNames.any { p -> p.startsWith(packageName) } }?.frameworkBaseName ?: ""
-            framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
-            return framework
-        }
+        val framework = moduleMetadata.firstOrNull { it.packageNames.any { p -> p.startsWith(packageName) } }?.frameworkBaseName ?: ""
+        framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
+        return framework
     }
 
     private fun getFrameworkBaseNames(

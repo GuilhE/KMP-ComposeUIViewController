@@ -666,7 +666,7 @@ class ProcessorTest {
             import androidx.compose.runtime.Composable
             import com.mycomposable.data.Data
             
-            @ComposeUIViewController("ComposablesFramework")
+            @ComposeUIViewController
             @Composable
             fun Screen(data: Data) { }
         """.trimIndent()
@@ -721,7 +721,7 @@ class ProcessorTest {
             import androidx.compose.runtime.Composable
             import com.mycomposable.data.Data
             
-            @ComposeUIViewController("ComposablesFramework")
+            @ComposeUIViewController
             @Composable
             fun Screen(data: Data) { }
         """.trimIndent()
