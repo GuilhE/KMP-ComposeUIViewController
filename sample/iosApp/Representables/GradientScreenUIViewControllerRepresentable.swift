@@ -1,8 +1,9 @@
 import SwiftUI
+import Models
 import Composables
 
 public struct GradientScreenRepresentable: UIViewControllerRepresentable {
-    @Binding var state: ScreenState
+    @Binding var state: ScreenStateExternal
     let randomize: (KotlinLong) -> Void
 
     public func makeUIViewController(context: Context) -> UIViewController {

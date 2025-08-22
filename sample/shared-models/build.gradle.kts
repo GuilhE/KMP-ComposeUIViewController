@@ -1,11 +1,14 @@
-import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-
 plugins {
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.kotlin.compose)
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
+}
+
+ComposeUiViewController {
+    swiftExport = true
+    moduleName = "Models"
 }
 
 kotlin {

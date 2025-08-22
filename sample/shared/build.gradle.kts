@@ -21,11 +21,11 @@ kotlin {
     @OptIn(ExperimentalSwiftExportDsl::class)
     swiftExport {
         moduleName = "Composables"
-        flattenPackage = "com.sample.shared.composables"
+        flattenPackage = "com.sample.composables"
 
         export(projects.sharedModels) {
             moduleName = "Models"
-            flattenPackage = "com.sample.shared.models"
+            flattenPackage = "com.sample.models"
         }
     }
 

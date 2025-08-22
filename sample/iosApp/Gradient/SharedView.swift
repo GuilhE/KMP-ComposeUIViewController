@@ -1,8 +1,9 @@
-import SwiftUI
 import Composables
+import Models
+import SwiftUI
 
 struct SharedView: View {
-    @State private var screenState: ScreenState = ScreenState (
+    @State private var screenState: ScreenStateExternal = ScreenStateExternal (
         startColor: convertUIColorToKotlinLong(UIColor.red),
         endColor: convertUIColorToKotlinLong(UIColor.blue)
     )
