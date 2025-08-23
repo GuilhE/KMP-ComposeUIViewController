@@ -7,11 +7,11 @@ plugins {
 }
 
 ComposeUiViewController {
-    swiftExport = true
     moduleName = "Models"
 }
 
 kotlin {
+    jvm()
     iosArm64()
     iosSimulatorArm64()
     sourceSets {
