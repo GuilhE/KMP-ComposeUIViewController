@@ -168,7 +168,7 @@ After a successful build the `UIViewControllerRepresentable` files are included 
 
 ```swift
 import SwiftUI
-import SharedUI
+import Shared
 
 struct SomeView: View {
     @State private var state: ViewState = ViewState(isLoading: false)
