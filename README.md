@@ -100,7 +100,7 @@ object ComposeSimpleViewUIViewController {
 and also a `ComposeSimpleViewRepresentable`:
 ```swift
 import SwiftUI
-import SharedUI
+import Shared
 
 public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
 
@@ -145,7 +145,7 @@ object ComposeAdvancedViewUIViewController {
 and also a `ComposeAdvancedViewRepresentable`:
 ```swift
 import SwiftUI
-import SharedUI
+import Shared
 
 public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
     @Binding var viewState: ViewState
