@@ -169,7 +169,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     name = name,
                     packageNames = value,
                     frameworkBaseName = key,
-                    swiftExport = true
+                    swiftExport = isSwiftExportModuleNameConfigured()
                 )
             )
         }
