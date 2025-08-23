@@ -28,7 +28,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Installation
 
-By using the Gradle plugin all configurations will be applied automatically. If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+By using the Gradle plugin all configurations will be applied automatically.
 
 ```kotlin
 plugins {
@@ -42,6 +42,19 @@ ComposeUiViewController {
     targetName = "Gradient"
 }
 ```
+
+<details><summary>Parameters available</summary>
+
+- `iosAppFolderName` name of the folder containing the iosApp in the root's project tree
+- `iosAppName` name of the iOS project (name.xcodeproj)
+- `targetName` name of the iOS project's target
+- `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the Composable files will be copied to when `autoExport` is `true`
+- `autoExport` enables auto export generated files to Xcode project. If set to false, you will find the generated files under /build/generated/ksp/.
+- `moduleName` when swiftExport is enabled `moduleName` must be set for modules that do not configure it in their own swiftExport block.
+
+If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+
+</details>
 
 ## Code generation
 
