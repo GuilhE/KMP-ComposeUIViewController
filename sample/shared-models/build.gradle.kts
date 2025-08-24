@@ -6,12 +6,7 @@ plugins {
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
 }
 
-ComposeUiViewController {
-    moduleName = "Models"
-}
-
 kotlin {
-    jvm()
     iosArm64()
     iosSimulatorArm64()
     sourceSets {

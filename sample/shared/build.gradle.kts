@@ -20,11 +20,8 @@ kotlin {
     @OptIn(ExperimentalSwiftExportDsl::class)
     swiftExport {
         moduleName = "Composables"
-        flattenPackage = "com.sample.composables"
-
         export(projects.sharedModels) {
             moduleName = "Models"
-            flattenPackage = "com.sample.models"
         }
     }
 
@@ -34,7 +31,6 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
-//            api(projects.sharedModels)
         }
         jvmMain.dependencies { implementation(compose.preview) }
         iosMain.dependencies { api(projects.sharedModels)}

@@ -11,7 +11,6 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_MODULE_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_EXTENSION
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_FRAMEWORK
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_SWIFT_EXPORT
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_PACKAGES
@@ -432,12 +431,8 @@ class PluginTest {
                 kotlin {
                     iosSimulatorArm64()
                     swiftExport {
-                        moduleName = "DefaultModule"
+                        moduleName = "CustomModuleName"
                     }
-                }
-
-                ComposeUiViewController {
-                    moduleName = "CustomModuleName"
                 }
                 """.trimIndent()
         )
@@ -452,11 +447,11 @@ class PluginTest {
             .withPluginClasspath()
             .build()
 
-        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [DefaultModule]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [CustomModuleName]"))
     }
 
     @Test
-    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with extension moduleName`() {
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with exported moduleName`() {
         val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
         val classFile = File(folder, "File.kt")
         classFile.writeText(
@@ -480,8 +475,14 @@ class PluginTest {
                     iosSimulatorArm64()
                 }
 
-                ComposeUiViewController {
-                    moduleName = "CustomModuleName"
+                kotlin {
+                    iosSimulatorArm64()
+                    swiftExport {
+                        moduleName = "CustomModuleName"
+                        export(projects.testProject) {
+                            moduleName = "ExportedModuleName"
+                        }
+                    }
                 }
                 """.trimIndent()
         )
@@ -496,7 +497,8 @@ class PluginTest {
             .withPluginClasspath()
             .build()
 
-        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_EXTENSION [CustomModuleName]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [CustomModuleName]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [ExportedModuleName]"))
     }
 
     @Test
