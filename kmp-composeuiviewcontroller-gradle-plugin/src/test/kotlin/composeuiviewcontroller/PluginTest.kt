@@ -8,7 +8,13 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KSP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_MODULE_NAME
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_EXTENSION
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_FRAMEWORK
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_SWIFT_EXPORT
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_PACKAGES
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_ANNOTATIONS_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_GROUP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_KSP_NAME
@@ -21,11 +27,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
-import java.io.File
 import kotlinx.serialization.json.Json
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertTrue
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.internal.impldep.junit.framework.TestCase.assertNotNull
 import org.gradle.testfixtures.ProjectBuilder
@@ -34,7 +36,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
+import java.io.File
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class PluginTest {
 
@@ -102,6 +109,30 @@ class PluginTest {
     }
 
     @Test
+    fun `Method setupTargets only adds KSP dependencies to iOS targets`() {
+        val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
+        kotlin.apply {
+            jvm()
+            iosX64()
+            iosArm64()
+        }
+
+        kotlin.targets.forEach { target ->
+            if (target is KotlinNativeTarget && target.konanTarget.family == Family.IOS) {
+                val kspConfigName = "ksp${target.targetName.replaceFirstChar { it.uppercaseChar() }}"
+                val config = project.configurations.findByName(kspConfigName)
+                assertNotNull(config)
+                assertTrue(config!!.dependencies.any { it.group == LIB_GROUP && it.name == LIB_KSP_NAME })
+            }
+        }
+
+        val jvmKspConfig = project.configurations.findByName("kspJvm")
+        jvmKspConfig?.let { config ->
+            assertFalse(config.dependencies.any { it.group == LIB_GROUP && it.name == LIB_KSP_NAME })
+        }
+    }
+
+    @Test
     fun `Method setupTargets configures dependencies and targets correctly`() {
         val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.apply {
@@ -157,7 +188,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or embedSwiftExportForXcode or syncFramework with CopyFilesToXcode task`() {
+    fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or embedSwiftExportForXcode or syncFramework with copyFilesToXcode task`() {
         with(KmpComposeUIViewControllerPlugin.Companion) {
             val embedObjCTask = project.tasks.register(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE) {}
             val embedSwiftTask = project.tasks.register(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE) {}
@@ -169,7 +200,64 @@ class PluginTest {
     }
 
     @Test
-    fun `Task CopyFilesToXcode will inject the extension parameters into exportToXcode file`() {
+    fun `Method finalizeFrameworkTasks does not finalize when autoExport is false`() {
+        with(project) {
+            val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
+            kotlin.apply {
+                jvm()
+                iosSimulatorArm64()
+            }
+
+            val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+            val classFile = File(folder, "Test.kt")
+            classFile.writeText(
+                """
+                package com.test
+                class Test()
+                """.trimIndent()
+            )
+
+            val buildFile = File(projectDir, "build.gradle.kts")
+            buildFile.writeText(
+                """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+
+                kotlin {
+                    jvm()
+                    iosSimulatorArm64 {
+                        binaries.framework {
+                            baseName = "TestFramework"
+                        }
+                    }
+                }
+
+                ComposeUiViewController {
+                    autoExport = false
+                }
+                """.trimIndent()
+            )
+
+            val settingsFile = File(projectDir, "settings.gradle.kts")
+            settingsFile.writeText("rootProject.name = \"testProject\"")
+            assertTrue(settingsFile.exists())
+
+            val result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("help", "--stacktrace")
+                .build()
+
+            // When autoExport is false, the finalization message should not appear
+            assertFalse(result.output.contains("will be finalizedBy"))
+        }
+    }
+
+    @Test
+    fun `Task copyFilesToXcode will inject the extension parameters into exportToXcode file`() {
         val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
         val classFile = File(folder, "File.kt")
         classFile.writeText(
@@ -194,17 +282,14 @@ class PluginTest {
                 iosAppName = "iosApp"
                 targetName = "iosTarget"
                 exportFolderName = "Composables"
+                moduleName = "Test"
             }
         """.trimIndent()
         )
         assertTrue(buildFile.exists())
 
         val settingsFile = File(projectDir, "settings.gradle.kts")
-        settingsFile.writeText(
-            """
-            rootProject.name = "testProject"
-            """.trimIndent()
-        )
+        settingsFile.writeText("rootProject.name = \"testProject\"")
         assertTrue(settingsFile.exists())
 
         val result = GradleRunner.create()
@@ -225,6 +310,269 @@ class PluginTest {
         assertTrue(modifiedScriptContent.contains("$PARAM_APP_NAME=\"iosApp\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_TARGET=\"iosTarget\""))
         assertTrue(modifiedScriptContent.contains("$PARAM_GROUP=\"Composables\""))
+    }
+
+    @Test
+    fun `Task cleanTempFilesFolder is registered and configured correctly`() {
+        with(KmpComposeUIViewControllerPlugin.Companion) {
+            assertTrue(project.tasks.names.contains(TASK_CLEAN_TEMP_FILES_FOLDER))
+
+            val cleanTask = project.tasks.getByName("clean")
+            val cleanTempTask = project.tasks.getByName(TASK_CLEAN_TEMP_FILES_FOLDER)
+
+            assertTrue(cleanTask.finalizedBy.getDependencies(cleanTempTask).isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets throws exception when no framework names found`() {
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+                """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .buildAndFail()
+
+        assertTrue(result.output.contains(ERROR_MISSING_MODULE_NAME))
+    }
+
+    @Test
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles Obj-C export`() {
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+
+                kotlin {
+                    iosSimulatorArm64 {
+                        binaries.framework {
+                            baseName = "DefaultFramework"
+                        }
+                    }
+                }
+
+                ComposeUiViewController {
+                    moduleName = "CustomModuleName"
+                }
+                """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_FRAMEWORK [DefaultFramework]"))
+    }
+
+    @Test
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with moduleName`() {
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+
+                kotlin {
+                    iosSimulatorArm64()
+                    swiftExport {
+                        moduleName = "DefaultModule"
+                    }
+                }
+
+                ComposeUiViewController {
+                    moduleName = "CustomModuleName"
+                }
+                """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [DefaultModule]"))
+    }
+
+    @Test
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with extension moduleName`() {
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+
+                kotlin {
+                    iosSimulatorArm64()
+                }
+
+                ComposeUiViewController {
+                    moduleName = "CustomModuleName"
+                }
+                """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_EXTENSION [CustomModuleName]"))
+    }
+
+    @Test
+    fun `Method retrieveModulePackagesFromCommonMain throws exception when package not found`() {
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+                
+                kotlin {
+                    iosSimulatorArm64()
+                    swiftExport {
+                        moduleName = "DefaultModule"
+                    }
+                }
+                """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .buildAndFail()
+
+        assertTrue(result.output.contains(ERROR_MISSING_PACKAGE))
+    }
+
+    @Test
+    fun `Method retrieveModulePackagesFromCommonMain successfuly retrieves package information`() {
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+                
+                kotlin {
+                    iosSimulatorArm64()
+                    swiftExport {
+                        moduleName = "DefaultModule"
+                    }
+                }
+                """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .build()
+
+        assertTrue(result.output.contains("$INFO_MODULE_PACKAGES [com.test]"))
     }
 
     private companion object {

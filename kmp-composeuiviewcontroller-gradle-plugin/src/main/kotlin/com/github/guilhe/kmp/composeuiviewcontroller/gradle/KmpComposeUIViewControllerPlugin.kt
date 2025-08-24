@@ -30,7 +30,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
     private fun ComposeUiViewControllerParameters.toList() =
-        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
+        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName, moduleName)
 
     override fun apply(project: Project) {
         with(project) {
@@ -97,10 +97,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         if (isSwiftExportModuleNameConfigured()) {
             val swiftExport = kmp.extensions.getByType(SwiftExportExtension::class.java)
             frameworkNames += swiftExport.moduleName.orNull ?: ""
-            println("\t> SwiftExport is configured, will use its moduleName as frameworkBaseName: $frameworkNames")
-        } else if (extensionParameters.moduleName != null) {
-            frameworkNames += extensionParameters.moduleName ?: ""
-            println("\t> Extension Parameter moduleName is configured, will it as frameworkBaseName: $frameworkNames")
+            println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT $frameworkNames")
         } else {
             kmp.targets.configureEach { target ->
                 if (target.fromIosFamily()) {
@@ -109,9 +106,18 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     }
                 }
             }
-            println("\t> SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName: $frameworkNames")
+            if (frameworkNames.isEmpty()) {
+                extensionParameters.moduleName?.let {
+                    if (it.isNotBlank()) {
+                        frameworkNames += it
+                        println("\t> $INFO_MODULE_NAME_BY_EXTENSION $frameworkNames")
+                    }
+                }
+            } else {
+                println("\t> $INFO_MODULE_NAME_BY_FRAMEWORK $frameworkNames")
+            }
         }
-        return frameworkNames.ifEmpty { throw GradleException("Cloud not determine framework's module name") }
+        return frameworkNames.ifEmpty { throw GradleException(ERROR_MISSING_MODULE_NAME) }
     }
 
     private fun Project.retrieveModulePackagesFromCommonMain(): Set<String> {
@@ -129,7 +135,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 }
             }
         }
-        return packages.ifEmpty { throw GradleException("Cloud not determine project's package") }
+        println("\t> $INFO_MODULE_PACKAGES $packages")
+        return packages.ifEmpty { throw GradleException(ERROR_MISSING_PACKAGE) }
     }
 
     private fun Project.isSwiftExportModuleNameConfigured(): Boolean {
@@ -270,5 +277,13 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val PARAM_GROUP = "group_name"
         internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
         internal const val ERROR_MISSING_KSP = "$LOG_TAG requires the KSP plugin to be applied."
+        internal const val INFO_MODULE_PACKAGES = "Module packages fond:"
+        internal const val ERROR_MISSING_PACKAGE = "Cloud not determine project's package"
+        internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName as frameworkBaseName:"
+        internal const val INFO_MODULE_NAME_BY_EXTENSION = "Extension Parameter moduleName is configured, will use it as frameworkBaseName:"
+        internal const val INFO_MODULE_NAME_BY_FRAMEWORK =
+            "SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName:"
+        internal const val ERROR_MISSING_MODULE_NAME = "Cloud not determine framework's module name"
+
     }
 }
