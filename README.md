@@ -28,7 +28,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Installation
 
-By using the Gradle plugin all configurations will be applied automatically.
+Configure the `plugins` block with the following three plugins. Once added, you can use the `ComposeUiViewController` block to set up the plugin’s configuration.
 
 ```kotlin
 plugins {
@@ -43,14 +43,17 @@ ComposeUiViewController {
 }
 ```
 
+With this setup, all necessary configurations are automatically applied.  
+You only need to adjust the ComposeUiViewController block to match your project settings (e.g. `iosAppName` and `targetName`).
+
 <details><summary>Parameters available</summary>
 
-- `iosAppFolderName` name of the folder containing the iosApp in the root's project tree
-- `iosAppName` name of the iOS project (name.xcodeproj)
-- `targetName` name of the iOS project's target
-- `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the Composable files will be copied to when `autoExport` is `true`
-- `autoExport` enables auto export generated files to Xcode project. If set to false, you will find the generated files under /build/generated/ksp/.
-- `moduleName` when swiftExport is enabled `moduleName` must be set for modules that do not configure it in their own swiftExport block.
+- `iosAppFolderName` name of the folder containing the iosApp in the root's project tree;
+- `iosAppName` name of the iOS project (`name.xcodeproj`);
+- `targetName` name of the iOS project's target;
+- `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the Composable files will be copied to when `autoExport` is `true`;
+- `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
+- `moduleName` if `swiftExport` is enabled, you need to define `moduleName` for any module that doesn’t specify it in its own swiftExport block.
 
 If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
 
@@ -72,9 +75,7 @@ To annotate the parameter as the composable state variable (for **advanced** use
 >  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
 > [!TIP]
-> The `@ComposeUIViewController` includes a `frameworkBaseName` parameter, allowing you to specify a framework name manually. While the plugin typically attempts to retrieve this name automatically, you can use this parameter to enforce a specific name <ins>if the automatic retrieval fails</ins>.
->
-> For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
+> The `@ComposeUIViewController` has a `frameworkBaseName` parameter to manually set the framework name. This parameter will only be used <ins>if detection fails within the Processor</ins>.
 
 #### Examples
 
@@ -184,7 +185,7 @@ struct SomeView: View {
 > Avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
 
 ## Sample
-For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
 
 ```bash
 > Task :shared:kspKotlinIosSimulatorArm64
@@ -193,7 +194,7 @@ note: [ksp] GradientScreenUIViewController created!
 note: [ksp] GradientScreenRepresentable created!
 
 > Task :CopyFilesToXcode
-> Copying files to iosApp/SharedRepresentables/
+> Copying files to iosApp/Representables/
 > Checking for new references to be added to xcodeproj
 > GradientScreenUIViewControllerRepresentable.swift added!
 > Done
