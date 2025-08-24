@@ -30,7 +30,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
     private fun ComposeUiViewControllerParameters.toList() =
-        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName, moduleName)
+        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
     override fun apply(project: Project) {
         with(project) {
@@ -277,7 +277,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val PARAM_GROUP = "group_name"
         internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
         internal const val ERROR_MISSING_KSP = "$LOG_TAG requires the KSP plugin to be applied."
-        internal const val INFO_MODULE_PACKAGES = "Module packages fond:"
+        internal const val INFO_MODULE_PACKAGES = "Module packages found:"
         internal const val ERROR_MISSING_PACKAGE = "Cloud not determine project's package"
         internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName as frameworkBaseName:"
         internal const val INFO_MODULE_NAME_BY_EXTENSION = "Extension Parameter moduleName is configured, will use it as frameworkBaseName:"
