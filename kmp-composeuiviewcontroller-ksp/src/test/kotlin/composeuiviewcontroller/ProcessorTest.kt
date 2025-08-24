@@ -646,6 +646,63 @@ class ProcessorTest {
     }
 
     @Test
+    fun `Processor handles generic types in parameters`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import androidx.compose.runtime.Composable
+            
+            data class GenericData<T>(val value: T)
+            
+            @ComposeUIViewController("ComposablesFramework")
+            @Composable
+            fun Screen(data: GenericData<Int>) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.toList().isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "GenericData<KotlinInt>")
+    }
+
+    @Test
+    fun `Processor handles complex nested generics correctly`() {
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import androidx.compose.runtime.Composable
+            
+            @ComposeUIViewController("ComposablesFramework")
+            @Composable
+            fun Screen(
+                callback: (Map<String, List<Map<String, Int>>>) -> List<Map<String, String>>
+            ) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.toList().isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "Dictionary<String, Array<Dictionary<String, KotlinInt>>>")
+        assertContains(swiftContent, "Array<Dictionary<String, String>>")
+    }
+
+    @Test
     fun `Types imported from different KMP modules will not produce Swift files by default`() {
         tempArgs.writeText(
             """
