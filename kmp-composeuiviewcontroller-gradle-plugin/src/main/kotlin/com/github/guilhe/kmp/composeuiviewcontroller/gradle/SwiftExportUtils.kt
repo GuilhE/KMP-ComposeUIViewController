@@ -21,14 +21,12 @@ internal object SwiftExportUtils {
         return try {
             println("\t> Looking for SwiftExport config that references project: ${this.name}")
 
-            // First, try to find SwiftExport in root project
             val rootSwiftExportModuleName = rootProject.findSwiftExportModuleNameForProject(this)
             if (rootSwiftExportModuleName != null) {
                 println("\t> Found SwiftExport module name in root project: $rootSwiftExportModuleName")
                 return rootSwiftExportModuleName
             }
 
-            // Then try parent projects
             var currentProject = this.parent
             while (currentProject != null) {
                 val parentSwiftExportModuleName = currentProject.findSwiftExportModuleNameForProject(this)
@@ -39,7 +37,6 @@ internal object SwiftExportUtils {
                 currentProject = currentProject.parent
             }
 
-            // Try all projects in the build
             rootProject.allprojects.forEach { project ->
                 if (project != this) {
                     val projectSwiftExportModuleName = project.findSwiftExportModuleNameForProject(this)
@@ -70,26 +67,19 @@ internal object SwiftExportUtils {
 
             val buildContent = buildFile.readText()
 
-            // Look for patterns like: export(projects.sharedModels) { moduleName = "Models" }
-            val exportPattern = Regex("""export\s*\(\s*projects\.(\w+)\s*\)\s*\{\s*moduleName\s*=\s*["']([^"']+)["']\s*\}""")
+            // export(projects.sharedModels) { moduleName = "Models" }
+            // export(":shared-models") { moduleName = "Models" }
+            val exportPattern = Regex("""export\s*\(\s*(?:projects\.(\w+)|["']?:?([^"':)]+)["']?)\s*\)\s*\{\s*moduleName\s*=\s*["']([^"']+)["']\s*\}""")
             val matches = exportPattern.findAll(buildContent)
 
             for (match in matches) {
-                val projectName = match.groupValues[1]
-                val moduleName = match.groupValues[2]
+                val projectNameWithAccessors = match.groupValues[1] // projects.sharedModels
+                val projectNameDirect = match.groupValues[2] // shared-models (with or without :)
+                val moduleName = match.groupValues[3] // Models
 
-                if (isProjectNameMatch(projectName, targetProject.name)) {
-                    return moduleName
+                val projectName = projectNameWithAccessors.ifEmpty {
+                    projectNameDirect.removePrefix(":")
                 }
-            }
-
-            // Also try simpler patterns without "projects."
-            val simpleExportPattern = Regex("""export\s*\(\s*:?(\w+)\s*\)\s*\{\s*moduleName\s*=\s*["']([^"']+)["']\s*\}""")
-            val simpleMatches = simpleExportPattern.findAll(buildContent)
-
-            for (match in simpleMatches) {
-                val projectName = match.groupValues[1]
-                val moduleName = match.groupValues[2]
 
                 if (isProjectNameMatch(projectName, targetProject.name)) {
                     return moduleName
