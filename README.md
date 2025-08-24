@@ -74,9 +74,6 @@ To annotate the parameter as the composable state variable (for **advanced** use
 > [!IMPORTANT]
 >  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
 
-> [!TIP]
-> The `@ComposeUIViewController` has a `frameworkBaseName` parameter to manually set the framework name. This parameter will only be used <ins>if detection fails within the Processor</ins>.
-
 #### Examples
 
 <details><summary>Simple</summary>
@@ -163,6 +160,9 @@ public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
 ```
 </details>
 
+> [!TIP]
+> The `@ComposeUIViewController` has a `frameworkBaseName` parameter to manually set the framework name. This parameter will only be used <ins>if detection fails within the Processor</ins>.
+
 ### iOSApp
 
 After a successful build the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj` ready to be used:
@@ -191,7 +191,7 @@ For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run
 > Task :shared:kspKotlinIosSimulatorArm64
 note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
 note: [ksp] GradientScreenUIViewController created!
-note: [ksp] GradientScreenRepresentable created!
+note: [ksp] GradientScreenUIViewControllerRepresentable created!
 
 > Task :CopyFilesToXcode
 > Copying files to iosApp/Representables/
