@@ -53,7 +53,6 @@ You only need to adjust the ComposeUiViewController block to match your project 
 - `targetName` name of the iOS project's target;
 - `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the Composable files will be copied to when `autoExport` is `true`;
 - `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
-- `moduleName` if `swiftExport` is enabled, you need to define `moduleName` for any module that doesn’t specify it in its own swiftExport block.
 
 If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
 

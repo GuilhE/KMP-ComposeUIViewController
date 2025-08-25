@@ -299,7 +299,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val ERROR_MISSING_PACKAGE = "Cloud not determine project's package"
         internal const val INFO_MODULE_NAME_BY_FRAMEWORK =
             "SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName:"
-        internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName as frameworkBaseName:"
+        internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName:"
         internal const val INFO_MODULE_NAME_BY_PROJECT = "No configurations found for moduleName. Fallback to project module name:"
         internal const val ERROR_MISSING_MODULE_NAME = "Cloud not determine framework's module name"
 
