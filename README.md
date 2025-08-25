@@ -2,8 +2,7 @@
 
 # KMP-ComposeUIViewController
 
-KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose 
-Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
+KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIViewControllerRepresentable` files when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
 | Version                                                                                                                                                                                                                     |  Kotlin   |  KSP  | Compose Multiplatform | Xcode  |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------:|:-----:|:---------------------:|:------:|
@@ -52,7 +51,7 @@ project settings (e.g. `iosAppName` and `targetName`). If you wish to change the
 - `iosAppFolderName` name of the folder containing the iosApp in the root's project tree;
 - `iosAppName` name of the iOS project (`name.xcodeproj`);
 - `targetName` name of the iOS project's target;
-- `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the Composable files will be copied to when `autoExport` is `true`;
+- `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the `UIViewControllerRepresentable` files will be copied to when `autoExport` is `true`;
 - `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
 
 [Default values](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
