@@ -399,7 +399,7 @@ class PluginTest {
         assertTrue(buildFile.exists())
 
         val settingsFile = File(projectDir, "settings.gradle.kts")
-        settingsFile.writeText("rootProject.name = \"testProject\"")
+        settingsFile.writeText("rootProject.name = \"testProject\"\n")
         assertTrue(settingsFile.exists())
 
         val result = GradleRunner.create()

@@ -52,11 +52,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 configureTaskToRegisterCopyFilesToXcode(project, this)
                 configureTaskToFinalizeByCopyFilesToXcode(this)
                 afterEvaluate {
+                    val packageNames = retrieveModulePackagesFromCommonMain()
+                    val (frameworkNames, swiftExport) = retrieveFrameworkBaseNamesFromIosTargets()
                     writeModuleMetadataToDisk(
-                        args = buildFrameworkPackages(
-                            retrieveModulePackagesFromCommonMain(),
-                            retrieveFrameworkBaseNamesFromIosTargets(this)
-                        )
+                        swiftExportEnabled = swiftExport,
+                        args = buildFrameworkPackages(packageNames, frameworkNames)
                     )
                 }
             }
@@ -92,7 +92,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.retrieveFrameworkBaseNamesFromIosTargets(extensionParameters: ComposeUiViewControllerParameters): Set<String> {
+    private fun Project.retrieveFrameworkBaseNamesFromIosTargets(): Pair<Set<String>, Boolean> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
 
         // Priority 1: Framework baseName
@@ -106,29 +106,27 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
         if (frameworkNames.isNotEmpty()) {
             println("\t> $INFO_MODULE_NAME_BY_FRAMEWORK $frameworkNames")
-            return frameworkNames
+            return Pair(frameworkNames, false)
         }
 
-        // Priority 2: SwiftExport moduleName
-        if (isSwiftExportModuleNameConfigured()) {
-            val swiftExport = kmp.extensions.getByType(SwiftExportExtension::class.java)
-            val moduleName = swiftExport.moduleName.orNull
-            if (!moduleName.isNullOrBlank()) {
-                println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
-                return setOf(moduleName)
-            }
+        // Priority 2: SwiftExport root moduleName
+        val swiftExport = kmp.extensions.getByType(SwiftExportExtension::class.java)
+        val moduleName = swiftExport.moduleName.orNull
+        if (!moduleName.isNullOrBlank()) {
+            println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
+            return Pair(setOf(moduleName), true)
         }
 
-        // Priority 3: SwiftExport exported moduleName
+        // Priority 3: SwiftExport exported child moduleName
         getSwiftExportModuleNameForProject()?.let { moduleName ->
             println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
-            return setOf(moduleName)
+            return Pair(setOf(moduleName), true)
         }
 
         // Priority 4: Project name (fallback)
         val projectModuleName = name.toPascalCase()
         println("\t> $INFO_MODULE_NAME_BY_PROJECT [$projectModuleName]")
-        return setOf(projectModuleName)
+        return Pair(setOf(projectModuleName), true)
     }
 
     private fun Project.retrieveModulePackagesFromCommonMain(): Set<String> {
@@ -150,15 +148,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return packages.ifEmpty { throw GradleException(ERROR_MISSING_PACKAGE) }
     }
 
-    private fun Project.isSwiftExportModuleNameConfigured(): Boolean {
-        val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
-        return try {
-            kmp.extensions.getByType(SwiftExportExtension::class.java).moduleName.orNull != null
-        } catch (_: UnknownDomainObjectException) {
-            false
-        }
-    }
-
     private fun Project.buildFrameworkPackages(packageNames: Set<String>, frameworkNames: Set<String>): Map<String, Set<String>> {
         packageNames.ifEmpty { return emptyMap() }
         frameworkNames.ifEmpty { return emptyMap() }
@@ -174,7 +163,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return map
     }
 
-    private fun Project.writeModuleMetadataToDisk(args: Map<String, Set<String>>) {
+    private fun Project.writeModuleMetadataToDisk(swiftExportEnabled: Boolean, args: Map<String, Set<String>>) {
         val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
         val moduleMetadata = try {
             Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
@@ -187,7 +176,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     name = name,
                     packageNames = value,
                     frameworkBaseName = key,
-                    swiftExport = isSwiftExportModuleNameConfigured()
+                    swiftExport = swiftExportEnabled
                 )
             )
         }
