@@ -43,8 +43,8 @@ ComposeUiViewController {
 }
 ```
 
-With this setup, all necessary configurations are automatically applied.  
-You only need to adjust the ComposeUiViewController block to match your project settings (e.g. `iosAppName` and `targetName`).
+With this setup, all necessary configurations are automatically applied. You only need to adjust the `ComposeUiViewController` block to match your 
+project settings (e.g. `iosAppName` and `targetName`). If you wish to change the default values, you can configure its parameters:
 
 <details><summary>Parameters available</summary>
 
@@ -54,7 +54,8 @@ You only need to adjust the ComposeUiViewController block to match your project 
 - `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the Composable files will be copied to when `autoExport` is `true`;
 - `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
 
-If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+[Default values](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle
+/ComposeUiViewControllerParameters.kt).
 
 </details>
 
