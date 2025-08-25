@@ -8,7 +8,6 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KSP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_MODULE_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_FRAMEWORK
@@ -106,6 +105,38 @@ class PluginTest {
             .buildAndFail()
 
         assertTrue(result.output.contains(ERROR_MISSING_KMP))
+    }
+
+    @Test
+    fun `Plugin build failure will clear temp files`() {
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+                
+                kotlin {
+                    iosSimulatorArm64()
+                }
+                """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .buildAndFail()
+        assertTrue(result.output.contains(ERROR_MISSING_PACKAGE))
+
+        val tempFolder = File("$projectDir/build/$TEMP_FILES_FOLDER")
+        assertFalse(tempFolder.exists())
     }
 
     @Test
@@ -253,73 +284,6 @@ class PluginTest {
 
             // When autoExport is false, the finalization message should not appear
             assertFalse(result.output.contains("will be finalizedBy"))
-        }
-    }
-
-    @Test
-    fun `Task copyFilesToXcode will inject the extension parameters into exportToXcode file`() {
-        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
-        val classFile = File(folder, "File.kt")
-        classFile.writeText(
-            """
-            package com.test
-            class Test()
-            """.trimIndent()
-        )
-        assertTrue(classFile.exists())
-
-        val buildFile = File(projectDir, "build.gradle.kts")
-        buildFile.writeText(
-            """
-            plugins {
-                id("$PLUGIN_KMP")
-                id("$PLUGIN_KSP")
-                id("$PLUGIN_ID")
-            }
-
-            ComposeUiViewController {
-                iosAppFolderName = "iosFolder"
-                iosAppName = "iosApp"
-                targetName = "iosTarget"
-                exportFolderName = "Composables"
-            }
-        """.trimIndent()
-        )
-        assertTrue(buildFile.exists())
-
-        val settingsFile = File(projectDir, "settings.gradle.kts")
-        settingsFile.writeText("rootProject.name = \"testProject\"")
-        assertTrue(settingsFile.exists())
-
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withPluginClasspath()
-            .withArguments(TASK_COPY_FILES_TO_XCODE, "-P$PARAM_KEEP_FILE=true", "--stacktrace")
-            .forwardOutput()
-            .build()
-
-        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
-
-        val script = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
-        assertTrue(script.exists())
-
-        val modifiedScriptContent = script.readText()
-        assertTrue(modifiedScriptContent.contains("$PARAM_KMP_MODULE=\"${projectDir.name}\""))
-        assertTrue(modifiedScriptContent.contains("$PARAM_FOLDER=\"iosFolder\""))
-        assertTrue(modifiedScriptContent.contains("$PARAM_APP_NAME=\"iosApp\""))
-        assertTrue(modifiedScriptContent.contains("$PARAM_TARGET=\"iosTarget\""))
-        assertTrue(modifiedScriptContent.contains("$PARAM_GROUP=\"Composables\""))
-    }
-
-    @Test
-    fun `Task cleanTempFilesFolder is registered and configured correctly`() {
-        with(KmpComposeUIViewControllerPlugin.Companion) {
-            assertTrue(project.tasks.names.contains(TASK_CLEAN_TEMP_FILES_FOLDER))
-
-            val cleanTask = project.tasks.getByName("clean")
-            val cleanTempTask = project.tasks.getByName(TASK_CLEAN_TEMP_FILES_FOLDER)
-
-            assertTrue(cleanTask.finalizedBy.getDependencies(cleanTempTask).isNotEmpty())
         }
     }
 
@@ -684,6 +648,118 @@ class PluginTest {
             .build()
 
         assertTrue(result.output.contains("$INFO_MODULE_PACKAGES [com.test]"))
+    }
+
+    @Test
+    fun `Task cleanTempFilesFolder is registered and configured correctly`() {
+        with(KmpComposeUIViewControllerPlugin.Companion) {
+            assertTrue(project.tasks.names.contains(TASK_CLEAN_TEMP_FILES_FOLDER))
+
+            val cleanTask = project.tasks.getByName("clean")
+            val cleanTempTask = project.tasks.getByName(TASK_CLEAN_TEMP_FILES_FOLDER)
+
+            assertTrue(cleanTask.finalizedBy.getDependencies(cleanTempTask).isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `Task copyFilesToXcode will inject the extension parameters into exportToXcode file`() {
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+
+            ComposeUiViewController {
+                iosAppFolderName = "iosFolder"
+                iosAppName = "iosApp"
+                targetName = "iosTarget"
+                exportFolderName = "Composables"
+            }
+        """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .withArguments(TASK_COPY_FILES_TO_XCODE, "-P$PARAM_KEEP_FILE=true", "--stacktrace")
+            .forwardOutput()
+            .build()
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+        val script = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
+        assertTrue(script.exists())
+
+        val modifiedScriptContent = script.readText()
+        assertTrue(modifiedScriptContent.contains("$PARAM_KMP_MODULE=\"${projectDir.name}\""))
+        assertTrue(modifiedScriptContent.contains("$PARAM_FOLDER=\"iosFolder\""))
+        assertTrue(modifiedScriptContent.contains("$PARAM_APP_NAME=\"iosApp\""))
+        assertTrue(modifiedScriptContent.contains("$PARAM_TARGET=\"iosTarget\""))
+        assertTrue(modifiedScriptContent.contains("$PARAM_GROUP=\"Composables\""))
+    }
+
+    @Test
+    fun `Task copyFilesToXcode will clear temp files after success`() {
+        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val classFile = File(folder, "File.kt")
+        classFile.writeText(
+            """
+            package com.test
+            class Test()
+            """.trimIndent()
+        )
+        assertTrue(classFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {}
+            }
+        """.trimIndent()
+        )
+        assertTrue(buildFile.exists())
+
+        val settingsFile = File(projectDir, "settings.gradle.kts")
+        settingsFile.writeText("rootProject.name = \"testProject\"")
+        assertTrue(settingsFile.exists())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .forwardOutput()
+            .build()
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+        val tempFile = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
+        assertFalse(tempFile.exists())
     }
 
     private companion object {

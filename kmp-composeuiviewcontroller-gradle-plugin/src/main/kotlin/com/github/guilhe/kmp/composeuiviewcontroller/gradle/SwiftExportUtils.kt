@@ -46,7 +46,6 @@ internal object SwiftExportUtils {
                     }
                 }
             }
-
             null
         } catch (e: Exception) {
             println("\t> Exception while searching for SwiftExport module name: ${e.message}")
@@ -62,32 +61,24 @@ internal object SwiftExportUtils {
             val kmp = extensions.findByType(KotlinMultiplatformExtension::class.java) ?: return null
             kmp.extensions.findByType(SwiftExportExtension::class.java) ?: return null
 
-            val buildFile = this.buildFile
             if (!buildFile.exists()) return null
-
-            val buildContent = buildFile.readText()
-
-            // export(projects.sharedModels) { moduleName = "Models" }
-            // export(":shared-models") { moduleName = "Models" }
-            val exportPattern = Regex("""export\s*\(\s*(?:projects\.(\w+)|["']?:?([^"':)]+)["']?)\s*\)\s*\{\s*moduleName\s*=\s*["']([^"']+)["']\s*\}""")
-            val matches = exportPattern.findAll(buildContent)
+            // ex: export(projects.sharedModels) { moduleName = "Models" }
+            // ex: export(":shared-models") { moduleName = "Models" }
+            val exportPattern =
+                Regex("""export\s*\(\s*(?:projects\.(\w+)|["']?:?([^"':)]+)["']?)\s*\)\s*\{\s*moduleName\s*=\s*["']([^"']+)["']\s*\}""")
+            val matches = exportPattern.findAll(buildFile.readText())
 
             for (match in matches) {
                 val projectNameWithAccessors = match.groupValues[1] // projects.sharedModels
                 val projectNameDirect = match.groupValues[2] // shared-models (with or without :)
                 val moduleName = match.groupValues[3] // Models
-
-                val projectName = projectNameWithAccessors.ifEmpty {
-                    projectNameDirect.removePrefix(":")
-                }
-
+                val projectName = projectNameWithAccessors.ifEmpty { projectNameDirect.removePrefix(":") }
                 if (isProjectNameMatch(projectName, targetProject.name)) {
                     return moduleName
                 }
             }
-
             null
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -102,9 +93,10 @@ internal object SwiftExportUtils {
         val camelToKebab = configProjectName.replace(Regex("([a-z])([A-Z])"), "$1-$2").lowercase()
         if (camelToKebab == targetProjectName.lowercase()) return true
 
-        val kebabToCamel = targetProjectName.split("-").joinToString("") { segment ->
-            segment.replaceFirstChar { it.uppercaseChar() }
-        }.replaceFirstChar { it.lowercaseChar() }
+        val kebabToCamel = targetProjectName
+            .split("-")
+            .joinToString("") { segment -> segment.replaceFirstChar { it.uppercaseChar() } }
+            .replaceFirstChar { it.lowercaseChar() }
         if (kebabToCamel == configProjectName) return true
 
         if (configProjectName.replace("-", "").lowercase() == targetProjectName.replace("-", "").lowercase()) return true

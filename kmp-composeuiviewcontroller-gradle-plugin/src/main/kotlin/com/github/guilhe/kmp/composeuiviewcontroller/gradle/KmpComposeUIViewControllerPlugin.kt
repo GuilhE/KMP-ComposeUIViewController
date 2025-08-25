@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.UnknownDomainObjectException
+import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.PluginInstantiationException
 import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -28,11 +28,6 @@ import java.io.File
  */
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
-    private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
-
-    private fun ComposeUiViewControllerParameters.toList() =
-        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
-
     override fun apply(project: Project) {
         with(project) {
             if (!plugins.hasPlugin(PLUGIN_KMP)) {
@@ -44,14 +39,14 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             }
 
             val tempFolder = File(rootProject.layout.buildDirectory.asFile.get().path, TEMP_FILES_FOLDER).apply { mkdirs() }
-            configureTaskToRegisterCleanTempFilesFolder(tempFolder)
+            configureCleanTempFilesLogic(tempFolder)
 
             println("> $LOG_TAG:")
             setupTargets()
             with(extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)) {
-                configureTaskToRegisterCopyFilesToXcode(project, this)
+                configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = this, tempFolder = tempFolder)
                 configureTaskToFinalizeByCopyFilesToXcode(this)
-                afterEvaluate {
+                project.afterEvaluate {
                     val packageNames = retrieveModulePackagesFromCommonMain()
                     val (frameworkNames, swiftExport) = retrieveFrameworkBaseNamesFromIosTargets()
                     writeModuleMetadataToDisk(
@@ -63,17 +58,27 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.configureTaskToRegisterCleanTempFilesFolder(tempFolder: File) {
-        tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) {
-            it.doLast {
-                if (tempFolder.exists()) {
-                    println("\n> $LOG_TAG:\n\t> Temp folder deleted: ${tempFolder.deleteRecursively()}")
-                } else {
-                    println("\n> $LOG_TAG:\n\t> Temp folder already deleted")
+    private fun Project.configureCleanTempFilesLogic(tempFolder: File) {
+        tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) { it.doLast { deleteTempFolder(tempFolder) } }
+        tasks.named("clean").configure { it.finalizedBy(TASK_CLEAN_TEMP_FILES_FOLDER) }
+        gradle.addBuildListener(object : org.gradle.BuildListener {
+            override fun settingsEvaluated(settings: org.gradle.api.initialization.Settings) {}
+            override fun projectsLoaded(gradle: Gradle) {}
+            override fun projectsEvaluated(gradle: Gradle) {}
+            override fun buildFinished(result: org.gradle.BuildResult) {
+                if (result.failure != null) {
+                    deleteTempFolder(tempFolder)
                 }
             }
+        })
+    }
+
+    private fun deleteTempFolder(folder: File) {
+        if (folder.exists()) {
+            println("\n> $LOG_TAG:\n\t> Temp folder deleted: ${folder.deleteRecursively()}")
+        } else {
+            println("\n> $LOG_TAG:\n\t> Temp folder already deleted")
         }
-        tasks.named("clean").configure { it.finalizedBy(TASK_CLEAN_TEMP_FILES_FOLDER) }
     }
 
     private fun Project.setupTargets() {
@@ -183,7 +188,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         file.writeText(Json.encodeToString(moduleMetadata))
     }
 
-    private fun Project.configureTaskToRegisterCopyFilesToXcode(project: Project, extensionParameters: ComposeUiViewControllerParameters) {
+    private fun Project.configureTaskToRegisterCopyFilesToXcode(
+        project: Project,
+        extensionParameters: ComposeUiViewControllerParameters,
+        tempFolder: File
+    ) {
         tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
             val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
             println("\t> parameters: ${extensionParameters.toList()}")
@@ -224,9 +233,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     try {
                         task.commandLine("bash", "-c", tempFile.absolutePath)
                         if (!keepScriptFile) {
-                            task.doLast {
-                                delete()
-                            }
+                            task.doLast { deleteTempFolder(tempFolder) }
                         }
                     } catch (e: Exception) {
                         println("\t> Error running script: ${e.message}")
@@ -257,6 +264,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 segment.replaceFirstChar { it.uppercaseChar() }
             }
     }
+
+    private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
+
+    private fun ComposeUiViewControllerParameters.toList() =
+        listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
     internal companion object {
         private const val VERSION_LIBRARY = "2.2.20-RC-1.9.0-beta03"
@@ -290,7 +302,5 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             "SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName:"
         internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName:"
         internal const val INFO_MODULE_NAME_BY_PROJECT = "No configurations found for moduleName. Fallback to project module name:"
-        internal const val ERROR_MISSING_MODULE_NAME = "Cloud not determine framework's module name"
-
     }
 }
