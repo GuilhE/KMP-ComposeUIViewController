@@ -2,4 +2,3 @@ import ExportedKotlinPackages
 
 typealias GradientScreenUIViewController = ExportedKotlinPackages.com.sample.shared.GradientScreenUIViewController
 typealias ScreenStateExternal = ExportedKotlinPackages.com.sample.models.ScreenStateExternal
-
