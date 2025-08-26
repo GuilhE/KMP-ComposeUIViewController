@@ -107,8 +107,7 @@ internal class Processor(
                         createSwiftFileWithTypeAlias(
                             composableName = composable.name(),
                             composablePackageName = packageName,
-                            stateParameter = stateParameter,
-                            externalParameters = externalModuleTypes,
+                            externalImports = externalImports
                         ).also {
                             logger.info("TypeAliasForExternalDependencies.swift file created!")
                         }
@@ -371,11 +370,11 @@ internal class Processor(
     private fun createSwiftFileWithTypeAlias(
         composableName: String,
         composablePackageName: String,
-        stateParameter: KSValueParameter?,
-        externalParameters: Map<String, String>,
+        externalImports: List<String>,
     ): String {
-        val code = "typealias ${composableName}UIViewController = ExportedKotlinPackages.${composablePackageName}.${composableName}UIViewController"
-//        "typealias $stateType = ExportedKotlinPackages.${composablePackageName}.${stateType}"
+        val code = "typealias ${composableName}UIViewController = ExportedKotlinPackages.${composablePackageName}" +
+                ".${composableName}UIViewController" + "\n" + externalImports
+            .joinToString("\n") { "typealias ${it.split(".").last()} = ExportedKotlinPackages.${it}" }
 
         codeGenerator
             .createNewFile(
