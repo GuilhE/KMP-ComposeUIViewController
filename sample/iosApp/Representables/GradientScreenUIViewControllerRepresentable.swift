@@ -2,10 +2,6 @@ import SwiftUI
 import Models
 import Composables
 
-import ExportedKotlinPackages
-typealias ScreenStateExternal = ExportedKotlinPackages.com.sample.models.ScreenStateExternal
-typealias GradientScreenUIViewController = ExportedKotlinPackages.com.sample.shared.GradientScreenUIViewController
-
 public struct GradientScreenRepresentable: UIViewControllerRepresentable {
     @Binding var state: ScreenStateExternal
     let randomize: (Int64) -> Void
