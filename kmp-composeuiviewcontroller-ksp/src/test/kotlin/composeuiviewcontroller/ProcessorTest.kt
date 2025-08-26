@@ -454,86 +454,6 @@ class ProcessorTest {
     }
 
     @Test
-    fun `Function parameters with Kotlin types will map to Swift types`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            import com.mycomposable.test.ViewState                       
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,
-                    callBackA: () -> Unit,
-                    callBackB: (List<Map<String, List<Int>>>) -> List<String>,
-                    callBackS: (Set<Int>) -> Unit,
-                    callBackC: (MutableList<String>) -> Unit,
-                    callBackD: (Map<String, String>) -> Unit,
-                    callBackE: (MutableMap<String, String>) -> Unit,
-                    callBackF: (Byte) -> Unit,
-                    callBackG: (UByte) -> Unit,
-                    callBackH: (Short) -> Unit,
-                    callBackI: (UShort) -> Unit,
-                    callBackJ: (Int) -> Unit,
-                    callBackK: (UInt) -> Unit,
-                    callBackL: (Long) -> Unit,
-                    callBackM: (ULong) -> Unit,
-                    callBackN: (Float) -> Unit,
-                    callBackO: (Double) -> Unit,
-                    callBackP: (Boolean) -> Unit
-            ) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-        val result = compilation.compile()
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-
-        val generatedSwiftFiles = compilation.kspSourcesDir.walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-            .toList()
-        assertTrue(generatedSwiftFiles.isNotEmpty())
-
-        val expectedSwiftOutput = """
-                import SwiftUI
-                import ComposablesFramework
-                
-                public struct ScreenRepresentable: UIViewControllerRepresentable {
-                    @Binding var state: ViewState
-                    let callBackA: () -> Void
-                    let callBackB: (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>
-                    let callBackS: (Set<KotlinInt>) -> Void
-                    let callBackC: (NSMutableArray<String>) -> Void
-                    let callBackD: (Dictionary<String, String>) -> Void
-                    let callBackE: (NSMutableDictionary<String, String>) -> Void
-                    let callBackF: (KotlinByte) -> Void
-                    let callBackG: (KotlinUByte) -> Void
-                    let callBackH: (KotlinShort) -> Void
-                    let callBackI: (KotlinUShort) -> Void
-                    let callBackJ: (KotlinInt) -> Void
-                    let callBackK: (KotlinUInt) -> Void
-                    let callBackL: (KotlinLong) -> Void
-                    let callBackM: (KotlinULong) -> Void
-                    let callBackN: (KotlinFloat) -> Void
-                    let callBackO: (KotlinDouble) -> Void
-                    let callBackP: (KotlinBoolean) -> Void
-                
-                    public func makeUIViewController(context: Context) -> UIViewController {
-                        ScreenUIViewController().make(callBackA: callBackA, callBackB: callBackB, callBackS: callBackS, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
-                    }
-                
-                    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                        ScreenUIViewController().update(state: state)
-                    }
-                }
-        """.trimIndent()
-        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
-    }
-
-    @Test
     fun `Collection or Map parameters without type specification will throw TypeResolutionError`() {
         var code = """
             package com.mycomposable.test
@@ -802,11 +722,221 @@ class ProcessorTest {
                 let data: Data
 
                 public func makeUIViewController(context: Context) -> UIViewController {
-                    ScreenUIViewController().make(data: data)
+                    ScreenUIViewController.shared.make(data: data)
                 }
 
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
                     //unused
+                }
+            }
+        """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+    }
+
+    @Test
+    fun `TypeAliasForExternalDependencies file will be created when external dependencies exist`() {
+        tempArgs.writeText(
+            """
+                [
+                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","swiftExport":true},
+                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","swiftExport":true}
+                ]
+                """.trimIndent()
+        )
+        val data = """
+            package com.mycomposable.data
+            data class Data(val field: Int)
+        """.trimIndent()
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
+            import com.mycomposable.data.Data
+            
+            data class ViewState(val field: Int = 0)
+
+            @ComposeUIViewController
+            @Composable
+            fun Screen(@ComposeUIViewControllerState state: ViewState, data: Data) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir
+            .walkTopDown()
+            .filter { it.name == "TypeAliasForExternalDependencies.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedTypeAliasSwiftOutput = """
+            typealias ScreenUIViewController = ExportedKotlinPackages.com.mycomposable.test.ScreenUIViewController
+            typealias Data = ExportedKotlinPackages.com.mycomposable.data.Data
+        """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedTypeAliasSwiftOutput)
+    }
+
+    @Test
+    fun `Function parameters with Kotlin types will map to ObjC-Swift export types`() {
+        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","swiftExport":false}]""")
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
+            import com.mycomposable.test.ViewState                       
+            
+            data class ViewState(val field: Int = 0)
+            
+            @ComposeUIViewController("ComposablesFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,
+                    callBackA: () -> Unit,
+                    callBackB: (List<Map<String, List<Int>>>) -> List<String>,
+                    callBackS: (Set<Int>) -> Unit,
+                    callBackC: (MutableList<String>) -> Unit,
+                    callBackD: (Map<String, String>) -> Unit,
+                    callBackE: (MutableMap<String, String>) -> Unit,
+                    callBackF: (Byte) -> Unit,
+                    callBackG: (UByte) -> Unit,
+                    callBackH: (Short) -> Unit,
+                    callBackI: (UShort) -> Unit,
+                    callBackJ: (Int) -> Unit,
+                    callBackK: (UInt) -> Unit,
+                    callBackL: (Long) -> Unit,
+                    callBackM: (ULong) -> Unit,
+                    callBackN: (Float) -> Unit,
+                    callBackO: (Double) -> Unit,
+                    callBackP: (Boolean) -> Unit
+            ) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir.walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftOutput = """
+                import SwiftUI
+                import ComposablesFramework
+                
+                public struct ScreenRepresentable: UIViewControllerRepresentable {
+                    @Binding var state: ViewState
+                    let callBackA: () -> Void
+                    let callBackB: (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>
+                    let callBackS: (Set<KotlinInt>) -> Void
+                    let callBackC: (NSMutableArray<String>) -> Void
+                    let callBackD: (Dictionary<String, String>) -> Void
+                    let callBackE: (NSMutableDictionary<String, String>) -> Void
+                    let callBackF: (KotlinByte) -> Void
+                    let callBackG: (KotlinUByte) -> Void
+                    let callBackH: (KotlinShort) -> Void
+                    let callBackI: (KotlinUShort) -> Void
+                    let callBackJ: (KotlinInt) -> Void
+                    let callBackK: (KotlinUInt) -> Void
+                    let callBackL: (KotlinLong) -> Void
+                    let callBackM: (KotlinULong) -> Void
+                    let callBackN: (KotlinFloat) -> Void
+                    let callBackO: (KotlinDouble) -> Void
+                    let callBackP: (KotlinBoolean) -> Void
+                
+                    public func makeUIViewController(context: Context) -> UIViewController {
+                        ScreenUIViewController().make(callBackA: callBackA, callBackB: callBackB, callBackS: callBackS, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
+                    }
+                
+                    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                        ScreenUIViewController().update(state: state)
+                    }
+                }
+        """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+    }
+
+    @Test
+    fun `Function parameters with Kotlin types will map to Swift export types`() {
+        tempArgs.writeText(
+            """[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework",
+            |"swiftExport":true}]""".trimMargin()
+        )
+        val code = """
+            package com.mycomposable.test
+            import $composeUIViewControllerAnnotationName
+            import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
+            import com.mycomposable.test.ViewState                       
+            
+            data class ViewState(val field: Int = 0)
+            
+            @ComposeUIViewController("ComposablesFramework")
+            @Composable
+            fun Screen(
+                    @ComposeUIViewControllerState state: ViewState,
+                    callBackA: () -> Unit,
+                    callBackB: (List<Map<String, List<Int>>>) -> List<String>,
+                    callBackS: (Set<Int>) -> Unit,
+                    callBackC: (MutableList<String>) -> Unit,
+                    callBackD: (Map<String, String>) -> Unit,
+                    callBackE: (MutableMap<String, String>) -> Unit,
+                    callBackF: (Byte) -> Unit,
+                    callBackG: (UByte) -> Unit,
+                    callBackH: (Short) -> Unit,
+                    callBackI: (UShort) -> Unit,
+                    callBackJ: (Int) -> Unit,
+                    callBackK: (UInt) -> Unit,
+                    callBackL: (Long) -> Unit,
+                    callBackM: (ULong) -> Unit,
+                    callBackN: (Float) -> Unit,
+                    callBackO: (Double) -> Unit,
+                    callBackP: (Boolean) -> Unit
+            ) { }
+        """.trimIndent()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = compilation.kspSourcesDir.walkTopDown()
+            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+            .toList()
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftOutput = """
+            import SwiftUI
+            import ComposablesFramework
+
+            public struct ScreenRepresentable: UIViewControllerRepresentable {
+                @Binding var state: ViewState
+                let callBackA: () -> Void
+                let callBackB: (Array<Dictionary<String, Array<Int32>>>) -> Array<String>
+                let callBackS: (Set<Int32>) -> Void
+                let callBackC: (Array<String>) -> Void
+                let callBackD: (Dictionary<String, String>) -> Void
+                let callBackE: (Dictionary<String, String>) -> Void
+                let callBackF: (Int8) -> Void
+                let callBackG: (UInt8) -> Void
+                let callBackH: (Int16) -> Void
+                let callBackI: (UInt16) -> Void
+                let callBackJ: (Int32) -> Void
+                let callBackK: (UInt32) -> Void
+                let callBackL: (Int64) -> Void
+                let callBackM: (UInt64) -> Void
+                let callBackN: (Float) -> Void
+                let callBackO: (Double) -> Void
+                let callBackP: (Bool) -> Void
+
+                public func makeUIViewController(context: Context) -> UIViewController {
+                    ScreenUIViewController.shared.make(callBackA: callBackA, callBackB: callBackB, callBackS: callBackS, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
+                }
+
+                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+                    ScreenUIViewController.shared.update(state: state)
                 }
             }
         """.trimIndent()
