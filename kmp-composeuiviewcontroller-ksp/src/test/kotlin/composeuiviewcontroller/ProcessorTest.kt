@@ -739,7 +739,8 @@ class ProcessorTest {
             """
                 [
                     {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","swiftExport":true},
-                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","swiftExport":true}
+                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","swiftExport":true},
+                    {"name":"module-state","packageNames":["com.mycomposable.state"],"frameworkBaseName":"ComposablesFramework3","swiftExport":true}
                 ]
                 """.trimIndent()
         )
@@ -747,20 +748,28 @@ class ProcessorTest {
             package com.mycomposable.data
             data class Data(val field: Int)
         """.trimIndent()
+        val state = """
+            package com.mycomposable.state
+            data class ViewState(val field: Int = 0)
+        """.trimIndent()
         val code = """
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
             import androidx.compose.runtime.Composable
             import com.mycomposable.data.Data
-            
-            data class ViewState(val field: Int = 0)
+            import com.mycomposable.state.ViewState
 
             @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState, data: Data) { }
         """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data), *klibSourceFiles().toTypedArray())
+        val compilation = prepareCompilation(
+            kotlin("Screen.kt", code),
+            kotlin("Data.kt", data),
+            kotlin("State.kt", state),
+            *klibSourceFiles().toTypedArray()
+        )
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
@@ -772,8 +781,11 @@ class ProcessorTest {
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
         val expectedTypeAliasSwiftOutput = """
+            import ExportedKotlinPackages
+
             typealias ScreenUIViewController = ExportedKotlinPackages.com.mycomposable.test.ScreenUIViewController
             typealias Data = ExportedKotlinPackages.com.mycomposable.data.Data
+            typealias ViewState = ExportedKotlinPackages.com.mycomposable.state.ViewState
         """.trimIndent()
         assertEquals(generatedSwiftFiles.first().readText(), expectedTypeAliasSwiftOutput)
     }

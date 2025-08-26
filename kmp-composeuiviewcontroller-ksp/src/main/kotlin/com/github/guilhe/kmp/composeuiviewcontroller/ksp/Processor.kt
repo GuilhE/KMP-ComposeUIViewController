@@ -25,10 +25,14 @@ public class ProcessorProvider : SymbolProcessorProvider {
     }
 }
 
+private data class TypeAliasInfo(val composableName: String, val composablePackageName: String, val externalImports: List<String>)
+
 internal class Processor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
 ) : SymbolProcessor {
+
+    private val accumulatedTypeAliases = mutableSetOf<TypeAliasInfo>()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
@@ -38,6 +42,8 @@ internal class Processor(
         }
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
+        var hasSwiftExportEnabled = false
+
         for (node in trimmedCandidates) {
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
@@ -104,17 +110,23 @@ internal class Processor(
                     }
 
                     if (swiftExportEnabled) {
-                        createSwiftFileWithTypeAlias(
+                        hasSwiftExportEnabled = true
+                        collectTypeAliasData(
                             composableName = composable.name(),
                             composablePackageName = packageName,
                             externalImports = externalImports
-                        ).also {
-                            logger.info("TypeAliasForExternalDependencies.swift file created!")
-                        }
+                        )
                     }
                 }
             }
         }
+
+        if (hasSwiftExportEnabled && accumulatedTypeAliases.isNotEmpty()) {
+            createConsolidatedSwiftFileWithTypeAlias().also {
+                logger.info("TypeAliasForExternalDependencies.swift created with ${accumulatedTypeAliases.size} typealias")
+            }
+        }
+
         return emptyList()
     }
 
@@ -367,14 +379,42 @@ internal class Processor(
         return updatedCode
     }
 
-    private fun createSwiftFileWithTypeAlias(
-        composableName: String,
-        composablePackageName: String,
-        externalImports: List<String>,
-    ): String {
-        val code = "typealias ${composableName}UIViewController = ExportedKotlinPackages.${composablePackageName}" +
-                ".${composableName}UIViewController" + "\n" + externalImports
-            .joinToString("\n") { "typealias ${it.split(".").last()} = ExportedKotlinPackages.${it}" }
+    private fun collectTypeAliasData(composableName: String, composablePackageName: String, externalImports: List<String>) {
+        if (externalImports.isEmpty()) {
+            logger.warn("No external imports found for $composableName, skipping TypeAlias data collection")
+            return
+        }
+        accumulatedTypeAliases.add(TypeAliasInfo(composableName, composablePackageName, externalImports))
+    }
+
+    private fun createConsolidatedSwiftFileWithTypeAlias(): String {
+        val importStatement = "import ExportedKotlinPackages"
+        val typeAliases = accumulatedTypeAliases.joinToString("\n") { typeAliasInfo ->
+            val mainTypeAlias = "typealias ${typeAliasInfo.composableName}UIViewController = ExportedKotlinPackages.${typeAliasInfo.composablePackageName}.${typeAliasInfo.composableName}UIViewController"
+
+            val externalTypeAliases = typeAliasInfo.externalImports
+                .filter { it.isNotBlank() }
+                .map { import ->
+                    val typeName = import.split(".").last()
+                    "typealias $typeName = ExportedKotlinPackages.$import"
+                }
+                .distinct()
+                .sorted()
+
+            buildString {
+                append(mainTypeAlias)
+                if (externalTypeAliases.isNotEmpty()) {
+                    append("\n")
+                    append(externalTypeAliases.joinToString("\n"))
+                }
+            }
+        }
+
+        val code = buildString {
+            append(importStatement)
+            append("\n\n")
+            append(typeAliases)
+        }
 
         codeGenerator
             .createNewFile(
@@ -384,6 +424,7 @@ internal class Processor(
                 extensionName = "swift"
             )
             .write(code.toByteArray())
+
         return code
     }
 }
