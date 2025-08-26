@@ -1,5 +1,5 @@
 import SwiftUI
-import Models
+import SharedModels
 import Composables
 
 public struct GradientScreenRepresentable: UIViewControllerRepresentable {

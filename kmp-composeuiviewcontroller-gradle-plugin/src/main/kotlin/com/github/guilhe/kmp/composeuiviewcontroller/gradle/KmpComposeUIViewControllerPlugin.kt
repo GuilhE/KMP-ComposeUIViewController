@@ -100,7 +100,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     private fun Project.retrieveFrameworkBaseNamesFromIosTargets(): Pair<Set<String>, Boolean> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
 
-        // Priority 1: Framework baseName
+        // Priority 1: Framework baseName (Obcjective-C/Swift interoperability)
         val frameworkNames = mutableSetOf<String>()
         kmp.targets.configureEach { target ->
             if (target.fromIosFamily()) {

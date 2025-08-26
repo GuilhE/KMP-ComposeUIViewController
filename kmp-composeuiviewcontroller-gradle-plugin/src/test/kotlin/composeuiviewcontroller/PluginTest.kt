@@ -280,6 +280,7 @@ class PluginTest {
                 .withProjectDir(projectDir)
                 .withPluginClasspath()
                 .withArguments("help", "--stacktrace")
+                .forwardOutput()
                 .build()
 
             // When autoExport is false, the finalization message should not appear
@@ -326,6 +327,7 @@ class PluginTest {
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
+            .forwardOutput()
             .build()
 
         assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_FRAMEWORK [FrameworkName]"))
@@ -356,6 +358,7 @@ class PluginTest {
                     iosSimulatorArm64()
                     swiftExport {
                         moduleName = "CustomModuleName"
+                        flattenPackage = "com.test.abc"
                     }
                 }
                 """.trimIndent()
@@ -369,13 +372,14 @@ class PluginTest {
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
+            .forwardOutput()
             .build()
 
         assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [CustomModuleName]"))
     }
 
     @Test
-    fun `Method retrieveFrameworkBaseNamesFromIosTargets fallsback to project name with moduleName`() {
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with fallback to project name as moduleName`() {
         val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
         val classFile = File(folder, "File.kt")
         classFile.writeText(
@@ -394,10 +398,6 @@ class PluginTest {
                     id("$PLUGIN_KMP")
                     id("$PLUGIN_KSP")
                     id("$PLUGIN_ID")
-                }
-
-                kotlin {
-                    iosSimulatorArm64()
                 }
 
                 kotlin {
@@ -416,6 +416,7 @@ class PluginTest {
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
+            .forwardOutput()
             .build()
 
         assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_PROJECT [TestProject]"))
@@ -423,21 +424,30 @@ class PluginTest {
 
     @Test
     fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with exported moduleName`() {
-        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
-        val classFile = File(folder, "File.kt")
-        classFile.writeText(
+        val commonMain = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val commonFile = File(commonMain, "File.kt")
+        commonFile.writeText(
             """
             package com.test
             class Test()
             """.trimIndent()
         )
-        assertTrue(classFile.exists())
+        assertTrue(commonFile.exists())
 
-        val buildFile = File(projectDir, "build.gradle.kts")
-        buildFile.writeText(
+        val abcProjectDir = File(projectDir, "abc").apply { mkdirs() }
+        val abcCommonMain = File(abcProjectDir, "src/commonMain/kotlin/com/abc").apply { mkdirs() }
+        val abcCommonFile = File(abcCommonMain, "File.kt")
+        abcCommonFile.writeText(
             """
-                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-                
+            package com.abc
+            class AbcTest()
+            """.trimIndent()
+        )
+        assertTrue(abcCommonFile.exists())
+
+        val abcBuildFile = File(abcProjectDir, "build.gradle.kts")
+        abcBuildFile.writeText(
+            """
                 plugins {
                     id("$PLUGIN_KMP")
                     id("$PLUGIN_KSP")
@@ -447,13 +457,27 @@ class PluginTest {
                 kotlin {
                     iosSimulatorArm64()
                 }
+                """.trimIndent()
+        )
+        assertTrue(abcBuildFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
 
                 kotlin {
                     iosSimulatorArm64()
                     @OptIn(ExperimentalSwiftExportDsl::class)
                     swiftExport {
-                        export(":testProject") {
-                            moduleName = "ExportedModuleName"
+                        moduleName = "DefaultModule"
+                        export(project(":abc")) {
+                            moduleName = "ExportedModule"
                         }
                     }
                 }
@@ -462,34 +486,45 @@ class PluginTest {
         assertTrue(buildFile.exists())
 
         val settingsFile = File(projectDir, "settings.gradle.kts")
-        settingsFile.writeText("rootProject.name = \"testProject\"")
+        settingsFile.writeText("rootProject.name = \"testProject\"\ninclude(\":abc\")")
         assertTrue(settingsFile.exists())
 
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
+            .forwardOutput()
             .build()
 
-        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [ExportedModuleName]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [DefaultModule]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [ExportedModule]"))
     }
 
     @Test
-    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with exported moduleName (with TYPESAFE_PROJECT_ACCESSORS)`() {
-        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
-        val classFile = File(folder, "File.kt")
-        classFile.writeText(
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with exported module fallback to project name`() {
+        val commonMain = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+        val commonFile = File(commonMain, "File.kt")
+        commonFile.writeText(
             """
             package com.test
             class Test()
             """.trimIndent()
         )
-        assertTrue(classFile.exists())
+        assertTrue(commonFile.exists())
 
-        val buildFile = File(projectDir, "build.gradle.kts")
-        buildFile.writeText(
+        val abcProjectDir = File(projectDir, "abc").apply { mkdirs() }
+        val abcCommonMain = File(abcProjectDir, "src/commonMain/kotlin/com/abc").apply { mkdirs() }
+        val abcCommonFile = File(abcCommonMain, "File.kt")
+        abcCommonFile.writeText(
             """
-                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-                
+            package com.abc
+            class AbcTest()
+            """.trimIndent()
+        )
+        assertTrue(abcCommonFile.exists())
+
+        val abcBuildFile = File(abcProjectDir, "build.gradle.kts")
+        abcBuildFile.writeText(
+            """
                 plugins {
                     id("$PLUGIN_KMP")
                     id("$PLUGIN_KSP")
@@ -499,13 +534,27 @@ class PluginTest {
                 kotlin {
                     iosSimulatorArm64()
                 }
+                """.trimIndent()
+        )
+        assertTrue(abcBuildFile.exists())
+
+        val buildFile = File(projectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
 
                 kotlin {
                     iosSimulatorArm64()
                     @OptIn(ExperimentalSwiftExportDsl::class)
                     swiftExport {
-                        export(projects.testProject) {
-                            moduleName = "ExportedModuleName"
+                        moduleName = "DefaultModule"
+                        export(projects.abc) {
+                            flattenPackage = "com.abc.123"
                         }
                     }
                 }
@@ -514,64 +563,17 @@ class PluginTest {
         assertTrue(buildFile.exists())
 
         val settingsFile = File(projectDir, "settings.gradle.kts")
-        settingsFile.writeText("enableFeaturePreview(\"TYPESAFE_PROJECT_ACCESSORS\")\nrootProject.name = \"testProject\"")
+        settingsFile.writeText("enableFeaturePreview(\"TYPESAFE_PROJECT_ACCESSORS\")\nrootProject.name = \"testProject\"\ninclude(\":abc\")")
         assertTrue(settingsFile.exists())
 
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
+            .forwardOutput()
             .build()
 
-        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [ExportedModuleName]"))
-    }
-
-    @Test
-    fun `Method retrieveFrameworkBaseNamesFromIosTargets with exported moduleName fallsback to project name`() {
-        val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
-        val classFile = File(folder, "File.kt")
-        classFile.writeText(
-            """
-            package com.test
-            class Test()
-            """.trimIndent()
-        )
-        assertTrue(classFile.exists())
-
-        val buildFile = File(projectDir, "build.gradle.kts")
-        buildFile.writeText(
-            """
-                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-                plugins {
-                    id("$PLUGIN_KMP")
-                    id("$PLUGIN_KSP")
-                    id("$PLUGIN_ID")
-                }
-
-                kotlin {
-                    iosSimulatorArm64()
-                }
-
-                kotlin {
-                    iosSimulatorArm64()
-                    @OptIn(ExperimentalSwiftExportDsl::class)
-                    swiftExport {
-                        export(":testProject") {}
-                    }
-                }
-                """.trimIndent()
-        )
-        assertTrue(buildFile.exists())
-
-        val settingsFile = File(projectDir, "settings.gradle.kts")
-        settingsFile.writeText("rootProject.name = \"testProject\"")
-        assertTrue(settingsFile.exists())
-
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withPluginClasspath()
-            .build()
-
-        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_PROJECT [TestProject]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [DefaultModule]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_PROJECT [Abc]"))
     }
 
     @Test
@@ -645,6 +647,7 @@ class PluginTest {
         val result = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
+            .forwardOutput()
             .build()
 
         assertTrue(result.output.contains("$INFO_MODULE_PACKAGES [com.test]"))
