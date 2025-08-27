@@ -22,7 +22,6 @@ kotlin {
         moduleName = "Composables"
         export(projects.sharedModels) {
             moduleName = "Models"
-            flattenPackage = "com.abc.models"
         }
     }
 
