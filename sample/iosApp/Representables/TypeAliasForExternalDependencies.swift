@@ -3,7 +3,5 @@
 // If you get errors about missing types, consider using the 'flattenPackage' property in KMP swiftExport settings.
 import ExportedKotlinPackages
 
-//This typealias can be avoided if you use `flattenPackage = "com.sample.shared"` in KMP swiftExport settings
-typealias GradientScreenUIViewController = ExportedKotlinPackages.com.sample.shared.GradientScreenUIViewController
 //This typealias can be avoided if you use the `flattenPackage = "com.sample.models"` in KMP swiftExport settings
 typealias ScreenStateExternal = ExportedKotlinPackages.com.sample.models.ScreenStateExternal

@@ -23,6 +23,7 @@ kotlin {
         flattenPackage = "com.sample.shared"
         export(projects.sharedModels) {
             moduleName = "Models"
+            flattenPackage = "com.sample.models"
         }
     }
 
