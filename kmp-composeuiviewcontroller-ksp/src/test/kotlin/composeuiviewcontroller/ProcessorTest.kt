@@ -20,7 +20,6 @@ import composeuiviewcontroller.Templates.CodeTemplates
 import composeuiviewcontroller.Templates.ModuleConfigs
 import composeuiviewcontroller.Templates.ExpectedOutputs
 import composeuiviewcontroller.Templates.TestFileUtils
-import composeuiviewcontroller.Templates.ErrorTemplates
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
 import kotlin.test.AfterTest
@@ -186,7 +185,7 @@ class ProcessorTest {
 
         val generatedSwiftFiles = TestFileUtils.findGeneratedSwiftFile(compilation, "ScreenAUIViewControllerRepresentable.swift")
         val generatedSwiftFile = generatedSwiftFiles.first().readText()
-        assertEquals(generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithState())
+        assertEquals(generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithState(functionName = "ScreenA", stateType = "ViewAState"))
     }
 
     @Test
@@ -255,6 +254,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewState(val field: Int = 0)
 
@@ -265,7 +265,7 @@ class ProcessorTest {
                     callBackC: (MutableList) -> Unit
             ) { }
         """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
         result = compilation.compile()
         assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
@@ -273,6 +273,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewState(val field: Int = 0)
 
@@ -283,7 +284,7 @@ class ProcessorTest {
                     callBackE: (Set) -> Unit
             ) { }
         """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
         result = compilation.compile()
         assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
@@ -291,6 +292,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewState(val field: Int = 0)
 
@@ -301,7 +303,7 @@ class ProcessorTest {
                     callBackD: (Map) -> Unit
             ) { }
         """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
         result = compilation.compile()
         assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
@@ -309,6 +311,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewState(val field: Int = 0)
 
@@ -319,7 +322,7 @@ class ProcessorTest {
                     callBackE: (MutableMap) -> Unit                   
             ) { }
         """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
         result = compilation.compile()
         assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
@@ -327,6 +330,7 @@ class ProcessorTest {
             package com.mycomposable.test
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
+            import androidx.compose.runtime.Composable
             
             data class ViewState(val field: Int = 0)
 
@@ -337,7 +341,7 @@ class ProcessorTest {
                     callBackB: (List<String>) -> List
             ) { }
         """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
+        compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
         result = compilation.compile()
         assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
     }
@@ -346,7 +350,7 @@ class ProcessorTest {
     fun `Processor handles generic types in parameters`() {
         val code = """
             package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
+            import ${'$'}composeUIViewControllerAnnotationName
             import androidx.compose.runtime.Composable
             
             data class GenericData<T>(val value: T)
@@ -374,7 +378,7 @@ class ProcessorTest {
     fun `Processor handles complex nested generics correctly`() {
         val code = """
             package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
+            import ${'$'}composeUIViewControllerAnnotationName
             import androidx.compose.runtime.Composable
             
             @ComposeUIViewController("ComposablesFramework")
