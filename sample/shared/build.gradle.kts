@@ -20,6 +20,7 @@ kotlin {
     @OptIn(ExperimentalSwiftExportDsl::class)
     swiftExport {
         moduleName = "Composables"
+        flattenPackage = "com.sample.shared"
         export(projects.sharedModels) {
             moduleName = "Models"
         }

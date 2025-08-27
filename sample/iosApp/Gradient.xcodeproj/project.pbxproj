@@ -12,7 +12,7 @@
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
 		7555FF83242A565900829871 /* SharedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* SharedView.swift */; };
 		A4CF77E2CCD784C26558BB44 /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82964B6808F92AF0EA281884 /* GradientScreenUIViewControllerRepresentable.swift */; };
-		BC427490A637D463394D52C0 /* TypeAliasForExternalDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4358C70585CAD2EC4108B836 /* TypeAliasForExternalDependencies.swift */; };
+		D69A47C404456CB829BD414B /* TypeAliasForExternalDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAB75A823B92DA10117158AD /* TypeAliasForExternalDependencies.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,11 +32,11 @@
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* GradientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientApp.swift; sourceTree = "<group>"; };
-		4358C70585CAD2EC4108B836 /* TypeAliasForExternalDependencies.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TypeAliasForExternalDependencies.swift; path = Representables/TypeAliasForExternalDependencies.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* SharedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		82964B6808F92AF0EA281884 /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = Representables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
+		BAB75A823B92DA10117158AD /* TypeAliasForExternalDependencies.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TypeAliasForExternalDependencies.swift; path = Representables/TypeAliasForExternalDependencies.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +62,7 @@
 			isa = PBXGroup;
 			children = (
 				82964B6808F92AF0EA281884 /* GradientScreenUIViewControllerRepresentable.swift */,
-				4358C70585CAD2EC4108B836 /* TypeAliasForExternalDependencies.swift */,
+				BAB75A823B92DA10117158AD /* TypeAliasForExternalDependencies.swift */,
 			);
 			name = Representables;
 			sourceTree = "<group>";
@@ -202,7 +202,7 @@
 				2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */,
 				7555FF83242A565900829871 /* SharedView.swift in Sources */,
 				A4CF77E2CCD784C26558BB44 /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
-				BC427490A637D463394D52C0 /* TypeAliasForExternalDependencies.swift in Sources */,
+				D69A47C404456CB829BD414B /* TypeAliasForExternalDependencies.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
