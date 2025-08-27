@@ -478,6 +478,7 @@ class PluginTest {
                         moduleName = "DefaultModule"
                         export(project(":abc")) {
                             moduleName = "ExportedModule"
+                            flattenPackage = "com.exported"
                         }
                     }
                 }
@@ -554,7 +555,7 @@ class PluginTest {
                     swiftExport {
                         moduleName = "DefaultModule"
                         export(projects.abc) {
-                            flattenPackage = "com.abc.123"
+                            flattenPackage = "com.123"
                         }
                     }
                 }

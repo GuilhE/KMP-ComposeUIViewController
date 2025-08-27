@@ -65,7 +65,7 @@ internal object SwiftExportUtils {
             // ex: export(projects.sharedModels) { moduleName = "Models" }
             // ex: export(project(":shared-models")) { moduleName = "Models" }
             val exportPattern = Regex(
-                """export\s*\(\s*(?:projects\.([a-zA-Z0-9_-]+)|project\(\s*["']([^"']*)["']\s*\))\s*\)\s*\{\s*moduleName\s*=\s*["']([^"']+)["']\s*\}""",
+                """export\s*\(\s*(?:projects\.([a-zA-Z0-9_-]+)|project\(\s*["']([^"']*)["']\s*\))\s*\)\s*\{[^}]*moduleName\s*=\s*["']([^"']+)["'][^}]*\}""",
                 RegexOption.DOT_MATCHES_ALL
             )
             val matches = exportPattern.findAll(buildFile.readText())
