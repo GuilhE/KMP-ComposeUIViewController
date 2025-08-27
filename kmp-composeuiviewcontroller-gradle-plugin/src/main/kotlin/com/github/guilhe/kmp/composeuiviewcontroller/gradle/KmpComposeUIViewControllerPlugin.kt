@@ -5,7 +5,7 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.SwiftExportUtils.getSwiftExportModuleNameForProject
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.SwiftExportUtils.getSwiftExportConfigForProject
 import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -48,9 +48,10 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                 configureTaskToFinalizeByCopyFilesToXcode(this)
                 project.afterEvaluate {
                     val packageNames = retrieveModulePackagesFromCommonMain()
-                    val (frameworkNames, swiftExport) = retrieveFrameworkBaseNamesFromIosTargets()
+                    val (frameworkNames, swiftExport, flattenPackage) = retrieveFrameworkBaseNamesFromIosTargets(packageNames)
                     writeModuleMetadataToDisk(
                         swiftExportEnabled = swiftExport,
+                        flattenPackageConfigured = flattenPackage,
                         args = buildFrameworkPackages(packageNames, frameworkNames)
                     )
                 }
@@ -97,7 +98,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.retrieveFrameworkBaseNamesFromIosTargets(): Pair<Set<String>, Boolean> {
+    private fun Project.retrieveFrameworkBaseNamesFromIosTargets(packageNames: Set<String>): Triple<Set<String>, Boolean, Boolean> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
 
         // Priority 1: Framework baseName (Obcjective-C/Swift interoperability)
@@ -111,27 +112,42 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
         if (frameworkNames.isNotEmpty()) {
             println("\t> $INFO_MODULE_NAME_BY_FRAMEWORK $frameworkNames")
-            return Pair(frameworkNames, false)
+            return Triple(frameworkNames, false, false)
         }
 
-        // Priority 2: SwiftExport root moduleName
+        // Priority 2: SwiftExport for current Project
         val swiftExport = kmp.extensions.getByType(SwiftExportExtension::class.java)
         val moduleName = swiftExport.moduleName.orNull
+        val flattenPackage = swiftExport.flattenPackage.orNull
+        val flattenConfigured = packageNames.contains(flattenPackage)
         if (!moduleName.isNullOrBlank()) {
             println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
-            return Pair(setOf(moduleName), true)
+            if (flattenConfigured) {
+                println("\t> Info: flattenPackage '$flattenPackage' matches sourceSet.")
+            }
+            return Triple(setOf(moduleName), true, flattenConfigured)
+        } else if (!flattenPackage.isNullOrBlank()) {
+            return Triple(setOf(), true, flattenConfigured)
         }
 
-        // Priority 3: SwiftExport exported child moduleName
-        getSwiftExportModuleNameForProject()?.let { moduleName ->
-            println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
-            return Pair(setOf(moduleName), true)
+        // Priority 3: SwiftExport in all Projects
+        getSwiftExportConfigForProject()?.let { (moduleName, flattenPackage) ->
+            if (!moduleName.isNullOrBlank()) {
+                println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
+                val flattenConfigured = packageNames.contains(flattenPackage)
+                if (flattenConfigured) {
+                    println("\t> Info: flattenPackage '$flattenPackage' matches sourceSet.")
+                } else {
+                    println("\t> Warning: flattenPackage '$flattenPackage' does NOT match sourceSet. Typealias will be generated")
+                }
+                return Triple(setOf(moduleName), true, flattenConfigured)
+            }
         }
 
         // Priority 4: Project name (fallback)
         val projectModuleName = name.toPascalCase()
         println("\t> $INFO_MODULE_NAME_BY_PROJECT [$projectModuleName]")
-        return Pair(setOf(projectModuleName), true)
+        return Triple(setOf(projectModuleName), true, false)
     }
 
     private fun Project.retrieveModulePackagesFromCommonMain(): Set<String> {
@@ -168,7 +184,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         return map
     }
 
-    private fun Project.writeModuleMetadataToDisk(swiftExportEnabled: Boolean, args: Map<String, Set<String>>) {
+    private fun Project.writeModuleMetadataToDisk(swiftExportEnabled: Boolean, flattenPackageConfigured: Boolean, args: Map<String, Set<String>>) {
         val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
         val moduleMetadata = try {
             Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
@@ -181,7 +197,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     name = name,
                     packageNames = value,
                     frameworkBaseName = key,
-                    swiftExport = swiftExportEnabled
+                    swiftExportEnabled = swiftExportEnabled,
+                    flattenPackageConfigured = flattenPackageConfigured
                 )
             )
         }

@@ -6,49 +6,54 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension
 
+internal data class SwiftExportConfig(
+    val moduleName: String?,
+    val flattenPackage: String?
+)
+
 /**
  * Utility functions for handling SwiftExport configurations
  */
 internal object SwiftExportUtils {
 
     /**
-     * Retrieves the specific SwiftExport module name for the current project.
+     * Retrieves the specific SwiftExport configuration for the current project.
      * Since SwiftExport doesn't expose the exports collection, we need to look
      * in the root project or parent projects for the SwiftExport configuration
      * that references this project.
      */
-    fun Project.getSwiftExportModuleNameForProject(): String? {
+    fun Project.getSwiftExportConfigForProject(): SwiftExportConfig? {
         return try {
             println("\t> Looking for SwiftExport config that references project: ${this.name}")
 
-            val rootSwiftExportModuleName = rootProject.findSwiftExportModuleNameForProject(this)
-            if (rootSwiftExportModuleName != null) {
-                println("\t> Found SwiftExport module name in root project: $rootSwiftExportModuleName")
-                return rootSwiftExportModuleName
+            val rootSwiftExportConfig = rootProject.findSwiftExportConfigForProject(this)
+            if (rootSwiftExportConfig != null) {
+//                println("\t> Found SwiftExport config in root project: $rootSwiftExportConfig")
+                return rootSwiftExportConfig
             }
 
             var currentProject = this.parent
             while (currentProject != null) {
-                val parentSwiftExportModuleName = currentProject.findSwiftExportModuleNameForProject(this)
-                if (parentSwiftExportModuleName != null) {
-                    println("\t> Found SwiftExport module name in parent project ${currentProject.name}: $parentSwiftExportModuleName")
-                    return parentSwiftExportModuleName
+                val parentSwiftExportConfig = currentProject.findSwiftExportConfigForProject(this)
+                if (parentSwiftExportConfig != null) {
+//                    println("\t> Found SwiftExport config in parent project ${currentProject.name}: $parentSwiftExportConfig")
+                    return parentSwiftExportConfig
                 }
                 currentProject = currentProject.parent
             }
 
             rootProject.allprojects.forEach { project ->
                 if (project != this) {
-                    val projectSwiftExportModuleName = project.findSwiftExportModuleNameForProject(this)
-                    if (projectSwiftExportModuleName != null) {
-                        println("\t> Found SwiftExport module name in project ${project.name}: $projectSwiftExportModuleName")
-                        return projectSwiftExportModuleName
+                    val projectSwiftExportConfig = project.findSwiftExportConfigForProject(this)
+                    if (projectSwiftExportConfig != null) {
+//                        println("\t> Found SwiftExport config in project ${project.name}: $projectSwiftExportConfig")
+                        return projectSwiftExportConfig
                     }
                 }
             }
             null
         } catch (e: Exception) {
-            println("\t> Exception while searching for SwiftExport module name: ${e.message}")
+            println("\t> Exception while searching for SwiftExport config: ${e.message}")
             null
         }
     }
@@ -56,27 +61,41 @@ internal object SwiftExportUtils {
     /**
      * Looks for SwiftExport configuration in this project that references the target project
      */
-    private fun Project.findSwiftExportModuleNameForProject(targetProject: Project): String? {
+    private fun Project.findSwiftExportConfigForProject(targetProject: Project): SwiftExportConfig? {
         return try {
             val kmp = extensions.findByType(KotlinMultiplatformExtension::class.java) ?: return null
             kmp.extensions.findByType(SwiftExportExtension::class.java) ?: return null
 
             if (!buildFile.exists()) return null
-            // ex: export(projects.sharedModels) { moduleName = "Models" }
-            // ex: export(project(":shared-models")) { moduleName = "Models" }
+
+            val buildFileContent = buildFile.readText()
+
+            // Extract only the export blocks from swiftExport
+            // Look for patterns like: export(projects.something) { ... } or export(project(":something")) { ... }
             val exportPattern = Regex(
-                """export\s*\(\s*(?:projects\.([a-zA-Z0-9_-]+)|project\(\s*["']([^"']*)["']\s*\))\s*\)\s*\{[^}]*moduleName\s*=\s*["']([^"']+)["'][^}]*\}""",
+                """export\s*\(\s*(?:projects\.([a-zA-Z0-9_-]+)|project\(\s*["']([^"']*)["']\s*\))\s*\)\s*\{([^}]*)\}""",
                 RegexOption.DOT_MATCHES_ALL
             )
-            val matches = exportPattern.findAll(buildFile.readText())
 
-            for (match in matches) {
+            val exportMatches = exportPattern.findAll(buildFileContent)
+
+            for (match in exportMatches) {
                 val projectNameWithAccessors = match.groupValues[1] // projects.sharedModels
                 val projectNameDirect = match.groupValues[2] // shared-models (with or without :)
-                val moduleName = match.groupValues[3] // Models
+                val configBlock = match.groupValues[3] // the content inside the braces
+
                 val projectName = projectNameWithAccessors.ifEmpty { projectNameDirect.removePrefix(":") }
+
                 if (isProjectNameMatch(projectName, targetProject.name)) {
-                    return moduleName
+                    val moduleNamePattern = Regex("""moduleName\s*=\s*["']([^"']+)["']""")
+                    val moduleNameMatch = moduleNamePattern.find(configBlock)
+                    val moduleName = moduleNameMatch?.groupValues?.get(1) ?: continue
+
+                    val flattenPackagePattern = Regex("""flattenPackage\s*=\s*["']([^"']+)["']""")
+                    val flattenPackageMatch = flattenPackagePattern.find(configBlock)
+                    val flattenPackage = flattenPackageMatch?.groupValues?.get(1)
+
+                    return SwiftExportConfig(moduleName, flattenPackage)
                 }
             }
             null
