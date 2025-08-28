@@ -119,7 +119,9 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         val swiftExport = kmp.extensions.getByType(SwiftExportExtension::class.java)
         val moduleName = swiftExport.moduleName.orNull
         val flattenPackage = swiftExport.flattenPackage.orNull
-        val flattenConfigured = packageNames.contains(flattenPackage)
+        val flattenConfigured = flattenPackage?.let { flatten ->
+            packageNames.any { it.startsWith("$flatten.") } || packageNames.contains(flatten)
+        } ?: false
         if (!moduleName.isNullOrBlank()) {
             println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
             if (flattenConfigured) {
@@ -134,7 +136,9 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         getSwiftExportConfigForProject()?.let { (moduleName, flattenPackage) ->
             if (!moduleName.isNullOrBlank()) {
                 println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
-                val flattenConfigured = packageNames.contains(flattenPackage)
+                val flattenConfigured = flattenPackage?.let { flatten ->
+                    packageNames.any { it.startsWith("$flatten.") } || packageNames.contains(flatten)
+                } ?: false
                 if (flattenConfigured) {
                     println("\t> Info: flattenPackage '$flattenPackage' matches sourceSet.")
                 } else {
