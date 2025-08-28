@@ -4,7 +4,8 @@
 
 - Kotlin 2.3.0-dev-4778
 
-**Note:** This development version is required for Swift Export support until the official release of Kotlin 2.3.0.
+__Note:__ This development version is required for Swift Export support until the official release of Kotlin 2.3.0.
+
 ---
 
 ## [2.2.20-RC-1.9.0-beta03]
