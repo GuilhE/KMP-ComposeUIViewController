@@ -9,11 +9,13 @@ import com.google.devtools.ksp.symbol.KSValueParameter
 
 /**
  * Resolves KSValueParameter type
- * @param toSwift If true, transforms Kotlin types into their Swift representation. [Apple framework generated framework headers](https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers)
+ * @param toSwift If true, transforms Kotlin types into their Swift representation.
+ * @param withSwiftExport If true, will use Swift-interop instead of ObjC interop
+ * .org/docs/native-objc-interop.html#swift-exported-symbols)
  * @return String with type resolved
  * @throws ValueParameterResolutionError when type cannot be resolved
  */
-internal fun KSValueParameter.resolveType(toSwift: Boolean = false): String {
+internal fun KSValueParameter.resolveType(toSwift: Boolean = false, withSwiftExport: Boolean = false): String {
     //println(">> KSValueParameter type: ${type}")
     val resolvedType = type.resolve()
     return if (resolvedType.isFunctionType) {
@@ -24,7 +26,7 @@ internal fun KSValueParameter.resolveType(toSwift: Boolean = false): String {
                 if (argType == null || argType.isError) {
                     throw ValueParameterResolutionError(this@resolveType)
                 } else {
-                    convertGenericType(argType, toSwift)
+                    convertGenericType(argType, toSwift, withSwiftExport)
                 }
             })
             append(") -> ")
@@ -32,26 +34,37 @@ internal fun KSValueParameter.resolveType(toSwift: Boolean = false): String {
             val returnTypeName = if (returnType == null || returnType.isError) {
                 throw ValueParameterResolutionError(this@resolveType)
             } else {
-                convertGenericType(returnType, toSwift)
+                convertGenericType(returnType, toSwift, withSwiftExport)
             }
             append(returnTypeName)
         }
     } else {
-        convertGenericType(resolvedType, toSwift)
+        convertGenericType(resolvedType, toSwift, withSwiftExport)
     }
 }
 
-private fun convertGenericType(type: KSType, toSwift: Boolean): String {
+private fun convertGenericType(type: KSType, toSwift: Boolean, withSwiftExport: Boolean): String {
     val baseType = type.declaration.simpleName.asString()
-    val convertedBaseType = if (toSwift) convertToSwift(baseType) else baseType
+    val convertedBaseType = if (toSwift) convertToSwift(baseType, withSwiftExport) else baseType
     if (type.arguments.isEmpty()) return convertedBaseType
     val generics = type.arguments.joinToString(", ") { arg ->
-        arg.type?.resolve()?.let { convertGenericType(it, toSwift) } ?: throw TypeResolutionError(type)
+        arg.type?.resolve()?.let { convertGenericType(it, toSwift, withSwiftExport) } ?: throw TypeResolutionError(type)
     }
     return "$convertedBaseType<$generics>"
 }
 
-private fun convertToSwift(baseType: String): String {
+private fun convertToSwift(baseType: String, withSwiftExport: Boolean): String {
+    return if (withSwiftExport) {
+        convertToSwiftFromSwiftExport(baseType)
+    } else {
+        convertToSwiftFromObjcExport(baseType)
+    }
+}
+
+/**
+ *  [Apple framework generated framework headers](https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers)
+ */
+private fun convertToSwiftFromObjcExport(baseType: String): String {
     return when (baseType) {
         "Unit" -> "Void"
         "List" -> "Array"
@@ -70,6 +83,36 @@ private fun convertToSwift(baseType: String): String {
         "Float" -> "KotlinFloat"
         "Double" -> "KotlinDouble"
         "Boolean" -> "KotlinBoolean"
+        else -> baseType
+    }
+}
+
+/**
+ *  [Kotlin to Swift mapping - Built-in types](https://github.com/JetBrains/kotlin/blob/master/docs/swift-export/language-mapping.md#built-in-types)
+ */
+private fun convertToSwiftFromSwiftExport(baseType: String): String {
+    return when (baseType) {
+        "Unit" -> "Void"
+        "List" -> "Array"
+        "MutableList" -> "Array"
+        "Set" -> "Set"
+        "MutableSet" -> "Set"
+        "Map" -> "Dictionary"
+        "MutableMap" -> "Dictionary"
+        "Byte" -> "Int8"
+        "UByte" -> "UInt8"
+        "Short" -> "Int16"
+        "UShort" -> "UInt16"
+        "Int" -> "Int32"
+        "UInt" -> "UInt32"
+        "Long" -> "Int64"
+        "ULong" -> "UInt64"
+        "Float" -> "Float"
+        "Double" -> "Double"
+        "Boolean" -> "Bool"
+        "String" -> "String"
+        "Char" -> "Unicode.UTF16.CodeUnit"
+        "Nothing" -> "Never"
         else -> baseType
     }
 }
@@ -212,3 +255,4 @@ internal class TypeResolutionError(parameter: KSType) : IllegalArgumentException
 
 internal class ModuleDecodeException(e: Exception) :
     IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
+

@@ -18,13 +18,17 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import kotlinx.serialization.json.Json
 import java.io.File
-import java.util.Locale
 
 public class ProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         return Processor(environment.codeGenerator, environment.logger)
     }
 }
+
+private data class TypeAliasInfo(
+    val name: String,
+    val packageName: String,
+)
 
 internal class Processor(
     private val codeGenerator: CodeGenerator,
@@ -39,6 +43,9 @@ internal class Processor(
         }
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
+        var hasSwiftExportEnabled = false
+
+        val accumulatedTypeAliases = mutableSetOf<TypeAliasInfo>()
         for (node in trimmedCandidates) {
             node.containingFile?.let { file ->
                 val packageName = file.packageName.asString()
@@ -58,21 +65,31 @@ internal class Processor(
                             .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                     }
                     val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
+                    val externalPackages = externalImports.map { it.substringBeforeLast('.') }.distinct().plus(packageName)
                     val modulesMetadata = getFrameworkMetadataFromDisk()
-                    val experimentalFeature: Boolean = modulesMetadata.firstOrNull()?.experimentalNamespaceFeature ?: false
-                    val externalModuleTypes = if (experimentalFeature) {
+                    val swiftExportEnabled: Boolean = modulesMetadata.firstOrNull()?.swiftExportEnabled ?: false
+                    val externalModuleTypes = if (swiftExportEnabled) {
                         buildExternalModuleParameters(modulesMetadata, externalImports)
                     } else {
                         emptyMap()
                     }
-//                    val frameworkBaseNames = getFrameworkBaseNames(composable, node, makeParameters, parameters)
-                    val currentFramework = trimFrameworkBaseNames(node, modulesMetadata, packageName)
+                    val frameworkBaseNames = if (swiftExportEnabled) {
+                        getFrameworkBaseNames(composable, node, makeParameters, parameters)
+                    } else {
+                        listOf(trimFrameworkBaseNames(node, modulesMetadata, packageName))
+                    }
 
                     if (stateParameter == null) {
                         createKotlinFileWithoutState(packageName, externalImports, composable, makeParameters, parameters).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
-                        createSwiftFileWithoutState(listOf(currentFramework), composable, makeParameters, externalModuleTypes).also {
+                        createSwiftFileWithoutState(
+                            frameworkBaseNames = frameworkBaseNames,
+                            composable = composable,
+                            makeParameters = makeParameters,
+                            externalParameters = externalModuleTypes,
+                            swiftExportEnabled = swiftExportEnabled
+                        ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     } else {
@@ -83,14 +100,56 @@ internal class Processor(
                             logger.info("${composable.name()}UIViewController created!")
                         }
                         createSwiftFileWithState(
-                            listOf(currentFramework), composable, stateParameterName, stateParameter, makeParameters, externalModuleTypes
+                            frameworkBaseNames = frameworkBaseNames,
+                            composable = composable,
+                            stateParameterName = stateParameterName,
+                            stateParameter = stateParameter,
+                            makeParameters = makeParameters,
+                            externalParameters = externalModuleTypes,
+                            swiftExportEnabled = swiftExportEnabled
                         ).also {
                             logger.info("${composable.name()}Representable created!")
                         }
                     }
+
+                    modulesMetadata
+                        .filter { module -> !module.flattenPackageConfigured && module.packageNames.any { it in externalPackages } }
+                        .distinct()
+                        .forEach { module ->
+                            if (swiftExportEnabled) {
+                                hasSwiftExportEnabled = true
+                                val internalImport = packageName == module.packageNames.first()
+
+                                if (internalImport) {
+                                    accumulatedTypeAliases.add(
+                                        TypeAliasInfo(name = "${composable.name()}UIViewController", packageName = packageName)
+                                    )
+                                } else {
+                                    val modulePackage = module.packageNames.first()
+                                    val typesFromThisModule = externalImports
+                                        .filter { it.startsWith("$modulePackage.") }
+                                        .map { it.substringAfterLast(".") }
+                                    typesFromThisModule.forEach { typeName ->
+                                        accumulatedTypeAliases.add(
+                                            TypeAliasInfo(
+                                                name = typeName,
+                                                packageName = modulePackage
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
                 }
             }
         }
+
+        if (hasSwiftExportEnabled && accumulatedTypeAliases.isNotEmpty()) {
+            createConsolidatedSwiftFileWithTypeAlias(accumulatedTypeAliases.toList()).also {
+                logger.info("TypeAliasForExternalDependencies.swift created with $accumulatedTypeAliases typealias")
+            }
+        }
+
         return emptyList()
     }
 
@@ -108,7 +167,7 @@ internal class Processor(
     }
 
     private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
-        val file = if(System.getProperty("user.dir").endsWith("Pods")) {
+        val file = if (System.getProperty("user.dir").endsWith("Pods")) {
             File("../../build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
         } else File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
         val moduleMetadata = try {
@@ -119,11 +178,6 @@ internal class Processor(
         return moduleMetadata
     }
 
-    /**
-     * Theres an [actual limitation](https://kotlinlang.slack.com/archives/C3SGXARS6/p1719961104891399) on Kotlin Multiplatform where each binary framework is compiled as a "closed world“, meaning it's not possible to pass custom type between two frameworks even it’s the same in Kotlin.
-     * For more information refer to CHANGELOG.md#2020-beta1-1611-beta-4
-     * [https://stackoverflow.com/a/78707072/1423773](https://stackoverflow.com/a/78707072/1423773)
-     */
     private fun buildExternalModuleParameters(moduleMetadata: List<ModuleMetadata>, imports: List<String>): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
         imports.forEach { it ->
@@ -131,27 +185,15 @@ internal class Processor(
             val import = it.split(".$type").first()
             moduleMetadata
                 .filter { module -> module.packageNames.contains(import) }
-                .forEach { module ->
-                    val capitalized = module.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-                    val replaced = capitalized.replace("-", "_")
-                    result[type] = "$replaced$type"
-                }
+                .forEach { module -> result[type] = type }
         }
         return result
     }
 
-    /**
-     * This will be needed until [buildExternalModuleParameters] is needed too. When (if) KPM limitation is addressed this will become deprecated and substituted by [getFrameworkBaseNames]
-     */
     private fun trimFrameworkBaseNames(node: KSAnnotated, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
-        if (moduleMetadata.isEmpty()) {
-            val framework = getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException()
-            return framework
-        } else {
-            val framework = moduleMetadata.firstOrNull { it.packageNames.any { p -> p.startsWith(packageName) } }?.frameworkBaseName ?: ""
-            framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
-            return framework
-        }
+        val framework = moduleMetadata.firstOrNull { it.packageNames.any { p -> p.startsWith(packageName) } }?.frameworkBaseName ?: ""
+        framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
+        return framework
     }
 
     private fun getFrameworkBaseNames(
@@ -171,9 +213,8 @@ internal class Processor(
                 stateParameter
             )
         )
-        frameworkBaseNames.ifEmpty {
-            getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) }
-        }
+        frameworkBaseNames.removeIf { it.isBlank() }
+        frameworkBaseNames.ifEmpty { getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) } }
         frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
         return frameworkBaseNames
     }
@@ -201,6 +242,7 @@ internal class Processor(
     ): String {
         val importsParsed = imports.joinToString("\n") { "import $it" }
         val code = """
+            // This file is auto-generated by KSP. Do not edit manually.
             @file:Suppress("unused")
             package $packageName
 
@@ -233,10 +275,11 @@ internal class Processor(
         stateParameterName: String,
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
-        parameters: List<KSValueParameter>
+        parameters: List<KSValueParameter>,
     ): String {
         val importsParsed = imports.joinToString("\n") { "import $it" }
         val code = """
+            // This file is auto-generated by KSP. Do not edit manually.
             @file:Suppress("unused")
             package $packageName
 
@@ -265,34 +308,38 @@ internal class Processor(
                 dependencies = Dependencies(true),
                 packageName = "",
                 fileName = "${composable.name()}UIViewController",
-            ).write(updatedCode.toByteArray())
+            )
+            .write(updatedCode.toByteArray())
         return updatedCode
     }
 
     private fun createSwiftFileWithoutState(
-        frameworkBaseName: List<String>,
+        frameworkBaseNames: List<String>,
         composable: KSFunctionDeclaration,
         makeParameters: List<KSValueParameter>,
-        externalParameters: Map<String, String>
+        externalParameters: Map<String, String>,
+        swiftExportEnabled: Boolean
     ): String {
-        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
+        val frameworks = frameworkBaseNames.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
-            val type = it.resolveType(toSwift = true)
+            val type = it.resolveType(toSwift = true, withSwiftExport = swiftExportEnabled)
             val finalType = if (externalParameters.containsKey(type)) {
                 externalParameters[type]
             } else type
             "let ${it.name()}: $finalType"
         }
+
         val code = """
+            // This file is auto-generated by KSP. Do not edit manually.
             import SwiftUI
             $frameworks
-
+            
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
                 $letParameters
 
                 public func makeUIViewController(context: Context) -> UIViewController {
-                    ${composable.name()}UIViewController().make($makeParametersParsed)
+                    ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.make($makeParametersParsed)
                 }
 
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
@@ -307,40 +354,43 @@ internal class Processor(
                 packageName = "",
                 fileName = "${composable.name()}UIViewControllerRepresentable",
                 extensionName = "swift"
-            ).write(updatedCode.toByteArray())
+            )
+            .write(updatedCode.toByteArray())
         return updatedCode
     }
 
     private fun createSwiftFileWithState(
-        frameworkBaseName: List<String>,
+        frameworkBaseNames: List<String>,
         composable: KSFunctionDeclaration,
         stateParameterName: String,
         stateParameter: KSValueParameter,
         makeParameters: List<KSValueParameter>,
-        externalParameters: Map<String, String>
+        externalParameters: Map<String, String>,
+        swiftExportEnabled: Boolean
     ): String {
-        val frameworks = frameworkBaseName.joinToString("\n") { "import ${it.name()}" }
+        val frameworks = frameworkBaseNames.joinToString("\n") { "import ${it.name()}" }
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
-            val type = it.resolveType(toSwift = true)
+            val type = it.resolveType(toSwift = true, withSwiftExport = swiftExportEnabled)
             val finalType = externalParameters[type] ?: type
             "let ${it.name()}: $finalType"
         }
         val stateType = externalParameters[stateParameter.type.resolve().toString()] ?: stateParameter.type
         val code = """
+            // This file is auto-generated by KSP. Do not edit manually.
             import SwiftUI
             $frameworks
-
+            
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
                 @Binding var $stateParameterName: $stateType
                 $letParameters
 
                 public func makeUIViewController(context: Context) -> UIViewController {
-                    ${composable.name()}UIViewController().make($makeParametersParsed)
+                    ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.make($makeParametersParsed)
                 }
 
                 public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                    ${composable.name()}UIViewController().update($stateParameterName: $stateParameterName)
+                    ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.update($stateParameterName: $stateParameterName)
                 }
             }
         """.trimIndent()
@@ -351,7 +401,41 @@ internal class Processor(
                 packageName = "",
                 fileName = "${composable.name()}UIViewControllerRepresentable",
                 extensionName = "swift"
-            ).write(updatedCode.toByteArray())
+            )
+            .write(updatedCode.toByteArray())
         return updatedCode
+    }
+
+    private fun createConsolidatedSwiftFileWithTypeAlias(info: List<TypeAliasInfo>): String {
+        val warning = """
+            // This file is auto-generated by KSP. Do not edit manually.
+            // It contains typealias for external dependencies used in @${composeUIViewControllerAnnotationName.name()} composables.
+            // If you get errors about missing types, consider using the 'flattenPackage' property in KMP swiftExport settings.
+        """.trimIndent()
+        val importStatement = "import ExportedKotlinPackages"
+
+        val types = info.joinToString("\n") {
+            val hint = "//This typealias can be avoided if you use the `flattenPackage = " +
+                    "\"${it.packageName.split(".${it.name}").first()}\"` in KMP swiftExport settings"
+            "${hint}\ntypealias ${it.name} = ExportedKotlinPackages.${it.packageName}.${it.name}"
+        }
+
+        val code = buildString {
+            appendLine(warning)
+            append(importStatement)
+            append("\n\n")
+            append(types)
+        }
+
+        codeGenerator
+            .createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = "TypeAliasForExternalDependencies",
+                extensionName = "swift"
+            )
+            .write(code.toByteArray())
+
+        return code
     }
 }

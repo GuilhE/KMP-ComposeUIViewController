@@ -2,13 +2,16 @@
 
 # KMP-ComposeUIViewController
 
-KSP library for generating `ComposeUIViewController` and `UIViewControllerRepresentable` implementations when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
+KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIViewControllerRepresentable` files when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
 | Version                                                                                                                                                                                                                     |  Kotlin   |  KSP  | Compose Multiplatform | Xcode  |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------:|:-----:|:---------------------:|:------:|
 | [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.2.20-RC | 2.0.2 |     1.9.0-beta03      | 16.4.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
+
+> [!TIP]
+> For Swift Export support, until the official release of Kotlin 2.3.0, use `2.3.0-dev-4778-1.9.0-beta03`
 
 ## Motivation
 As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary Kotlin and Swift code for you.
@@ -23,12 +26,12 @@ It can be used for **simple** and **advanced** use cases.
 
 Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
 
-> [!TIP]
+> [!NOTE]
 > This library takes care of the heavy lifting for you, but if you're interested in understanding how it works, the detailed approach is explained here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
 
 ## Installation
 
-By using the Gradle plugin all configurations will be applied automatically. If you wish to change the default values, you can configure its parameters using the available  [extension](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+Configure the `plugins` block with the following three plugins. Once added, you can use the `ComposeUiViewController` block to set up the plugin’s configuration.
 
 ```kotlin
 plugins {
@@ -42,6 +45,21 @@ ComposeUiViewController {
     targetName = "Gradient"
 }
 ```
+
+With this setup, all necessary configurations are automatically applied. You only need to adjust the `ComposeUiViewController` block to match your 
+project settings (e.g. `iosAppName` and `targetName`). If you wish to change the default values, you can configure its parameters:
+
+<details><summary>Parameters available</summary>
+
+- `iosAppFolderName` name of the folder containing the iosApp in the root's project tree;
+- `iosAppName` name of the iOS project (`name.xcodeproj`);
+- `targetName` name of the iOS project's target;
+- `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the `UIViewControllerRepresentable` files will be copied to when `autoExport` is `true`;
+- `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
+
+[Default values](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+
+</details>
 
 ## Code generation
 
@@ -57,10 +75,6 @@ To annotate the parameter as the composable state variable (for **advanced** use
 
 > [!IMPORTANT]
 >  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
->
-> The `@ComposeUIViewController` includes a `frameworkBaseName` parameter, allowing you to specify a framework name manually. While the plugin typically attempts to retrieve this name automatically, you can use this parameter to enforce a specific name <ins>if the automatic retrieval fails</ins>.
->
-> For more information consult the [ProcessorTest.kt](kmp-composeuiviewcontroller-ksp/src/test/kotlin/composeuiviewcontroller/ProcessorTest.kt) file from `kmp-composeuiviewcontroller-ksp`.
 
 #### Examples
 
@@ -86,14 +100,14 @@ object ComposeSimpleViewUIViewController {
 and also a `ComposeSimpleViewRepresentable`:
 ```swift
 import SwiftUI
-import SharedUI
+import Shared
 
 public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
-        
+
     func makeUIViewController(context: Context) -> UIViewController {
         ComposeSimpleViewUIViewController().make()
     }
-    
+
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         //unused
     }
@@ -131,16 +145,16 @@ object ComposeAdvancedViewUIViewController {
 and also a `ComposeAdvancedViewRepresentable`:
 ```swift
 import SwiftUI
-import SharedUI
+import Shared
 
 public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
     @Binding var viewState: ViewState
     let callback: () -> Void
-    
+
     func makeUIViewController(context: Context) -> UIViewController {
         ComposeAdvancedViewUIViewController().make(callback: callback)
     }
-    
+
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         ComposeAdvancedViewUIViewController().update(viewState: viewState)
     }
@@ -148,13 +162,16 @@ public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
 ```
 </details>
 
+> [!TIP]
+> The `@ComposeUIViewController` has a `frameworkBaseName` parameter to manually set the framework name. This parameter will only be used <ins>if detection fails within the Processor</ins>.
+
 ### iOSApp
 
 After a successful build the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj` ready to be used:
 
 ```swift
 import SwiftUI
-import SharedUI
+import Shared
 
 struct SomeView: View {
     @State private var state: ViewState = ViewState(isLoading: false)
@@ -170,16 +187,16 @@ struct SomeView: View {
 > Avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
 
 ## Sample
-For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMM plugin for Android Studio and choose `iosApp` in run configurations.
+For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
 
 ```bash
 > Task :shared:kspKotlinIosSimulatorArm64
 note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
 note: [ksp] GradientScreenUIViewController created!
-note: [ksp] GradientScreenRepresentable created!
+note: [ksp] GradientScreenUIViewControllerRepresentable created!
 
 > Task :CopyFilesToXcode
-> Copying files to iosApp/SharedRepresentables/
+> Copying files to iosApp/Representables/
 > Checking for new references to be added to xcodeproj
 > GradientScreenUIViewControllerRepresentable.swift added!
 > Done

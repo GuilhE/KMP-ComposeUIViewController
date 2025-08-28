@@ -6,14 +6,9 @@ plugins {
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
 }
 
-ComposeUiViewController {
-    autoExport = false
-}
-
 kotlin {
-    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
-        target.binaries.framework { baseName = "Models" }
-    }
+    iosArm64()
+    iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
             implementation(compose.ui)

@@ -1,8 +1,19 @@
 # Changelog
 
+## [2.3.0-dev-4778-1.9.0-beta03]
+
+- Kotlin 2.3.0-dev-4778
+
+**Note:** This development version is required for Swift Export support until the official release of Kotlin 2.3.0.
+---
+
 ## [2.2.20-RC-1.9.0-beta03]
 
 - Kotlin 2.2.20-RC
+- Adds experimental support to Swift Export
+
+**Note:** Kotlin 2.2.20-RC has the following issues with Swift Export: [KT-80347](https://youtrack.jetbrains.com/issue/KT-80347/Swift-Export-IllegalArgumentException-Collection-contains-more-than-one-matching-element), [KT-79889](https://youtrack.jetbrains.com/issue/KT-79889/K-N-swift-export-fails-under-several-different-conditions).  
+Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 
 ---
 

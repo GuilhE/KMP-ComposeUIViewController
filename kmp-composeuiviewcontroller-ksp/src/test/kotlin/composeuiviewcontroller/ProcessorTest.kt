@@ -7,14 +7,18 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.EmptyFrameworkBaseNameException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.InvalidParametersException
 import com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider
-import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerAnnotationName
-import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerStateAnnotationName
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
-import com.tschuchort.compiletesting.kspSourcesDir
 import com.tschuchort.compiletesting.symbolProcessorProviders
 import com.tschuchort.compiletesting.useKsp2
+import composeuiviewcontroller.Templates.CodeTemplates
+import composeuiviewcontroller.Templates.CodeTemplates.screenWithParameterType
+import composeuiviewcontroller.Templates.DATA_PACKAGE
+import composeuiviewcontroller.Templates.ExpectedOutputs
+import composeuiviewcontroller.Templates.ModuleConfigs
+import composeuiviewcontroller.Templates.TestFileUtils
+import composeuiviewcontroller.Templates.TestFileUtils.findGeneratedSwiftFile
 import composeuiviewcontroller.TestUtils.klibSourceFiles
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
@@ -65,98 +69,46 @@ class ProcessorTest {
 
     @Test
     fun `Not using @ComposeUIViewController will not generate any file`() {
-        val code = """
-            package com.mycomposable.test
-            
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            
-            data class ViewState(val field: Int = 0)
-            
-            @Composable
-            fun ScreenA(state: ViewState) { }
-            
-            @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
+        val code = CodeTemplates.screenWithoutAnnotations()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-        assertTrue(
-            compilation.kspSourcesDir
-                .walkTopDown()
-                .filter { it.extension == "kt" || it.extension == "swift" }
-                .toList()
-                .isEmpty()
-        )
+        assertTrue(TestFileUtils.hasNoGeneratedFiles(compilation))
     }
 
     @Test
     fun `When frameworkBaseName is provided via ModulesJson it overrides @ComposeUIViewController frameworkBaseName value`() {
-        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false}]""")
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("MyFramework")
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithFrameworkOverride(annotationFramework = "MyFramework")
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
         assertContains(generatedSwiftFiles.first().readText(), "import ComposablesFramework")
     }
 
     @Test
     fun `Empty frameworkBaseName in ModulesJson falls back to frameworkBaseName in @ComposeUIViewController`() {
-        tempArgs.writeText("""[{"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"","experimentalNamespaceFeature":false}]""")
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
+        tempArgs.writeText(ModuleConfigs.singleModule(framework = ""))
+        val code = CodeTemplates.basicScreenWithState(framework = "ComposablesFramework")
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-        assertContains(generatedSwiftFiles.first().readText(), "import ComposablesFramework")
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val generatedSwiftFile = generatedSwiftFiles.first().readText()
+        assertEquals(generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithState())
     }
 
     @Test
     fun `Empty frameworkBaseName in ModulesJson and @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
+        val code = CodeTemplates.screenWithEmptyFramework()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
@@ -166,87 +118,40 @@ class ProcessorTest {
 
     @Test
     fun `Not using @ComposeUIViewControllerState will generate files without state`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import androidx.compose.runtime.Composable
-            
-            data class SomeClass(val field: Int)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(data: SomeClass, value: Int, callBack: () -> Unit) { }
-        """.trimIndent()
+        val code = CodeTemplates.screenWithoutState()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val expectedKotlinOutput = """
-            @file:Suppress("unused")
-            package com.mycomposable.test
-
-            import androidx.compose.ui.window.ComposeUIViewController
-            import platform.UIKit.UIViewController
-
-            object ScreenUIViewController {
-                fun make(data: SomeClass, value: Int, callBack: () -> Unit): UIViewController {
-                    return ComposeUIViewController {
-                        Screen(data, value, callBack)
-                    }
-                }
-            }
-        """.trimIndent()
-        val generatedKotlinFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewController.kt" }
-            .toList()
+        val generatedKotlinFiles = TestFileUtils.findGeneratedKotlinFile(compilation, "ScreenUIViewController.kt")
         assertTrue(generatedKotlinFiles.isNotEmpty())
 
         val generatedKotlinFile = generatedKotlinFiles.first().readText()
-        assertEquals(generatedKotlinFile, expectedKotlinOutput)
+        assertEquals(
+            generatedKotlinFile, ExpectedOutputs.kotlinUIViewControllerWithoutState(
+                params = "data: SomeClass, value: Int, callBack: () -> Unit"
+            )
+        )
 
-        val expectedSwiftOutput = """
-            import SwiftUI
-            import ComposablesFramework
-
-            public struct ScreenRepresentable: UIViewControllerRepresentable {
-                let data: SomeClass
-                let value: KotlinInt
-                let callBack: () -> Void
-
-                public func makeUIViewController(context: Context) -> UIViewController {
-                    ScreenUIViewController().make(data: data, value: value, callBack: callBack)
-                }
-
-                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                    //unused
-                }
-            }
-        """.trimIndent()
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-            .toList()
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
         val generatedSwiftFile = generatedSwiftFiles.first().readText()
-        assertEquals(generatedSwiftFile, expectedSwiftOutput)
+        assertEquals(
+            generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithoutState(
+                params = listOf(
+                    "data" to "SomeClass",
+                    "value" to "KotlinInt",
+                    "callBack" to "() -> Void"
+                )
+            )
+        )
     }
 
     @Test
     fun `Only 1 @ComposeUIViewControllerState is allowed`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
-        """.trimIndent()
+        val code = CodeTemplates.screenWithMultipleStateAnnotations()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
@@ -255,21 +160,7 @@ class ProcessorTest {
 
     @Test
     fun `@Composable functions are not allowed as parameter`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,
-                    callback: () -> Unit,
-                    @Composable content: () -> Unit
-            ) { }
-        """.trimIndent()
+        val code = CodeTemplates.screenWithComposableParameter()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
@@ -279,479 +170,262 @@ class ProcessorTest {
 
     @Test
     fun `Composable functions properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate respective UIViewController and UIViewControllerRepresentable files`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            
-            data class ViewAState(val field: Int)
-            data class ViewBState(val field: Int)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun ScreenA(@ComposeUIViewControllerState state: ViewAState) { }
-            
-            private fun dummy() {}
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewBState) { }
-        """.trimIndent()
+        val code = CodeTemplates.multipleScreensWithDifferentStates()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
-            compilation.kspSourcesDir
-                .walkTopDown()
-                .filter {
-                    it.name == "ScreenAUIViewController.kt" || it.name == "ScreenAUIViewControllerRepresentable.swift" ||
-                            it.name == "ScreenBUIViewController.kt" || it.name == "ScreenBUIViewControllerRepresentable.swift"
-                }
-                .toList()
-                .size,
+            TestFileUtils.countGeneratedFiles(
+                compilation,
+                "ScreenAUIViewController.kt", "ScreenAUIViewControllerRepresentable.swift",
+                "ScreenBUIViewController.kt", "ScreenBUIViewControllerRepresentable.swift"
+            ),
             4
         )
 
-        val expectedKotlinOutput = """
-            @file:Suppress("unused")
-            package com.mycomposable.test
-
-            import androidx.compose.runtime.mutableStateOf
-            import androidx.compose.ui.window.ComposeUIViewController
-            import platform.UIKit.UIViewController
-
-            object ScreenAUIViewController {
-                private val state = mutableStateOf<ViewAState?>(null)
-
-                fun make(): UIViewController {
-                    return ComposeUIViewController {
-                        state.value?.let { ScreenA(it) }
-                    }
-                }
-
-                fun update(state: ViewAState) {
-                    this.state.value = state
-                }
-            }
-        """.trimIndent()
-        val generatedKotlinFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenAUIViewController.kt" }
+        val generatedKotlinFiles = TestFileUtils.findGeneratedKotlinFile(compilation, "ScreenAUIViewController.kt")
         val generatedKotlinFile = generatedKotlinFiles.first().readText()
-        assertEquals(generatedKotlinFile, expectedKotlinOutput)
+        assertEquals(generatedKotlinFile, ExpectedOutputs.kotlinUIViewControllerWithState())
 
-        val expectedSwiftOutput = """
-            import SwiftUI
-            import ComposablesFramework
-
-            public struct ScreenARepresentable: UIViewControllerRepresentable {
-                @Binding var state: ViewAState
-                
-                public func makeUIViewController(context: Context) -> UIViewController {
-                    ScreenAUIViewController().make()
-                }
-
-                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                    ScreenAUIViewController().update(state: state)
-                }
-            }
-        """.trimIndent()
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenAUIViewControllerRepresentable.swift" }
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenAUIViewControllerRepresentable.swift")
         val generatedSwiftFile = generatedSwiftFiles.first().readText()
-        assertEquals(generatedSwiftFile, expectedSwiftOutput)
+        assertEquals(generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithState(functionName = "ScreenA", stateType = "ViewAState"))
     }
 
     @Test
     fun `Composable functions from different files are parsed once only once`() {
-        val data = """
-            package com.mycomposable.data
-            data class ViewState(val field: Int = 0)
-        """.trimIndent()
-        val codeA = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            import com.mycomposable.data.*
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
-        val codeB = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            import com.mycomposable.data.*
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewState) { }
-        """.trimIndent()
+        val data = CodeTemplates.viewStateFile(packageName = DATA_PACKAGE)
+        val codeA = CodeTemplates.screenWithCrossPackageImport(functionName = "ScreenA")
+        val codeB = CodeTemplates.screenWithCrossPackageImport(functionName = "ScreenB")
 
         val compilation = prepareCompilation(
-            kotlin("ScreenA.kt", codeA), kotlin("ScreenB.kt", codeB), kotlin("Data.kt", data), *klibSourceFiles().toTypedArray()
+            kotlin("ScreenA.kt", codeA),
+            kotlin("ScreenB.kt", codeB),
+            kotlin("Data.kt", data),
+            *klibSourceFiles().toTypedArray()
         )
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
-            compilation.kspSourcesDir.walkTopDown()
-                .filter {
-                    it.name == "ScreenAUIViewController.kt" || it.name == "ScreenAUIViewControllerRepresentable.swift" ||
-                            it.name == "ScreenBUIViewController.kt" || it.name == "ScreenBUIViewControllerRepresentable.swift"
-                }
-                .toList()
-                .size,
+            TestFileUtils.countGeneratedFiles(
+                compilation,
+                "ScreenAUIViewController.kt", "ScreenAUIViewControllerRepresentable.swift",
+                "ScreenBUIViewController.kt", "ScreenBUIViewControllerRepresentable.swift"
+            ),
             4
         )
     }
 
     @Test
     fun `Composable functions in the same file are parsed once only once`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.ui.window.ComposeUIViewController
-            import platform.UIKit.UIViewController
-            import androidx.compose.runtime.*
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun ScreenA(@ComposeUIViewControllerState state: ViewState) { }
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun ScreenB(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit) { }
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun ScreenC(@ComposeUIViewControllerState state: ViewState, callBackA: () -> Unit, callBackB: () -> Unit) { }
-        """.trimIndent()
+        val code = CodeTemplates.multipleScreensInSameFile()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
-            compilation.kspSourcesDir.walkTopDown()
-                .filter {
-                    it.name == "ScreenAUIViewController.kt" || it.name == "ScreenAUIViewControllerRepresentable.swift" ||
-                            it.name == "ScreenBUIViewController.kt" || it.name == "ScreenBUIViewControllerRepresentable.swift" ||
-                            it.name == "ScreenCUIViewController.kt" || it.name == "ScreenCUIViewControllerRepresentable.swift"
-                }
-                .toList()
-                .size,
+            TestFileUtils.countGeneratedFiles(
+                compilation,
+                "ScreenAUIViewController.kt", "ScreenAUIViewControllerRepresentable.swift",
+                "ScreenBUIViewController.kt", "ScreenBUIViewControllerRepresentable.swift",
+                "ScreenCUIViewController.kt", "ScreenCUIViewControllerRepresentable.swift"
+            ),
             6
         )
     }
 
     @Test
-    fun `Function parameters with Kotlin types will map to Swift types`() {
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            import com.mycomposable.test.ViewState                       
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,
-                    callBackA: () -> Unit,
-                    callBackB: (List<Map<String, List<Int>>>) -> List<String>,
-                    callBackS: (Set<Int>) -> Unit,
-                    callBackC: (MutableList<String>) -> Unit,
-                    callBackD: (Map<String, String>) -> Unit,
-                    callBackE: (MutableMap<String, String>) -> Unit,
-                    callBackF: (Byte) -> Unit,
-                    callBackG: (UByte) -> Unit,
-                    callBackH: (Short) -> Unit,
-                    callBackI: (UShort) -> Unit,
-                    callBackJ: (Int) -> Unit,
-                    callBackK: (UInt) -> Unit,
-                    callBackL: (Long) -> Unit,
-                    callBackM: (ULong) -> Unit,
-                    callBackN: (Float) -> Unit,
-                    callBackO: (Double) -> Unit,
-                    callBackP: (Boolean) -> Unit
-            ) { }
-        """.trimIndent()
+    fun `Collection or Map parameters without type specification will throw TypeResolutionError`() {
+        val testCases = listOf("List", "MutableList", "Set", "Map", "MutableMap")
+
+        testCases.forEach { collectionType ->
+            val code = screenWithParameterType(collectionType)
+            val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+            val result = compilation.compile()
+            assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        }
+
+        val codeWithReturnType = screenWithParameterType("List")
+        val compilationReturn = prepareCompilation(kotlin("Screen.kt", codeWithReturnType), *klibSourceFiles().toTypedArray())
+        val resultReturn = compilationReturn.compile()
+        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, resultReturn.exitCode)
+    }
+
+    @Test
+    fun `Processor handles generic types in parameters`() {
+        val code = CodeTemplates.screenWithGenericData()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val generatedSwiftFiles = compilation.kspSourcesDir.walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-            .toList()
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
-        val expectedSwiftOutput = """
-                import SwiftUI
-                import ComposablesFramework
-                
-                public struct ScreenRepresentable: UIViewControllerRepresentable {
-                    @Binding var state: ViewState
-                    let callBackA: () -> Void
-                    let callBackB: (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>
-                    let callBackS: (Set<KotlinInt>) -> Void
-                    let callBackC: (NSMutableArray<String>) -> Void
-                    let callBackD: (Dictionary<String, String>) -> Void
-                    let callBackE: (NSMutableDictionary<String, String>) -> Void
-                    let callBackF: (KotlinByte) -> Void
-                    let callBackG: (KotlinUByte) -> Void
-                    let callBackH: (KotlinShort) -> Void
-                    let callBackI: (KotlinUShort) -> Void
-                    let callBackJ: (KotlinInt) -> Void
-                    let callBackK: (KotlinUInt) -> Void
-                    let callBackL: (KotlinLong) -> Void
-                    let callBackM: (KotlinULong) -> Void
-                    let callBackN: (KotlinFloat) -> Void
-                    let callBackO: (KotlinDouble) -> Void
-                    let callBackP: (KotlinBoolean) -> Void
-                
-                    public func makeUIViewController(context: Context) -> UIViewController {
-                        ScreenUIViewController().make(callBackA: callBackA, callBackB: callBackB, callBackS: callBackS, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
-                    }
-                
-                    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                        ScreenUIViewController().update(state: state)
-                    }
-                }
-        """.trimIndent()
-        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "GenericData<KotlinInt>")
     }
 
     @Test
-    fun `Collection or Map parameters without type specification will throw TypeResolutionError`() {
-        var code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,                   
-                    callBackB: (List) -> Unit
-            ) { }
-        """.trimIndent()
-        var compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+    fun `Processor handles complex nested generics correctly`() {
+        val code = CodeTemplates.screenWithComplexGenerics()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
-        var result = compilation.compile()
-        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
 
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,                   
-                    callBackC: (MutableList) -> Unit
-            ) { }
-        """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
-        result = compilation.compile()
-        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-
-        code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,                   
-                    callBackE: (Set) -> Unit
-            ) { }
-        """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
-        result = compilation.compile()
-        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-
-        code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,                   
-                    callBackD: (Map) -> Unit
-            ) { }
-        """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
-        result = compilation.compile()
-        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-
-        code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,                   
-                    callBackE: (MutableMap) -> Unit                   
-            ) { }
-        """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
-        result = compilation.compile()
-        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-
-        code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            
-            data class ViewState(val field: Int = 0)
-
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(
-                    @ComposeUIViewControllerState state: ViewState,                   
-                    callBackB: (List<String>) -> List
-            ) { }
-        """.trimIndent()
-        compilation = prepareCompilation(kotlin("Screen.kt", code))
-        result = compilation.compile()
-        assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "Dictionary<String, Array<Dictionary<String, KotlinInt>>>")
+        assertContains(swiftContent, "Array<Dictionary<String, String>>")
     }
 
     @Test
     fun `Types imported from different KMP modules will not produce Swift files by default`() {
-        tempArgs.writeText(
-            """
-                [
-                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":false},
-                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","experimentalNamespaceFeature":false}
-                ]
-                """.trimIndent()
+        tempArgs.writeText(ModuleConfigs.twoModules())
+
+        val dataCode = CodeTemplates.dataFile()
+        val screenCode = CodeTemplates.screenWithExternalDataDependency()
+
+        val compilation = prepareCompilation(
+            kotlin("Screen.kt", screenCode),
+            kotlin("Data.kt", dataCode),
+            *klibSourceFiles().toTypedArray()
         )
-        val data = """
-            package com.mycomposable.data
-            data class Data(val field: Int)
-        """.trimIndent()
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            import com.mycomposable.data.Data
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(data: Data) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-            .toList()
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
-        val expectedSwiftOutput = """
-            import SwiftUI
-            import ComposablesFramework
-
-            public struct ScreenRepresentable: UIViewControllerRepresentable {
-                let data: Data
-
-                public func makeUIViewController(context: Context) -> UIViewController {
-                    ScreenUIViewController().make(data: data)
-                }
-
-                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                    //unused
-                }
-            }
-        """.trimIndent()
+        val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithExternalDependency()
         assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
     }
 
     @Test
-    fun `Types imported from different KMP modules will produce Swift files with composed types when experimentalNamespaceFeature flag is true`() {
-        tempArgs.writeText(
-            """
-                [
-                    {"name":"module-test","packageNames":["com.mycomposable.test"],"frameworkBaseName":"ComposablesFramework","experimentalNamespaceFeature":true},
-                    {"name":"module-data","packageNames":["com.mycomposable.data"],"frameworkBaseName":"ComposablesFramework2","experimentalNamespaceFeature":true}
-                ]
-                """.trimIndent()
+    fun `Types imported from different KMP modules will produce Swift files with composed types when swiftExport flag is true`() {
+        tempArgs.writeText(ModuleConfigs.twoModules(moduleASwiftExport = true))
+
+        val dataCode = CodeTemplates.dataFile()
+        val screenCode = CodeTemplates.screenWithExternalDataDependency()
+
+        val compilation = prepareCompilation(
+            kotlin("Screen.kt", screenCode),
+            kotlin("Data.kt", dataCode),
+            *klibSourceFiles().toTypedArray()
         )
-        val data = """
-            package com.mycomposable.data
-            data class Data(val field: Int)
-        """.trimIndent()
-        val code = """
-            package com.mycomposable.test
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
-            import androidx.compose.runtime.Composable
-            import com.mycomposable.data.Data
-            
-            @ComposeUIViewController("ComposablesFramework")
-            @Composable
-            fun Screen(data: Data) { }
-        """.trimIndent()
-        val compilation = prepareCompilation(kotlin("Screen.kt", code), kotlin("Data.kt", data), *klibSourceFiles().toTypedArray())
 
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
-        val generatedSwiftFiles = compilation.kspSourcesDir
-            .walkTopDown()
-            .filter { it.name == "ScreenUIViewControllerRepresentable.swift" }
-            .toList()
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
-        val expectedSwiftOutput = """
-            import SwiftUI
-            import ComposablesFramework
+        val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithExternalDependencies(
+            framework = Templates.DEFAULT_FRAMEWORK,
+            framework2 = Templates.FRAMEWORK_2,
+            functionName = "Screen"
+        )
 
-            public struct ScreenRepresentable: UIViewControllerRepresentable {
-                let data: Module_dataData
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+    }
 
-                public func makeUIViewController(context: Context) -> UIViewController {
-                    ScreenUIViewController().make(data: data)
-                }
+    @Test
+    fun `TypeAliasForExternalDependencies file will be created when external dependencies exist without flattenPackage configurations`() {
+        tempArgs.writeText(ModuleConfigs.multiModule(swiftExportEnabled = true))
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-                    //unused
-                }
-            }
+        val dataCode = CodeTemplates.dataFile()
+        val stateCode = CodeTemplates.viewStateFile()
+        val screenCode = CodeTemplates.screenWithExternalStateAndData()
+
+        val compilation = prepareCompilation(
+            kotlin("Screen.kt", screenCode),
+            kotlin("Data.kt", dataCode),
+            kotlin("State.kt", stateCode),
+            *klibSourceFiles().toTypedArray()
+        )
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "TypeAliasForExternalDependencies.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedTypeAliasSwiftOutput = ExpectedOutputs.swiftTypeAliasForExternalDependencies()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedTypeAliasSwiftOutput)
+    }
+
+    @Test
+    fun `TypeAliasForExternalDependencies file will exclude external dependencies with flattenPackage configurations`() {
+        tempArgs.writeText(
+            ModuleConfigs.twoModules(
+                moduleASwiftExport = true, moduleAFlattenPackage = true,
+                moduleBSwiftExport = true, moduleBFlattenPackage = false,
+            )
+        )
+
+        val dataCode = CodeTemplates.dataFile()
+        val stateCode = CodeTemplates.viewStateFile()
+        val screenCode = CodeTemplates.screenWithExternalStateAndData()
+
+        val compilation = prepareCompilation(
+            kotlin("Screen.kt", screenCode),
+            kotlin("Data.kt", dataCode),
+            kotlin("State.kt", stateCode),
+            *klibSourceFiles().toTypedArray()
+        )
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "TypeAliasForExternalDependencies.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+        val expectedTypeAliasSwiftOutput = """
+            // This file is auto-generated by KSP. Do not edit manually.
+            // It contains typealias for external dependencies used in @ComposeUIViewController composables.
+            // If you get errors about missing types, consider using the 'flattenPackage' property in KMP swiftExport settings.
+            import ExportedKotlinPackages
+
+            //This typealias can be avoided if you use the `flattenPackage = "com.mycomposable.data"` in KMP swiftExport settings
+            typealias Data = ExportedKotlinPackages.com.mycomposable.data.Data
         """.trimIndent()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedTypeAliasSwiftOutput)
+    }
+
+    @Test
+    fun `Function parameters with Kotlin types will map to ObjC-Swift export types`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithKotlinTypes()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithObjCTypes()
+        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+    }
+
+    @Test
+    fun `Function parameters with Kotlin types will map to Swift export types`() {
+        tempArgs.writeText(ModuleConfigs.singleModule(swiftExportEnabled = true))
+        val code = CodeTemplates.screenWithKotlinTypes()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithSwiftExportTypes()
         assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
     }
 }
