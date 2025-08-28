@@ -8,7 +8,7 @@ __Note:__ This development version is required for Swift Export support until th
 
 ---
 
-## [2.2.20-RC-1.9.0-beta03]
+## [2.2.20-RC-1.9.0-beta03-1]
 
 - Kotlin 2.2.20-RC
 - Adds experimental support to Swift Export
