@@ -289,7 +289,7 @@ class ProcessorTest {
         tempArgs.writeText(ModuleConfigs.twoModules())
 
         val dataCode = CodeTemplates.dataFile()
-        val screenCode = CodeTemplates.screenWithExternalDataDependency()
+        val screenCode = CodeTemplates.screenWithExternalData()
 
         val compilation = prepareCompilation(
             kotlin("Screen.kt", screenCode),
@@ -312,7 +312,7 @@ class ProcessorTest {
         tempArgs.writeText(ModuleConfigs.twoModules(moduleASwiftExport = true))
 
         val dataCode = CodeTemplates.dataFile()
-        val screenCode = CodeTemplates.screenWithExternalDataDependency()
+        val screenCode = CodeTemplates.screenWithExternalData()
 
         val compilation = prepareCompilation(
             kotlin("Screen.kt", screenCode),
@@ -337,7 +337,7 @@ class ProcessorTest {
 
     @Test
     fun `TypeAliasForExternalDependencies file will be created when external dependencies exist without flattenPackage configurations`() {
-        tempArgs.writeText(ModuleConfigs.multiModule(swiftExportEnabled = true))
+        tempArgs.writeText(ModuleConfigs.treeModules(moduleASwiftExport = true, moduleBSwiftExport = true, moduleCSwiftExport = true))
 
         val dataCode = CodeTemplates.dataFile()
         val stateCode = CodeTemplates.viewStateFile()
@@ -363,9 +363,10 @@ class ProcessorTest {
     @Test
     fun `TypeAliasForExternalDependencies file will exclude external dependencies with flattenPackage configurations`() {
         tempArgs.writeText(
-            ModuleConfigs.twoModules(
+            ModuleConfigs.treeModules(
                 moduleASwiftExport = true, moduleAFlattenPackage = true,
                 moduleBSwiftExport = true, moduleBFlattenPackage = false,
+                moduleCSwiftExport = true, moduleCFlattenPackage = true,
             )
         )
 

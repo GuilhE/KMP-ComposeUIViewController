@@ -271,7 +271,7 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-        fun screenWithExternalDataDependency(packageName: String = TEST_PACKAGE) = """
+        fun screenWithExternalData(packageName: String = TEST_PACKAGE) = """
             package $packageName
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -359,16 +359,30 @@ object Templates {
             ]
         """.trimIndent()
 
-        fun multiModule(
+        fun treeModules(
             testFramework: String = DEFAULT_FRAMEWORK,
             dataFramework: String = FRAMEWORK_2,
             stateFramework: String = FRAMEWORK_3,
-            swiftExportEnabled: Boolean = false
+        ) = treeModules(moduleA = testFramework, moduleB = dataFramework, moduleC = stateFramework)
+
+        fun treeModules(
+            moduleA: String = DEFAULT_FRAMEWORK,
+            moduleASwiftExport: Boolean = false,
+            moduleAFlattenPackage: Boolean = false,
+            moduleB: String = FRAMEWORK_2,
+            moduleBSwiftExport: Boolean = false,
+            moduleBFlattenPackage: Boolean = false,
+            moduleC: String = FRAMEWORK_3,
+            moduleCSwiftExport: Boolean = false,
+            moduleCFlattenPackage: Boolean = false
         ) = """
             [
-                {"name":"module-test","packageNames":["$TEST_PACKAGE"],"frameworkBaseName":"$testFramework","swiftExportEnabled":$swiftExportEnabled,"flattenPackageConfigured":false},
-                {"name":"module-data","packageNames":["$DATA_PACKAGE"],"frameworkBaseName":"$dataFramework","swiftExportEnabled":$swiftExportEnabled,"flattenPackageConfigured":false},
-                {"name":"module-state","packageNames":["$STATE_PACKAGE"],"frameworkBaseName":"$stateFramework","swiftExportEnabled":$swiftExportEnabled,"flattenPackageConfigured":false}
+                {"name":"module-test","packageNames":["$TEST_PACKAGE"],"frameworkBaseName":"$moduleA","swiftExportEnabled":$moduleASwiftExport,
+                "flattenPackageConfigured":$moduleAFlattenPackage},
+                {"name":"module-data","packageNames":["$DATA_PACKAGE"],"frameworkBaseName":"$moduleB","swiftExportEnabled":$moduleBSwiftExport,
+                "flattenPackageConfigured":$moduleBFlattenPackage},
+                {"name":"module-state","packageNames":["$STATE_PACKAGE"],"frameworkBaseName":"$moduleC","swiftExportEnabled":$moduleCSwiftExport,
+                "flattenPackageConfigured":$moduleCFlattenPackage}
             ]
         """.trimIndent()
     }

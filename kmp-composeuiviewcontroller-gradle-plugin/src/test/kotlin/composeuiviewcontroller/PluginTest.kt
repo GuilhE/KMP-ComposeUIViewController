@@ -340,7 +340,6 @@ class PluginTest {
 
                 kotlin {
                     iosSimulatorArm64()
-                    @OptIn(ExperimentalSwiftExportDsl::class)
                     swiftExport {}
                 }
                 """

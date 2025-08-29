@@ -43,7 +43,6 @@ internal class Processor(
         }
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
-        var hasSwiftExportEnabled = false
 
         val accumulatedTypeAliases = mutableSetOf<TypeAliasInfo>()
         for (node in trimmedCandidates) {
@@ -65,7 +64,6 @@ internal class Processor(
                             .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                     }
                     val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
-                    val externalPackages = externalImports.map { it.substringBeforeLast('.') }.distinct().plus(packageName)
                     val modulesMetadata = getFrameworkMetadataFromDisk()
                     val swiftExportEnabled: Boolean = modulesMetadata.firstOrNull()?.swiftExportEnabled ?: false
                     val externalModuleTypes = if (swiftExportEnabled) {
@@ -112,44 +110,46 @@ internal class Processor(
                         }
                     }
 
-                    modulesMetadata
-                        .filter { module -> !module.flattenPackageConfigured && module.packageNames.any { it in externalPackages } }
-                        .distinct()
-                        .forEach { module ->
-                            if (swiftExportEnabled) {
-                                hasSwiftExportEnabled = true
-                                val internalImport = packageName == module.packageNames.first()
-
+                    if (swiftExportEnabled) {
+                        val externalPackages = externalImports.map { it.substringBeforeLast('.') }.distinct().plus(packageName)
+                        modulesMetadata
+                            .filter { module -> !module.flattenPackageConfigured }
+                            .distinct()
+                            .forEach { module ->
+                                val internalImport = module.packageNames.any { modulePackage ->
+                                    modulePackage.startsWith(packageName) || modulePackage == packageName
+                                }
                                 if (internalImport) {
                                     accumulatedTypeAliases.add(
                                         TypeAliasInfo(name = "${composable.name()}UIViewController", packageName = packageName)
                                     )
-                                } else {
-                                    val modulePackage = module.packageNames.first()
-                                    val typesFromThisModule = externalImports
-                                        .filter { it.startsWith("$modulePackage.") }
-                                        .map { it.substringAfterLast(".") }
-                                    typesFromThisModule.forEach { typeName ->
-                                        accumulatedTypeAliases.add(
-                                            TypeAliasInfo(
-                                                name = typeName,
-                                                packageName = modulePackage
-                                            )
-                                        )
+                                }
+
+                                val hasExternalPackages = module.packageNames.any { it in externalPackages }
+                                if (hasExternalPackages) {
+                                    externalPackages.forEach { externalModule ->
+                                        if (module.packageNames.contains(externalModule)) {
+                                            val typesFromThisModule = externalImports
+                                                .filter { it.startsWith("$externalModule.") }
+                                                .map { it.substringAfterLast(".") }
+                                            typesFromThisModule.forEach { typeName ->
+                                                val typeAlias = TypeAliasInfo(name = typeName, packageName = externalModule)
+                                                accumulatedTypeAliases.add(typeAlias)
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
+                    }
                 }
             }
         }
 
-        if (hasSwiftExportEnabled && accumulatedTypeAliases.isNotEmpty()) {
+        if (accumulatedTypeAliases.isNotEmpty()) {
             createConsolidatedSwiftFileWithTypeAlias(accumulatedTypeAliases.toList()).also {
                 logger.info("TypeAliasForExternalDependencies.swift created with $accumulatedTypeAliases typealias")
             }
         }
-
         return emptyList()
     }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-dev-4778-1.9.0-beta03-1]
+
+- Compatible with 2.3.0-dev-4778-1.9.0-beta03-1
+
+---
+
 ## [2.3.0-dev-4778-1.9.0-beta03]
 
 - Compatible with 2.3.0-dev-4778-1.9.0-beta03
