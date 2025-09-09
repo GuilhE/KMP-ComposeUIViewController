@@ -15,17 +15,19 @@ ComposeUiViewController {
 
 kotlin {
     jvm()
-    iosArm64()
-    iosSimulatorArm64()
-    @OptIn(ExperimentalSwiftExportDsl::class)
-    swiftExport {
-        moduleName = "Composables"
-        flattenPackage = "com.sample.shared"
-        export(projects.sharedModels) {
-            moduleName = "Models"
-            flattenPackage = "com.sample.models"
-        }
-    }
+//    iosArm64()
+//    iosSimulatorArm64()
+//    @OptIn(ExperimentalSwiftExportDsl::class)
+//    swiftExport {
+//        moduleName = "Composables"
+//        flattenPackage = "com.sample.shared"
+//        export(projects.sharedModels) {
+//            moduleName = "Models"
+//            flattenPackage = "com.sample.models"
+//        }
+//    }
+
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target -> target.binaries.framework { baseName = "Composables" } }
 
     sourceSets {
         commonMain.dependencies {
@@ -35,6 +37,6 @@ kotlin {
             implementation(compose.ui)
         }
         jvmMain.dependencies { implementation(compose.preview) }
-        iosMain.dependencies { api(projects.sharedModels)}
+        iosMain.dependencies { api(projects.sharedModels) }
     }
 }
