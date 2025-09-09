@@ -1,8 +1,8 @@
 # Changelog
 
-## [2.3.0-dev-4778-1.9.0-rc01]
+## [2.3.0-dev-5897-1.9.0-rc01]
 
-- Compatible with 2.3.0-dev-4778-1.9.0-rc01
+- Compatible with 2.3.0-dev-5897-1.9.0-rc01
 
 ---
 
