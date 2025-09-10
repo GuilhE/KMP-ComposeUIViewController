@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.20-1.9.0-rc01]
+
+- Kotlin 2.2.20
+- SerializationPlugin 2.2.20
+
+---
+
 ## [2.3.0-dev-5897-1.9.0-rc01]
 
 - Kotlin 2.3.0-dev-5897
