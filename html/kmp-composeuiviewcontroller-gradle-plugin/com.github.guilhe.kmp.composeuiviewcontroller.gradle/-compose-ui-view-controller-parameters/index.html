@@ -1,0 +1,221 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ComposeUiViewControllerParameters</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../index.html" tabindex="1">
+                    ComposeUIViewController
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">2.2.20-1.9.0-rc01
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":kmp-composeuiviewcontroller-gradle-plugin/main">jvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":kmp-composeuiviewcontroller-gradle-plugin/main" data-filter=":kmp-composeuiviewcontroller-gradle-plugin/main">
+                                <span class="checkbox--icon"></span>
+                                jvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    ComposeUIViewController
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="kmp-composeuiviewcontroller-gradle-plugin::com.github.guilhe.kmp.composeuiviewcontroller.gradle/ComposeUiViewControllerParameters///PointingToDeclaration//1543050370">
+  <div class="breadcrumbs"><a href="../../index.html">kmp-composeuiviewcontroller-gradle-plugin</a><span class="delimiter">/</span><a href="../index.html">com.github.guilhe.kmp.composeuiviewcontroller.gradle</a><span class="delimiter">/</span><span class="current">ComposeUiViewControllerParameters</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Compose</span><wbr><span>Ui</span><wbr><span>View</span><wbr><span>Controller</span><wbr><span><span>Parameters</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kmp-composeuiviewcontroller-gradle-plugin/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="index.html">ComposeUiViewControllerParameters</a></div><p class="paragraph">Gradle extension to configure the plugin parameters</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="tableheader">Constructors</h2>
+        <div class="table"><a data-name="-1866027703%2FConstructors%2F1543050370" anchor-label="ComposeUiViewControllerParameters" id="-1866027703%2FConstructors%2F1543050370" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main"></a>
+          <div class="table-row table-row_content" data-togglable="CONSTRUCTOR" data-filterable-current=":kmp-composeuiviewcontroller-gradle-plugin/main" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-compose-ui-view-controller-parameters.html"><span>Compose</span><wbr><span>Ui</span><wbr><span>View</span><wbr><span>Controller</span><wbr><span><span>Parameters</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1866027703%2FConstructors%2F1543050370"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kmp-composeuiviewcontroller-gradle-plugin/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="281397341%2FProperties%2F1543050370" anchor-label="autoExport" id="281397341%2FProperties%2F1543050370" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":kmp-composeuiviewcontroller-gradle-plugin/main" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="auto-export.html"><span>auto</span><wbr><span><span>Export</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="281397341%2FProperties%2F1543050370"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kmp-composeuiviewcontroller-gradle-plugin/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="auto-export.html">autoExport</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Auto export generated files to Xcode project. If set to <code class="lang-kotlin">false</code>, you will find the generated files under <code class="lang-kotlin">/build/generated/ksp/</code>. Warning: avoid deleting <code class="lang-kotlin">[iosAppFolderName]/[exportFolderName]</code> without first using Xcode to <code class="lang-kotlin">Remove references</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-54482765%2FProperties%2F1543050370" anchor-label="exportFolderName" id="-54482765%2FProperties%2F1543050370" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":kmp-composeuiviewcontroller-gradle-plugin/main" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="export-folder-name.html"><span>export</span><wbr><span>Folder</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-54482765%2FProperties%2F1543050370"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kmp-composeuiviewcontroller-gradle-plugin/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="export-folder-name.html">exportFolderName</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Name of the destination folder inside iOS project (<a href="ios-app-folder-name.html">iosAppFolderName</a>) where the Composable files will be copied to when <a href="auto-export.html">autoExport</a> is <code class="lang-kotlin">true</code></p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="85071251%2FProperties%2F1543050370" anchor-label="iosAppFolderName" id="85071251%2FProperties%2F1543050370" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":kmp-composeuiviewcontroller-gradle-plugin/main" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="ios-app-folder-name.html"><span>ios</span><wbr><span>App</span><wbr><span>Folder</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="85071251%2FProperties%2F1543050370"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kmp-composeuiviewcontroller-gradle-plugin/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="ios-app-folder-name.html">iosAppFolderName</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Name of the folder containing the iosApp in the root's project tree</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2107787937%2FProperties%2F1543050370" anchor-label="iosAppName" id="2107787937%2FProperties%2F1543050370" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":kmp-composeuiviewcontroller-gradle-plugin/main" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="ios-app-name.html"><span>ios</span><wbr><span>App</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2107787937%2FProperties%2F1543050370"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kmp-composeuiviewcontroller-gradle-plugin/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="ios-app-name.html">iosAppName</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Name of the iOS project (name.xcodeproj)</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1731830020%2FProperties%2F1543050370" anchor-label="targetName" id="1731830020%2FProperties%2F1543050370" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":kmp-composeuiviewcontroller-gradle-plugin/main" data-filterable-set=":kmp-composeuiviewcontroller-gradle-plugin/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="target-name.html"><span>target</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1731830020%2FProperties%2F1543050370"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kmp-composeuiviewcontroller-gradle-plugin/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="target-name.html">targetName</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Name of the iOS project's target</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2025 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
