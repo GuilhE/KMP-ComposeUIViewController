@@ -28,3 +28,25 @@ dependencies {
     dokka(project(":kmp-composeuiviewcontroller-annotations"))
     dokka(project(":kmp-composeuiviewcontroller-gradle-plugin"))
 }
+
+tasks.register("serveDokka") {
+    dependsOn("dokkaGenerate")
+    doLast {
+        val docsDir = file("${rootProject.layout.buildDirectory.asFile.get().path}/dokka/html")
+        val port = (project.findProperty("port") as String?)?.toIntOrNull() ?: 8080
+        try {
+            java.net.ServerSocket(port).use { true }
+        } catch (_: Exception) {
+            println("📖 Already serving Dokka docs at http://localhost:$port")
+            return@doLast
+        }
+
+        val process = ProcessBuilder("python3", "-m", "http.server", "$port")
+            .directory(docsDir)
+            .redirectErrorStream(true)
+            .start()
+        println("📖 Serving Dokka docs at http://localhost:$port")
+        Thread { process.inputStream.bufferedReader().forEachLine { println(it) } }.start()
+        process.waitFor()
+    }
+}
