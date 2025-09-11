@@ -33,7 +33,7 @@ jobs:
           cache: gradle
 
       - name: Build Dokka HTML
-        run: ./gradlew dokkaHtmlMultiModule
+        run: ./gradlew dokkaGenerate
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4

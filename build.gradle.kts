@@ -23,3 +23,8 @@ tasks.register("publishLibraryModules") {
     dependsOn(":kmp-composeuiviewcontroller-annotations:publishToMavenCentral")
     finalizedBy(":kmp-composeuiviewcontroller-ksp:publishToMavenCentral")
 }
+
+dependencies {
+    dokka(project(":kmp-composeuiviewcontroller-annotations"))
+    dokka(project(":kmp-composeuiviewcontroller-gradle-plugin"))
+}
