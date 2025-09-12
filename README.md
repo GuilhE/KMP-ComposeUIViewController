@@ -13,7 +13,7 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 > [!TIP]
 > For Swift Export support, until the official release of Kotlin 2.3.0, use `2.3.0-dev-*`.
-> Don't forget to change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`
+> Don't forget to change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`, and delete the `Derived Data` (recommended when switching between modes)
 
 ## Motivation
 As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary Kotlin and Swift code for you.
