@@ -18,16 +18,16 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     @OptIn(ExperimentalSwiftExportDsl::class)
-    swiftExport {
-        moduleName = "Composables"
-        flattenPackage = "com.sample.shared"
-        export(projects.sharedModels) {
-            moduleName = "Models"
-            flattenPackage = "com.sample.models"
-        }
-    }
+//    swiftExport {
+//        moduleName = "Composables"
+//        flattenPackage = "com.sample.shared"
+//        export(projects.sharedModels) {
+//            moduleName = "Models"
+//            flattenPackage = "com.sample.models"
+//        }
+//    }
 
-//    listOf(iosArm64(), iosSimulatorArm64()).forEach { target -> target.binaries.framework { baseName = "Composables" } }
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target -> target.binaries.framework { baseName = "Composables" } }
 
     sourceSets {
         commonMain.dependencies {

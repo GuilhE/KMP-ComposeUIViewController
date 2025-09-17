@@ -1,9 +1,8 @@
 import Composables
-import Models
 import SwiftUI
 
 struct SharedView: View {
-    @State private var screenState: ScreenStateExternal = ScreenStateExternal (
+    @State private var screenState: ScreenState = ScreenState (
         startColor: Color.red.asInt64,
         endColor: Color.blue.asInt64
     )
@@ -22,9 +21,9 @@ struct SharedView: View {
     
     var body: some View {
         GradientScreenRepresentable(state: $screenState, randomize: { millis in
-            print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(milliseconds: millis)))", terminator: "\n")
+            print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(milliseconds: Int64(truncating: millis))))", terminator: "\n")
             let randomColors = colorValues.shuffled().prefix(2)
-            screenState = ScreenStateExternal(
+            screenState = ScreenState(
                 startColor: randomColors.first!,
                 endColor: randomColors.last!
             )
@@ -39,7 +38,6 @@ private func dateFromMilliseconds(milliseconds: Int64) -> Date {
 }
 
 private extension Color {
-    /// Converts SwiftUI Color to Int64 (ARGB format)
     var asInt64: Int64 {
         let uiColor = UIColor(self)
         var red: CGFloat = 0
@@ -57,7 +55,6 @@ private extension Color {
         return (alphaValue << 24) | (redValue << 16) | (greenValue << 8) | blueValue
     }
     
-    /// Creates Color from Int64 (ARGB format) - useful for debugging/preview
     init(argb: Int64) {
         let alpha = Double((argb >> 24) & 0xFF) / 255.0
         let red = Double((argb >> 16) & 0xFF) / 255.0
