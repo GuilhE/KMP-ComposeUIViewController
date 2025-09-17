@@ -10,8 +10,8 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
+		4482BA00ED3320AEC50E6842 /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86576E91AA91E3C646602F11 /* GradientScreenUIViewControllerRepresentable.swift */; };
 		7555FF83242A565900829871 /* SharedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* SharedView.swift */; };
-		EEBFD1D25DED7A5A93F1AEA2 /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5CCD70AE92D3B0FAABE1FB /* GradientScreenUIViewControllerRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,10 +31,10 @@
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* GradientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientApp.swift; sourceTree = "<group>"; };
-		2C5CCD70AE92D3B0FAABE1FB /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = Representables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* SharedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		86576E91AA91E3C646602F11 /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = Representables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,7 +96,7 @@
 		FB554F50FFDB9E360558BC9D /* Representables */ = {
 			isa = PBXGroup;
 			children = (
-				2C5CCD70AE92D3B0FAABE1FB /* GradientScreenUIViewControllerRepresentable.swift */,
+				86576E91AA91E3C646602F11 /* GradientScreenUIViewControllerRepresentable.swift */,
 			);
 			name = Representables;
 			sourceTree = "<group>";
@@ -187,7 +187,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :shared:embedSwiftExportForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -198,7 +198,7 @@
 			files = (
 				2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */,
 				7555FF83242A565900829871 /* SharedView.swift in Sources */,
-				EEBFD1D25DED7A5A93F1AEA2 /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
+				4482BA00ED3320AEC50E6842 /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
