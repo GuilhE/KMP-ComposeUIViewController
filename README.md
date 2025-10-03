@@ -59,7 +59,7 @@ project settings (e.g. `iosAppName` and `targetName`). If you wish to change the
 - `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the `UIViewControllerRepresentable` files will be copied to when `autoExport` is `true`;
 - `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
 
-[Default values](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+[Default values](https://guilhe.github.io/KMP-ComposeUIViewController/html/kmp-composeuiviewcontroller-gradle-plugin/com.github.guilhe.kmp.composeuiviewcontroller.gradle/-compose-ui-view-controller-parameters/index.html).
 
 </details>
 
