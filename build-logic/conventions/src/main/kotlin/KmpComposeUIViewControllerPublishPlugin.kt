@@ -38,6 +38,15 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             return
         }
 
+        project.plugins.apply("signing")
+        project.gradle.taskGraph.whenReady(object : Closure<Unit>(project) {
+            fun doCall(graph: org.gradle.api.execution.TaskExecutionGraph) {
+                val isMavenLocal = graph.allTasks.any { it.name == "publishToMavenLocal" || it.path.endsWith("publishToMavenLocal") }
+                project.extensions.getByType(SigningExtension::class.java).isRequired = !isMavenLocal
+                project.logger.lifecycle(">> KmpComposeUIViewControllerPublishPlugin [${project.name}] - isMavenLocal = $isMavenLocal")
+            }
+        })
+        
         project.plugins.apply("com.vanniktech.maven.publish")
         project.extensions.getByType(MavenPublishBaseExtension::class.java).apply {
             publishToMavenCentral(automaticRelease = false)
