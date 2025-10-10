@@ -8,20 +8,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerState
+import com.sample.models.ScreenState
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
-import kotlin.experimental.ExperimentalObjCRefinement
 
 private fun getCurrentMillis(): Long = NSDate().timeIntervalSince1970.toLong() * 1000
-
-data class ScreenState(val startColor: Long, val endColor: Long) {
-    @OptIn(ExperimentalObjCRefinement::class)
-    @HiddenFromObjC
-    val colors: List<Color> = listOf(Color(startColor), Color(endColor))
-}
 
 @ComposeUIViewController
 @Composable
