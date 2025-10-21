@@ -6,13 +6,13 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 | Version                                                                                                                                                                                                                     |     Kotlin     |  KSP  | Compose Multiplatform | Xcode  |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------:|:-----:|:---------------------:|:------:|
-| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.3.0-dev-5897 | 2.0.2 |         1.9.0         | 26.0.0 |
-| `2.2.20-1.9.0`                                                                                                                                                                                                              |     2.2.20     | 2.0.2 |         1.9.0         | 26.0.0 |
+| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.3.0-dev-5897 | 2.0.2 |         1.9.0         | 26.0.1 |
+| `2.2.20-1.9.0`                                                                                                                                                                                                              |     2.2.20     | 2.0.2 |         1.9.0         | 26.0.1 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
 > [!TIP]
-> For Swift Export support, until the official release of Kotlin 2.3.0, use `2.3.0-dev-*`.
+> For Swift Export support, until the official release of Kotlin 2.3.0, use `2.3.0-*`.
 > Don't forget to change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`, and delete the `Derived Data` (recommended when switching between modes)
 
 ## Motivation
