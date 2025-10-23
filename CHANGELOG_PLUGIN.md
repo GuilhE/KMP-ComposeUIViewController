@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.21-1.9.1]
+
+- Compatible with 2.2.21-1.9.1
+
+---
+
 ## [2.2.20-1.9.0-rc01]
 
 - Compatible with 2.2.20-1.9.0-rc01

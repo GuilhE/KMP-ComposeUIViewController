@@ -1,8 +1,10 @@
 @file:Suppress("unused")
 
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import groovy.lang.Closure
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.plugins.signing.SigningExtension
 
 class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
     companion object {
@@ -34,10 +36,18 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                 System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId") != null
 
         if (!hasSigning) {
-            project.logger.lifecycle(">> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
+            project.logger.lifecycle("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
             return
         }
 
+        project.plugins.apply("signing")
+        project.gradle.taskGraph.whenReady(object : Closure<Unit>(project) {
+            fun doCall(graph: org.gradle.api.execution.TaskExecutionGraph) {
+                val isMavenLocal = graph.allTasks.any { it.name == "publishToMavenLocal" || it.path.endsWith("publishToMavenLocal") }
+                project.extensions.getByType(SigningExtension::class.java).isRequired = !isMavenLocal
+                project.logger.lifecycle("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - isMavenLocal = $isMavenLocal")
+            }
+        })
         project.plugins.apply("com.vanniktech.maven.publish")
         project.extensions.getByType(MavenPublishBaseExtension::class.java).apply {
             publishToMavenCentral(automaticRelease = false)
