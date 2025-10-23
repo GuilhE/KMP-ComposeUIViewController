@@ -36,7 +36,7 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                 System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId") != null
 
         if (!hasSigning) {
-            project.logger.lifecycle(">> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
+            project.logger.lifecycle("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
             return
         }
 
