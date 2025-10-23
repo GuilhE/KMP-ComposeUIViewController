@@ -12,8 +12,9 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
 > [!TIP]
-> For Swift Export support, until the official release of Kotlin 2.3.0, use `2.3.0-*`.
-> Don't forget to change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`, and delete the `Derived Data` (recommended when switching between modes)
+> For Swift Export support, until the stable release of Kotlin 2.3.0, use the experimental chanel `2.3.0-*`.
+> Don't forget to change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`, delete the `Derived Data` 
+> (recommended when switching between modes) and finally run `./gradlew clean --no-build-cache`.
 
 ## Motivation
 As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary Kotlin and Swift code for you.
