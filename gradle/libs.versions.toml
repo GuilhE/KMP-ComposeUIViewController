@@ -1,8 +1,8 @@
 [versions]
 
-kotlin = "2.3.0-Beta1"
-ksp = "2.2.20-2.0.3"
-kotlinCompose = "1.9.0"
+kotlin = "2.3.0-Beta2-91"
+ksp = "2.3.0"
+kotlinCompose = "1.10.0-alpha03"
 kotlinxSerialization = "1.9.0"
 kotlinxSerializationPlugin = "2.2.20"
 dokka = "2.1.0-Beta"

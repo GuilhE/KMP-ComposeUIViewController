@@ -45,7 +45,7 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
             fun doCall(graph: org.gradle.api.execution.TaskExecutionGraph) {
                 val isMavenLocal = graph.allTasks.any { it.name == "publishToMavenLocal" || it.path.endsWith("publishToMavenLocal") }
                 project.extensions.getByType(SigningExtension::class.java).isRequired = !isMavenLocal
-                project.logger.lifecycle(">> KmpComposeUIViewControllerPublishPlugin [${project.name}] - isMavenLocal = $isMavenLocal")
+                project.logger.lifecycle("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - isMavenLocal = $isMavenLocal")
             }
         })
         project.plugins.apply("com.vanniktech.maven.publish")
