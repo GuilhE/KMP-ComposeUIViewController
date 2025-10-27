@@ -65,7 +65,7 @@ Until the stable release of Kotlin 2.3.0, use the experimental plugin chanel `2.
 
 > [!IMPORTANT] 
 > The following steps are recommended when switching between modes:
-> 1. Change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`;
+> 1. Change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj` or vice-versa;
 > 2. Delete the `Representables` folder inside your `iosApp` using Xcode (if exists);
 > 3. Delete the `Derived Data`using Xcode or DevCleaner app;
 > 4. Run `./gradlew clean --no-build-cache`.
