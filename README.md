@@ -4,17 +4,12 @@
 
 KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIViewControllerRepresentable` files when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
-| Version                                                                                                                                                                                                                     |     Kotlin     |  KSP  | Compose Multiplatform | Xcode  |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------:|:-----:|:---------------------:|:------:|
-| `2.2.21-1.9.1`                                                                                                                                                                                                              |     2.2.21     | 2.3.0 |         1.9.1         | 26.0.0 |
-| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.3.0-Beta2-91 | 2.3.0 |    1.10.0-alpha03     | 26.0.0 |
+| Version                                                                                                                                                                                                                                             |     Kotlin     |  KSP  | Compose Multiplatform | Xcode  |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------:|:-----:|:---------------------:|:------:|
+| `2.2.21-1.9.1`                                                                                                                                                                                                                                      |     2.2.21     | 2.3.0 |         1.9.1         | 26.0.0 |
+| [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/io.github.guilhe.kmp.plugin-composeuiviewcontroller?strategy=latestProperty)](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | 2.3.0-Beta2-91 | 2.3.0 |    1.10.0-alpha03     | 26.0.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
-
-> [!TIP]
-> For Swift Export support, until the stable release of Kotlin 2.3.0, use the experimental chanel `2.3.0-*`.
-> Don't forget to change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`, delete the `Derived Data`
-> (recommended when switching between modes) and finally run `./gradlew clean --no-build-cache`.
 
 ## Motivation
 As the project expands, the codebase required naturally grows, which can quickly become cumbersome and susceptible to errors. To mitigate this challenge, this library leverages [Kotlin Symbol Processing](https://kotlinlang.org/docs/ksp-overview.html) to automatically generate the necessary Kotlin and Swift code for you.
@@ -63,6 +58,17 @@ project settings (e.g. `iosAppName` and `targetName`). If you wish to change the
 [Default values](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
 
 </details>
+
+## Swift Export
+To enable Swift Export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).  
+Until the stable release of Kotlin 2.3.0, use the experimental plugin chanel `2.3.0-*`.
+
+> [!IMPORTANT]
+> The following steps are recommended when switching between modes:
+> 1. Don't forget to change `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` in your `project.pbxproj`;
+> 2. Delete the `Representables` folder inside your `iosApp` using Xcode (if exists);
+> 3. Delete the `Derived Data`using Xcode or DevCleaner app;
+> 4. Run `./gradlew clean --no-build-cache`.
 
 ## Code generation
 
