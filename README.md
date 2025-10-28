@@ -63,7 +63,7 @@ To enable Swift Export support, just follow the official [documentation](https:/
 
 > [!IMPORTANT]
 > When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - follow this steps:
-> 1. Delete the `Representables` folder inside your `iosApp` using Xcode (if exists);
+> 1. Delete the `Representables` folder inside your `iosApp` using Xcode;
 > 2. Delete the `Derived Data`using Xcode or DevCleaner app;
 > 3. Run `./gradlew clean --no-build-cache`.
 

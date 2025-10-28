@@ -192,7 +192,7 @@ Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 ## [2.0.20-1.7.0-rc01-BETA-1]
 
 - CMP 1.7.0-rc01
- 
+
 ## [2.0.20-1.7.0-beta01-BETA-2]
 
 - Adds exception print to ModuleDecodeException
@@ -236,22 +236,22 @@ Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 
 > [!CAUTION]
 > Theres an [actual limitation](https://kotlinlang.slack.com/archives/C3SGXARS6/p1719961104891399) on Kotlin Multiplatform where each binary framework is compiled as a "closed world“, meaning it's not possible to pass custom type between two frameworks even it’s the same in Kotlin.
-> 
+>
 > Let’s say I have two modules, `shared` and `shared-models`, each providing their own binary frameworks: “Shared” and “SharedModels” respectively. The `shared-models` contains a `data class Hello`, and the `shared` module `implements(project(":shared-models"))` and has a public method that takes `Hello` as a parameter.
-> 
-> When these modules are exported to Swift, we see the following:  
+>
+> When these modules are exported to Swift, we see the following:
 >
 > SharedModels: `public class Hello : KotlinBase`  
 > Shared: `public class Shared_modelsHello : KotlinBase`  
 > Shared: `open func update(state: Shared_modelsHello)`
-> 
+>
 > Instead of:
-> 
+>
 > SharedModels: `public class Hello : KotlinBase`  
 > Shared: `open func update(state: Hello)`
-> 
+>
 > It means that the "Shared" framework will include all this external dependencies (from the "SharedModel" in this case) and will generate new types to reference those external types. That's why we endup having `Shared_modelsHello` instead of just `Hello`.
-> 
+>
 > A workaround to "solve" this limitation is to use the `export()` function (inside `binaries.framework` configuration) to add a dependency to be exported in the framework.
 > ```
 > iosTarget.binaries.framework {
@@ -278,7 +278,7 @@ ComposeUiViewController {
 ## [2.0.20-Beta1-1.6.11-BETA-3]
 
 - Adds all KMP targets available to `kmp-composeuiviewcontroller-annotations`
- 
+
 ---
 
 ## [2.0.20-Beta1-1.6.11-BETA-2]

@@ -35,6 +35,5 @@ kotlin {
             implementation(compose.ui)
         }
         jvmMain.dependencies { implementation(compose.preview) }
-        iosMain.dependencies { api(projects.sharedModels) }
     }
 }
