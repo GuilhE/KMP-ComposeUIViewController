@@ -1,8 +1,32 @@
 # Changelog
 
+## [2.3.0-Beta2-1.10.0-alpha03]
+
+- Compatible with 2.3.0-Beta2-1.10.0-alpha03
+
+---
+
+## [2.3.0-Beta2-91-1.10.0-alpha03]
+
+- Compatible with 2.3.0-Beta2-91-1.10.0-alpha03
+
+---
+
 ## [2.2.21-1.9.1]
 
 - Compatible with 2.2.21-1.9.1
+
+---
+
+## [2.3.0-Beta1-1.9.0]
+
+- Compatible with 2.3.0-Beta1-1.9.0
+
+---
+
+## [2.3.0-dev-5897-1.9.0]
+
+- Compatible with 2.3.0-dev-5897-1.9.0
 
 ---
 

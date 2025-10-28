@@ -1,10 +1,30 @@
 # Changelog
 
+## [2.3.0-Beta2-1.10.0-alpha03]
+
+- Kotlin 2.3.0-Beta2
+
+---
+
+## [2.3.0-Beta2-91-1.10.0-alpha03]
+
+- Kotlin 2.3.0-Beta2-91
+- CMP 1.10.0-alpha03
+- KSP 2.3.0
+
+---
+
 ## [2.2.21-1.9.1]
 
 - Kotlin 2.0.21
 - CMP 1.9.1
 - KSP 2.3.0
+
+---
+
+## [2.3.0-Beta1-1.9.0]
+
+- Kotlin 2.3.0-Beta1
 
 ---
 
