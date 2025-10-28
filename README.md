@@ -190,7 +190,7 @@ struct SomeView: View {
 }
 ```
 > [!IMPORTANT]
-> Avoid deleting `iosApp/Representables` without first using Xcode to `Remove references`.
+> Avoid deleting `iosApp/Representables` without using Xcode.
 
 ## Sample
 For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
