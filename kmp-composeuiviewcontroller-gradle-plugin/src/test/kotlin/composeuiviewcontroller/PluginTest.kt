@@ -27,7 +27,6 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
 import kotlinx.serialization.json.Json
 import org.gradle.api.internal.project.DefaultProject
-import org.gradle.internal.impldep.junit.framework.TestCase.assertNotNull
 import org.gradle.testfixtures.ProjectBuilder
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -38,6 +37,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PluginTest {
@@ -141,7 +141,7 @@ class PluginTest {
                 val kspConfigName = "ksp${target.targetName.replaceFirstChar { it.uppercaseChar() }}"
                 val config = project.configurations.findByName(kspConfigName)
                 assertNotNull(config)
-                assertTrue(config!!.dependencies.any { it.group == LIB_GROUP && it.name == LIB_KSP_NAME })
+                assertTrue(config.dependencies.any { it.group == LIB_GROUP && it.name == LIB_KSP_NAME })
             }
         }
 

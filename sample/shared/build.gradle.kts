@@ -33,6 +33,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            api(projects.sharedModels)
         }
         jvmMain.dependencies { implementation(compose.preview) }
     }
