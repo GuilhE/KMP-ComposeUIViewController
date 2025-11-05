@@ -11,6 +11,7 @@ kotlin {
     iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.kotlinx.collections)
             implementation(compose.ui)
         }
     }

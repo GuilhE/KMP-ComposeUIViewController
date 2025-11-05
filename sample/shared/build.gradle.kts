@@ -29,11 +29,12 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(projects.sharedModels)
+            implementation(libs.kotlinx.collections)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
-            api(projects.sharedModels)
         }
         jvmMain.dependencies { implementation(compose.preview) }
     }
