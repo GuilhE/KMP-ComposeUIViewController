@@ -2,6 +2,12 @@
 
 ## [2.3.0-Beta2-1.10.0-alpha03]
 
+- Compatible with 2.3.0-Beta2-1.10.0-beta01
+
+---
+
+## [2.3.0-Beta2-1.10.0-alpha03]
+
 - Compatible with 2.3.0-Beta2-1.10.0-alpha03
 
 ---

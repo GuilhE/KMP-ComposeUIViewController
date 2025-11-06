@@ -2,7 +2,7 @@
 
 kotlin = "2.3.0-Beta2"
 ksp = "2.3.0"
-kotlinCompose = "1.10.0-alpha03"
+kotlinCompose = "1.10.0-beta01"
 kotlinxSerialization = "1.9.0"
 kotlinxSerializationPlugin = "2.3.0-Beta2"
 kotlinxCollections = "0.4.0"

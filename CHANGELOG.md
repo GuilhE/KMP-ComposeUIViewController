@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-Beta2-1.10.0-beta01]
+
+- CMP 1.10.0-beta01
+
+---
+
 ## [2.3.0-Beta2-1.10.0-alpha03]
 
 - Kotlin 2.3.0-Beta2
