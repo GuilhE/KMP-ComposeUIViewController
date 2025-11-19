@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.0-RC-1.10.0-beta01]
+
+- Kotlin 2.3.0-RC
+- KSP 2.3.2
+- SerializationPlugin 2.3.0-RC
+
+---
+
 ## [2.3.0-Beta2-1.10.0-beta01]
 
 - CMP 1.10.0-beta01
