@@ -4,6 +4,7 @@
 
 - CMP 1.10.0-beta02
 - KSP 2.3.3
+- Removes necessity of adding ksp dependency in the module that applies the plugin. User can still override KSP version by adding the dependency manually.
 
 ---
 
