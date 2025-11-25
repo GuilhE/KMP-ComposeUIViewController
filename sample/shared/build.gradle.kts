@@ -1,10 +1,9 @@
 import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
 
 plugins {
-    alias(libs.plugins.google.ksp)
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.compose.compiler)
-    alias(libs.plugins.kotlin.compose)
+    alias(global.plugins.kotlin.multiplatform)
+    alias(local.plugins.compose.compiler)
+    alias(local.plugins.compose.multiplatform)
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
 }
 
@@ -30,12 +29,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.sharedModels)
-            implementation(libs.kotlinx.collections)
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
+            implementation(local.kotlinx.collections)
+            implementation(local.bundles.jetbrains.compose)
         }
-        jvmMain.dependencies { implementation(compose.preview) }
+        jvmMain.dependencies { implementation(local.jetbrains.compose.ui.tooling.preview) }
     }
 }

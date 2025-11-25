@@ -7,7 +7,6 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_FRAMEWORK
@@ -36,6 +35,7 @@ import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -65,22 +65,6 @@ class PluginTest {
     @Test
     fun `Plugin is applied correctly`() {
         assertTrue(project.plugins.hasPlugin(PLUGIN_ID))
-    }
-
-    @Test
-    fun `Plugin throws exception if KSP plugin is not applied`() {
-        Templates.writeBuildGradle(
-            projectDir,
-            """
-            plugins {
-                id("$PLUGIN_KMP") 
-                id("$PLUGIN_ID")
-            }
-            """
-        )
-
-        val result = Templates.runGradle(projectDir, expectFailure = true)
-        assertTrue(result.output.contains(ERROR_MISSING_KSP))
     }
 
     @Test
@@ -201,7 +185,7 @@ class PluginTest {
             assertTrue(file.exists())
 
             val moduleMetadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText()).first()
-            assertTrue(moduleMetadata.frameworkBaseName == "ComposablesFramework")
+            assertEquals( "ComposablesFramework", moduleMetadata.frameworkBaseName)
             assertTrue(moduleMetadata.packageNames.any { p -> p.startsWith("com.composables.module") })
         }
     }
@@ -212,9 +196,9 @@ class PluginTest {
             val embedObjCTask = project.tasks.register(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE) {}
             val embedSwiftTask = project.tasks.register(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE) {}
             val syncTask = project.tasks.register(TASK_SYNC_FRAMEWORK) {}
-            assertTrue(embedObjCTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size == 1)
-            assertTrue(embedSwiftTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size == 1)
-            assertTrue(syncTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size == 1)
+            assertEquals(1, embedObjCTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
+            assertEquals(1, embedSwiftTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
+            assertEquals(1, syncTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
         }
     }
 

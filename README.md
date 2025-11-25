@@ -6,7 +6,7 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 | Version                  |  Kotlin  |  KSP  | Compose Multiplatform | Xcode  |
 |--------------------------|:--------:|:-----:|:---------------------:|:------:|
-| `2.3.0-RC-1.10.0-beta01` | 2.3.0-RC | 2.3.2 |     1.10.0-beta01     | 26.1.0 |
+| `2.3.0-RC-1.10.0-beta02` | 2.3.0-RC | 2.3.3 |     1.10.0-beta02     | 26.1.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
@@ -28,12 +28,11 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Installation
 
-Configure the `plugins` block with the following three plugins. Once added, you can use the `ComposeUiViewController` block to set up the plugin’s configuration.
+Configure the `plugins` block with the following. Once added, you can use the `ComposeUiViewController` block to set up the plugin’s configuration.
 
 ```kotlin
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("com.google.devtools.ksp")
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller") version "$LASTEST_VERSION"
 }
 

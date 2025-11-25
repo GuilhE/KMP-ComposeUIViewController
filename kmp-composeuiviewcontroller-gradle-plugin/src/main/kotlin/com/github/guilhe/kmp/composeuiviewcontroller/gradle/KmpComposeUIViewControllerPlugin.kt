@@ -29,19 +29,19 @@ import java.io.File
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
+        println("> $LOG_TAG:")
         with(project) {
             if (!plugins.hasPlugin(PLUGIN_KMP)) {
                 throw PluginInstantiationException(ERROR_MISSING_KMP)
             }
 
             if (!plugins.hasPlugin(PLUGIN_KSP)) {
-                throw PluginInstantiationException(ERROR_MISSING_KSP)
+                project.pluginManager.apply(PLUGIN_KSP)
             }
 
             val tempFolder = File(rootProject.layout.buildDirectory.asFile.get().path, TEMP_FILES_FOLDER).apply { mkdirs() }
             configureCleanTempFilesLogic(tempFolder)
 
-            println("> $LOG_TAG:")
             setupTargets()
             with(extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)) {
                 configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = this, tempFolder = tempFolder)
@@ -66,6 +66,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             override fun settingsEvaluated(settings: org.gradle.api.initialization.Settings) {}
             override fun projectsLoaded(gradle: Gradle) {}
             override fun projectsEvaluated(gradle: Gradle) {}
+
+            @Suppress("OVERRIDE_DEPRECATION")
             override fun buildFinished(result: org.gradle.BuildResult) {
                 if (result.failure != null) {
                     deleteTempFolder(tempFolder)
@@ -290,7 +292,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
     internal companion object {
-        private const val VERSION_LIBRARY = "2.3.0-RC-1.10.0-beta01"
+        private const val VERSION_LIBRARY = "2.3.0-RC-1.10.0-beta02"
         private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
         internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
         internal const val PLUGIN_KSP = "com.google.devtools.ksp"
@@ -314,7 +316,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val PARAM_TARGET = "iosApp_target_name"
         internal const val PARAM_GROUP = "group_name"
         internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
-        internal const val ERROR_MISSING_KSP = "$LOG_TAG requires the KSP plugin to be applied."
         internal const val INFO_MODULE_PACKAGES = "Module packages found:"
         internal const val ERROR_MISSING_PACKAGE = "Cloud not determine project's package"
         internal const val INFO_MODULE_NAME_BY_FRAMEWORK =

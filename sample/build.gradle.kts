@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.multiplatform) apply false
-    alias(libs.plugins.kotlin.compose) apply false
-    alias(libs.plugins.kotlin.compose.compiler) apply false
+    alias(global.plugins.kotlin.multiplatform) apply false
+    alias(local.plugins.compose.multiplatform) apply false
+    alias(local.plugins.compose.compiler) apply false
 }

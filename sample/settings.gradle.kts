@@ -17,9 +17,8 @@ dependencyResolutionManagement {
         maven("https://redirector.kotlinlang.org/maven/dev")
     }
     versionCatalogs {
-        create("libs") {
-            from(files("../gradle/libs.versions.toml"))
-        }
+        create("global") { from(files("../gradle/libs.versions.toml")) }
+        create("local") { from(files("./gradle/libs.versions.toml")) }
     }
 }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-RC-1.10.0-beta02]
+
+- Compatible with 2.3.0-RC-1.10.0-beta02
+
+---
+
 ## [2.3.0-RC-1.10.0-beta01]
 
 - Compatible with 2.3.0-RC-1.10.0-beta01

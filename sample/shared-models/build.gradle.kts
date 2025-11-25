@@ -1,8 +1,7 @@
 plugins {
-    alias(libs.plugins.google.ksp)
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.compose.compiler)
-    alias(libs.plugins.kotlin.compose)
+    alias(global.plugins.kotlin.multiplatform)
+    alias(local.plugins.compose.compiler)
+    alias(local.plugins.compose.multiplatform)
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
 }
 
@@ -11,8 +10,8 @@ kotlin {
     iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.collections)
-            implementation(compose.ui)
+            implementation(local.kotlinx.collections)
+            implementation(local.jetbrains.compose.ui)
         }
     }
 }
