@@ -1,7 +1,7 @@
 [versions]
 
-kotlin = "2.3.0-RC"
-composeMultiplatform = "1.10.0-beta02"
+kotlin = "2.3.0-RC2"
+composeMultiplatform = "1.10.0-rc01"
 
 composeMaterial3 = "1.9.0"
 kotlinxCollections = "0.4.0"
