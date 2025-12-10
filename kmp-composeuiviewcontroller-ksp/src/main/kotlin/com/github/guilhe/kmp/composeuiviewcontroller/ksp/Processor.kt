@@ -180,12 +180,12 @@ internal class Processor(
 
     private fun buildExternalModuleParameters(moduleMetadata: List<ModuleMetadata>, imports: List<String>): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
-        imports.forEach { it ->
+        imports.forEach {
             val type = it.split(".").last()
             val import = it.split(".$type").first()
             moduleMetadata
                 .filter { module -> module.packageNames.contains(import) }
-                .forEach { module -> result[type] = type }
+                .forEach { _ -> result[type] = type }
         }
         return result
     }
