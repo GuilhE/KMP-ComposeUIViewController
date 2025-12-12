@@ -13,7 +13,6 @@ ComposeUiViewController {
 }
 
 kotlin {
-    jvm()
     iosArm64()
     iosSimulatorArm64()
     @OptIn(ExperimentalSwiftExportDsl::class)
@@ -32,6 +31,5 @@ kotlin {
             implementation(local.kotlinx.collections)
             implementation(local.bundles.jetbrains.compose)
         }
-        jvmMain.dependencies { implementation(local.jetbrains.compose.ui.tooling.preview) }
     }
 }

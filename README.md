@@ -60,6 +60,14 @@ project settings (e.g. `iosAppName` and `targetName`). If you wish to change the
 ## Swift Export
 To enable Swift Export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).  
 
+When using dependencies from [other modules](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/7a7385f8f7f92c422d5f9d68b122ce652df98e18/sample/shared/build.gradle.kts#L23):
+```kotlin
+swiftExport {
+    export(projects.otherModule) { ... }
+}
+```
+Don't forget to import the plugin in each module. Check the swift export [sample](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/7a7385f8f7f92c422d5f9d68b122ce652df98e18/sample/shared-models/build.gradle.kts#L5).
+
 > [!IMPORTANT]
 > When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - follow this steps:
 > 1. Delete the `Representables` folder inside your `iosApp` using Xcode;
