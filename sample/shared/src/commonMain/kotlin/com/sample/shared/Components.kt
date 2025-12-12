@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-fun Gradient(colors: ImmutableList<Color>) {
+internal fun Gradient(colors: ImmutableList<Color>) {
     Box(
         modifier = Modifier
             .fillMaxSize()

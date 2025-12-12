@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-
 plugins {
     alias(global.plugins.kotlin.multiplatform)
     alias(local.plugins.compose.compiler)
@@ -13,16 +11,10 @@ ComposeUiViewController {
 }
 
 kotlin {
-    jvm()
-    iosArm64()
-    iosSimulatorArm64()
-    @OptIn(ExperimentalSwiftExportDsl::class)
-    swiftExport {
-        moduleName = "Composables"
-        flattenPackage = "com.sample.shared"
-        export(projects.sharedModels) {
-            moduleName = "Models"
-            flattenPackage = "com.sample.models"
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Composables"
+            export(projects.sharedModels)
         }
     }
 
@@ -32,6 +24,6 @@ kotlin {
             implementation(local.kotlinx.collections)
             implementation(local.bundles.jetbrains.compose)
         }
-        jvmMain.dependencies { implementation(local.jetbrains.compose.ui.tooling.preview) }
+        iosMain.dependencies { api(projects.sharedModels) }
     }
 }
