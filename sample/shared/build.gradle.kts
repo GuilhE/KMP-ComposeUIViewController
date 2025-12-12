@@ -24,6 +24,5 @@ kotlin {
             implementation(local.kotlinx.collections)
             implementation(local.bundles.jetbrains.compose)
         }
-        iosMain.dependencies { api(projects.sharedModels) }
     }
 }
