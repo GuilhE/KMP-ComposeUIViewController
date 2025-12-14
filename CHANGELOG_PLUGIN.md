@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-RC3-1.10.0-rc02-1]
+
+- Compatible with 2.3.0-RC3-1.10.0-rc02-1
+
+---
+
 ## [2.3.0-RC3-1.10.0-rc02]
 
 - Compatible with 2.3.0-RC3-1.10.0-rc02

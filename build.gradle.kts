@@ -15,7 +15,12 @@ buildscript {
 
 allprojects {
     group = "com.github.guilhe.kmp"
-    version = "2.3.0-RC3-1.10.0-rc02"
+    version = "2.3.0-RC3-1.10.0-rc02-1"
+}
+
+dependencies {
+    dokka(project(":kmp-composeuiviewcontroller-annotations"))
+    dokka(project(":kmp-composeuiviewcontroller-gradle-plugin"))
 }
 
 tasks.register("publishLibraryModules") {
@@ -24,10 +29,6 @@ tasks.register("publishLibraryModules") {
     finalizedBy(":kmp-composeuiviewcontroller-ksp:publishToMavenCentral")
 }
 
-dependencies {
-    dokka(project(":kmp-composeuiviewcontroller-annotations"))
-    dokka(project(":kmp-composeuiviewcontroller-gradle-plugin"))
-}
 
 tasks.register("serveDokka") {
     dependsOn("dokkaGenerate")
