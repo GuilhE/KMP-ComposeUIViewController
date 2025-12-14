@@ -32,7 +32,8 @@ install_gem() {
       install_result=$?
 
       if [ $install_result -eq 0 ]; then
-        local user_gem_bin="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin"
+        local user_gem_bin
+        user_gem_bin="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin"
         if [ -d "$user_gem_bin" ] && [[ ":$PATH:" != *":$user_gem_bin:"* ]]; then
           export PATH="$user_gem_bin:$PATH"
           echo "  >Added $user_gem_bin to PATH"
@@ -97,14 +98,18 @@ smart_sync_files() {
   local files_removed=0
   local has_changes=0
 
-  local source_files_list=$(mktemp)
-  local source_files_map=$(mktemp)
-  trap "rm -f $source_files_list $source_files_map" RETURN
+  local source_files_list
+  local source_files_map
+  source_files_list=$(mktemp)
+  source_files_map=$(mktemp)
+  trap 'rm -f "$source_files_list" "$source_files_map"' RETURN
 
   # First pass: find all Swift files and deduplicate by basename (keeping newest)
   while IFS= read -r -d '' source_file; do
-    local filename=$(basename "$source_file")
-    local existing_file=$(grep "^$filename|" "$source_files_map" 2>/dev/null | cut -d'|' -f2)
+    local filename
+    local existing_file
+    filename=$(basename "$source_file")
+    existing_file=$(grep "^$filename|" "$source_files_map" 2>/dev/null | cut -d'|' -f2)
 
     if [ -z "$existing_file" ]; then
       # First occurrence of this filename
@@ -130,8 +135,10 @@ smart_sync_files() {
       should_copy=1
       echo "  > New file: $filename"
     else
-      local source_md5=$(md5 -q "$source_file" 2>/dev/null || md5sum "$source_file" | cut -d' ' -f1)
-      local dest_md5=$(md5 -q "$dest_file" 2>/dev/null || md5sum "$dest_file" | cut -d' ' -f1)
+      local source_md5
+      local dest_md5
+      source_md5=$(md5 -q "$source_file" 2>/dev/null || md5sum "$source_file" | cut -d' ' -f1)
+      dest_md5=$(md5 -q "$dest_file" 2>/dev/null || md5sum "$dest_file" | cut -d' ' -f1)
 
       if [ "$source_md5" != "$dest_md5" ]; then
         should_copy=1
@@ -150,7 +157,8 @@ smart_sync_files() {
 
   if [ -d "$files_destination" ]; then
     while IFS= read -r -d '' dest_file; do
-      local filename=$(basename "$dest_file")
+      local filename
+      filename=$(basename "$dest_file")
       if ! grep -Fxq "$filename" "$source_files_list"; then
         echo "  > Removed: $filename"
         rm -f "$dest_file"
