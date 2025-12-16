@@ -75,6 +75,9 @@ private fun convertGenericType(type: KSType, toSwift: Boolean, withSwiftExport: 
  * - List<String> -> Array<String> (exception)
  * - List<Char> -> Array<Any> (exception for ObjC export)
  *
+ * [Collections with basic types](https://github.com/kotlin-hands-on/kotlin-swift-interopedia/blob/main/docs/types/Collections%20with%20basic%20types.md)
+ * [Collections with custom types](https://github.com/kotlin-hands-on/kotlin-swift-interopedia/blob/main/docs/types/Collections%20with%20custom%20types.md)
+ * [Mutable, immutable collections](https://github.com/kotlin-hands-on/kotlin-swift-interopedia/blob/main/docs/types/Mutable%2C%20immutable%20collections.md)
  */
 private fun convertCollectionType(type: KSType, baseType: String, isNullable: Boolean, withSwiftExport: Boolean): String {
     val generics = type.arguments.map { arg ->
@@ -82,7 +85,6 @@ private fun convertCollectionType(type: KSType, baseType: String, isNullable: Bo
             val argBaseType = argType.declaration.simpleName.asString()
             val argIsNullable = argType.isMarkedNullable
 
-            // Check if it's a primitive type
             if (isPrimitiveType(argBaseType)) {
                 convertPrimitiveInCollection(argBaseType, argIsNullable, withSwiftExport)
             } else {
@@ -115,13 +117,15 @@ private fun isPrimitiveType(type: String): Boolean {
 /**
  * Convert primitive types when used inside collections
  * According to ObjC export rules, primitives in collections are wrapped (except String)
+ *
+ * [Collections with basic types](https://github.com/kotlin-hands-on/kotlin-swift-interopedia/blob/main/docs/types/Collections%20with%20basic%20types.md)
+ *
  */
 private fun convertPrimitiveInCollection(primitiveType: String, isNullable: Boolean, withSwiftExport: Boolean): String {
     if (withSwiftExport) {
         return convertToSwiftFromSwiftExport(primitiveType) + if (isNullable) "?" else ""
     }
 
-    // ObjC export rules for primitives in collections
     val converted = when (primitiveType) {
         "String" -> "String"  // Exception: String doesn't need wrapper
         "Char" -> "Any"       // Exception: Char becomes Any in collections
@@ -149,74 +153,74 @@ private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullabl
  */
 private fun convertToSwiftFromObjcExport(baseType: String, isNullable: Boolean = false, insideFunctionType: Boolean = false): String {
     return when (baseType) {
-        "Unit" -> "Void"
-        "List" -> "Array"
+        "Unit" -> convertToSwiftFromSwiftExport(baseType)
+        "List" -> convertToSwiftFromSwiftExport(baseType)
         "MutableList" -> "NSMutableArray"
-        "Set" -> "Set"
+        "Set" -> convertToSwiftFromSwiftExport(baseType)
         "MutableSet" -> "KotlinMutableSet"
-        "Map" -> "Dictionary"
+        "Map" -> convertToSwiftFromSwiftExport(baseType)
         "MutableMap" -> "NSMutableDictionary"
-        "Char" -> if (isNullable) "Any" else "unichar"
-        // Primitive types have different rules:
-        // 1. If nullable -> always use wrapper (KotlinInt?)
-        // 2. If inside function/closure -> use wrapper (KotlinInt)
-        // 3. If direct parameter and not nullable -> use native type (Int32)
+        "Char" -> when {
+            isNullable -> "Any"
+            insideFunctionType -> "Any"
+            else -> "unichar"
+        }
         "Byte" -> when {
             isNullable -> "KotlinByte"
             insideFunctionType -> "KotlinByte"
-            else -> "Int8"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "UByte" -> when {
             isNullable -> "KotlinUByte"
             insideFunctionType -> "KotlinUByte"
-            else -> "UInt8"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "Short" -> when {
             isNullable -> "KotlinShort"
             insideFunctionType -> "KotlinShort"
-            else -> "Int16"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "UShort" -> when {
             isNullable -> "KotlinUShort"
             insideFunctionType -> "KotlinUShort"
-            else -> "UInt16"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "Int" -> when {
             isNullable -> "KotlinInt"
             insideFunctionType -> "KotlinInt"
-            else -> "Int32"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "UInt" -> when {
             isNullable -> "KotlinUInt"
             insideFunctionType -> "KotlinUInt"
-            else -> "UInt32"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "Long" -> when {
             isNullable -> "KotlinLong"
             insideFunctionType -> "KotlinLong"
-            else -> "Int64"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "ULong" -> when {
             isNullable -> "KotlinULong"
             insideFunctionType -> "KotlinULong"
-            else -> "UInt64"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "Float" -> when {
             isNullable -> "KotlinFloat"
             insideFunctionType -> "KotlinFloat"
-            else -> "Float"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "Double" -> when {
             isNullable -> "KotlinDouble"
             insideFunctionType -> "KotlinDouble"
-            else -> "Double"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
         "Boolean" -> when {
             isNullable -> "KotlinBoolean"
             insideFunctionType -> "KotlinBoolean"
-            else -> "Bool"
+            else -> convertToSwiftFromSwiftExport(baseType)
         }
-        "String" -> "String"  // String? -> String? (no wrapper needed)
+        "String" -> convertToSwiftFromSwiftExport(baseType)
         else -> baseType
     }
 }

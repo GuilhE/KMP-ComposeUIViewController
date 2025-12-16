@@ -429,4 +429,205 @@ class ProcessorTest {
         val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithSwiftExportTypes()
         assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
     }
+
+    @Test
+    fun `Direct primitive parameters use native Swift types in ObjC export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithDirectPrimitives()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let byteVal: Int8")
+        assertContains(swiftContent, "let shortVal: Int16")
+        assertContains(swiftContent, "let intVal: Int32")
+        assertContains(swiftContent, "let longVal: Int64")
+        assertContains(swiftContent, "let floatVal: Float")
+        assertContains(swiftContent, "let doubleVal: Double")
+        assertContains(swiftContent, "let boolVal: Bool")
+        assertContains(swiftContent, "let stringVal: String")
+    }
+
+    @Test
+    fun `Nullable primitive parameters use Kotlin wrappers in ObjC export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithNullablePrimitives()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let intVal: KotlinInt?")
+        assertContains(swiftContent, "let boolVal: KotlinBoolean?")
+        assertContains(swiftContent, "let stringVal: String?")  // Exception: String doesn't need wrapper
+        assertContains(swiftContent, "let longVal: KotlinLong?")
+    }
+
+    @Test
+    fun `Primitives inside closures use Kotlin wrappers in ObjC export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithPrimitivesInClosures()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let onInt: (KotlinInt) -> Void")
+        assertContains(swiftContent, "let onBool: (KotlinBoolean) -> Void")
+        assertContains(swiftContent, "let onString: (String) -> Void")  // Exception: String
+        assertContains(swiftContent, "let onMultiple: (KotlinInt, KotlinBoolean, String) -> Void")
+    }
+
+    @Test
+    fun `Primitives inside collections use Kotlin wrappers in ObjC export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithPrimitivesInCollections()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let intList: Array<KotlinInt>")
+        assertContains(swiftContent, "let boolSet: Set<KotlinBoolean>")
+        assertContains(swiftContent, "let stringMap: Dictionary<String, KotlinInt>")
+        assertContains(swiftContent, "let mutableIntList: NSMutableArray<KotlinInt>")
+        assertContains(swiftContent, "let mutableBoolSet: KotlinMutableSet<KotlinBoolean>")
+        assertContains(swiftContent, "let mutableStringMap: NSMutableDictionary<String, KotlinInt>")
+    }
+
+    @Test
+    fun `Mixed contexts use appropriate type conversions in ObjC export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithMixedContexts()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let directInt: Int32")
+        assertContains(swiftContent, "let nullableInt: KotlinInt?")
+        assertContains(swiftContent, "let closureInt: (KotlinInt) -> Void")
+        assertContains(swiftContent, "let listInt: Array<KotlinInt>")
+        assertContains(swiftContent, "let genericInt: GenericData<KotlinInt>")
+        assertContains(swiftContent, "let complexCallback: (Array<KotlinInt>) -> KotlinInt")
+    }
+
+    @Test
+    fun `Nullable collections are handled correctly in ObjC export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithNullableCollections()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let nullableList: Array<KotlinInt>?")
+        assertContains(swiftContent, "let nullableElementList: Array<KotlinInt?>")
+        assertContains(swiftContent, "let bothNullable: Array<KotlinInt?>?")
+    }
+
+    @Test
+    fun `Char type is handled correctly in different contexts in ObjC export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule())
+        val code = CodeTemplates.screenWithCharType()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let charVal: unichar")
+        assertContains(swiftContent, "let nullableChar: Any?")
+        assertContains(swiftContent, "let charList: Array<Any>")
+        assertContains(swiftContent, "let charCallback: (Any) -> Void")
+    }
+
+    @Test
+    fun `Direct primitive parameters use native Swift types in Swift export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule(swiftExportEnabled = true))
+        val code = CodeTemplates.screenWithDirectPrimitives()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let byteVal: Int8")
+        assertContains(swiftContent, "let shortVal: Int16")
+        assertContains(swiftContent, "let intVal: Int32")
+        assertContains(swiftContent, "let longVal: Int64")
+        assertContains(swiftContent, "let boolVal: Bool")
+    }
+
+    @Test
+    fun `Primitives inside closures use native Swift types in Swift export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule(swiftExportEnabled = true))
+        val code = CodeTemplates.screenWithPrimitivesInClosures()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        assertContains(swiftContent, "let onInt: (Int32) -> Void")
+        assertContains(swiftContent, "let onBool: (Bool) -> Void")
+        assertContains(swiftContent, "let onMultiple: (Int32, Bool, String) -> Void")
+    }
+
+    @Test
+    fun `Primitives inside collections use native Swift types in Swift export`() {
+        tempArgs.writeText(ModuleConfigs.singleModule(swiftExportEnabled = true))
+        val code = CodeTemplates.screenWithPrimitivesInCollections()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val swiftContent = generatedSwiftFiles.first().readText()
+        // Swift export uses native types even inside collections
+        assertContains(swiftContent, "let intList: Array<Int32>")
+        assertContains(swiftContent, "let boolSet: Set<Bool>")
+        assertContains(swiftContent, "let stringMap: Dictionary<String, Int32>")
+        // Mutable collections in Swift export become regular collections
+        assertContains(swiftContent, "let mutableIntList: Array<Int32>")
+        assertContains(swiftContent, "let mutableBoolSet: Set<Bool>")
+        assertContains(swiftContent, "let mutableStringMap: Dictionary<String, Int32>")
+    }
 }

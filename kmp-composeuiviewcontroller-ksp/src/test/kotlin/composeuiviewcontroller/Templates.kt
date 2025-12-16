@@ -326,6 +326,113 @@ object Templates {
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState, data: Data) { }
         """.trimIndent()
+
+        fun screenWithDirectPrimitives(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            
+            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @Composable
+            fun Screen(
+                byteVal: Byte,
+                shortVal: Short,
+                intVal: Int,
+                longVal: Long,
+                floatVal: Float,
+                doubleVal: Double,
+                boolVal: Boolean,
+                stringVal: String
+            ) { }
+        """.trimIndent()
+
+        fun screenWithNullablePrimitives(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            
+            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @Composable
+            fun Screen(
+                intVal: Int?,
+                boolVal: Boolean?,
+                stringVal: String?,
+                longVal: Long?
+            ) { }
+        """.trimIndent()
+
+        fun screenWithPrimitivesInClosures(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            
+            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @Composable
+            fun Screen(
+                onInt: (Int) -> Unit,
+                onBool: (Boolean) -> Unit,
+                onString: (String) -> Unit,
+                onMultiple: (Int, Boolean, String) -> Unit
+            ) { }
+        """.trimIndent()
+
+        fun screenWithPrimitivesInCollections(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            
+            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @Composable
+            fun Screen(
+                intList: List<Int>,
+                boolSet: Set<Boolean>,
+                stringMap: Map<String, Int>,
+                mutableIntList: MutableList<Int>,
+                mutableBoolSet: MutableSet<Boolean>,
+                mutableStringMap: MutableMap<String, Int>
+            ) { }
+        """.trimIndent()
+
+        fun screenWithMixedContexts(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            
+            ${DataClasses.genericData}
+            
+            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @Composable
+            fun Screen(
+                directInt: Int,
+                nullableInt: Int?,
+                closureInt: (Int) -> Unit,
+                listInt: List<Int>,
+                genericInt: GenericData<Int>,
+                complexCallback: (List<Int>) -> Int
+            ) { }
+        """.trimIndent()
+
+        fun screenWithNullableCollections(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            
+            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @Composable
+            fun Screen(
+                nullableList: List<Int>?,
+                nullableElementList: List<Int?>,
+                bothNullable: List<Int?>?
+            ) { }
+        """.trimIndent()
+
+        fun screenWithCharType(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            
+            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @Composable
+            fun Screen(
+                charVal: Char,
+                nullableChar: Char?,
+                charList: List<Char>,
+                charCallback: (Char) -> Unit
+            ) { }
+        """.trimIndent()
     }
 
     object ModuleConfigs {
