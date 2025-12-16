@@ -10,8 +10,7 @@ import com.google.devtools.ksp.symbol.KSValueParameter
 /**
  * Resolves KSValueParameter type
  * @param toSwift If true, transforms Kotlin types into their Swift representation.
- * @param withSwiftExport If true, will use Swift-interop instead of ObjC interop
- * .org/docs/native-objc-interop.html#swift-exported-symbols)
+ * @param withSwiftExport If true, will use [Swift-interop instead of ObjC interop](https://kotlinlang.org/docs/native-objc-interop.html#swift-exported-symbols)
  * @return String with type resolved
  * @throws ValueParameterResolutionError when type cannot be resolved
  */
@@ -351,7 +350,10 @@ internal fun extractFrameworkBaseNames(
         .distinct()
 }
 
-internal fun String.name() = split(".").last()
+internal fun String.name(): String {
+    val lastDotIndex = lastIndexOf('.')
+    return if (lastDotIndex == -1) this else substring(lastDotIndex + 1)
+}
 
 internal fun List<KSValueParameter>.toComposableParameters(stateParameterName: String): String =
     joinToString(", ") { if (it.name() == stateParameterName) "it" else it.name() }
