@@ -13,7 +13,6 @@ ComposeUiViewController {
 }
 
 kotlin {
-    jvm()
     iosArm64()
     iosSimulatorArm64()
     @OptIn(ExperimentalSwiftExportDsl::class)
