@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-RC3-1.10.0-rc02-3]
+
+- Fixes type conversion from Kotlin to Swift (from objcExport)
+
+---
+
 ## [2.3.0-RC3-1.10.0-rc02-2]
 
 - Improves Xcode code export script
