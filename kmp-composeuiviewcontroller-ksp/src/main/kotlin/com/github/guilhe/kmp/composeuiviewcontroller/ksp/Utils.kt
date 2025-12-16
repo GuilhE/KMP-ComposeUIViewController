@@ -45,44 +45,121 @@ internal fun KSValueParameter.resolveType(toSwift: Boolean = false, withSwiftExp
 
 private fun convertGenericType(type: KSType, toSwift: Boolean, withSwiftExport: Boolean): String {
     val baseType = type.declaration.simpleName.asString()
-    val convertedBaseType = if (toSwift) convertToSwift(baseType, withSwiftExport) else baseType
-    if (type.arguments.isEmpty()) return convertedBaseType
+    val isNullable = type.isMarkedNullable
+
+    // Handle collections with primitive types - they have special rules
+    if (toSwift && type.arguments.isNotEmpty() && baseType in listOf("List", "MutableList", "Set", "MutableSet", "Map", "MutableMap")) {
+        return convertCollectionType(type, baseType, isNullable, withSwiftExport)
+    }
+
+    val convertedBaseType = if (toSwift) convertToSwift(baseType, withSwiftExport, isNullable) else baseType
+
+    if (type.arguments.isEmpty()) {
+        return if (isNullable) "$convertedBaseType?" else convertedBaseType
+    }
+
     val generics = type.arguments.joinToString(", ") { arg ->
         arg.type?.resolve()?.let { convertGenericType(it, toSwift, withSwiftExport) } ?: throw TypeResolutionError(type)
     }
-    return "$convertedBaseType<$generics>"
+
+    val result = "$convertedBaseType<$generics>"
+    return if (isNullable) "$result?" else result
 }
 
-private fun convertToSwift(baseType: String, withSwiftExport: Boolean): String {
+/**
+ * Handle collection types with primitive elements according to ObjC/Swift export rules
+ * Collections with primitive types (except String) require wrapper types:
+ * - List<Int> -> Array<KotlinInt>
+ * - List<String> -> Array<String> (exception)
+ * - List<Char> -> Array<Any> (exception for ObjC export)
+ *
+ */
+private fun convertCollectionType(type: KSType, baseType: String, isNullable: Boolean, withSwiftExport: Boolean): String {
+    val generics = type.arguments.map { arg ->
+        arg.type?.resolve()?.let { argType ->
+            val argBaseType = argType.declaration.simpleName.asString()
+            val argIsNullable = argType.isMarkedNullable
+
+            // Check if it's a primitive type
+            if (isPrimitiveType(argBaseType)) {
+                convertPrimitiveInCollection(argBaseType, argIsNullable, withSwiftExport)
+            } else {
+                convertGenericType(argType, true, withSwiftExport)
+            }
+        } ?: throw TypeResolutionError(type)
+    }
+
+    val convertedCollection = when (baseType) {
+        "List" -> "Array"
+        "MutableList" -> if (withSwiftExport) "Array" else "NSMutableArray"
+        "Set" -> "Set"
+        "MutableSet" -> if (withSwiftExport) "Set" else "KotlinMutableSet"
+        "Map" -> "Dictionary"
+        "MutableMap" -> if (withSwiftExport) "Dictionary" else "NSMutableDictionary"
+        else -> baseType
+    }
+
+    // NSMutableArray and NSMutableDictionary DO support generics in Swift (they are bridged from ObjC)
+    val result = "$convertedCollection<${generics.joinToString(", ")}>"
+
+    return if (isNullable) "$result?" else result
+}
+
+private fun isPrimitiveType(type: String): Boolean {
+    return type in listOf("Byte", "UByte", "Short", "UShort", "Int", "UInt", "Long", "ULong", "Float", "Double", "Boolean", "Char", "String")
+}
+
+/**
+ * Convert primitive types when used inside collections
+ * According to ObjC export rules, primitives in collections are wrapped (except String)
+ */
+private fun convertPrimitiveInCollection(primitiveType: String, isNullable: Boolean, withSwiftExport: Boolean): String {
+    if (withSwiftExport) {
+        return convertToSwiftFromSwiftExport(primitiveType) + if (isNullable) "?" else ""
+    }
+
+    // ObjC export rules for primitives in collections
+    val converted = when (primitiveType) {
+        "String" -> "String"  // Exception: String doesn't need wrapper
+        "Char" -> "Any"       // Exception: Char becomes Any in collections
+        else -> "Kotlin$primitiveType"  // All other primitives get Kotlin prefix
+    }
+
+    return if (isNullable) "$converted?" else converted
+}
+
+private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullable: Boolean = false): String {
     return if (withSwiftExport) {
         convertToSwiftFromSwiftExport(baseType)
     } else {
-        convertToSwiftFromObjcExport(baseType)
+        convertToSwiftFromObjcExport(baseType, isNullable)
     }
 }
 
 /**
- *  [Apple framework generated framework headers](https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers)
+ *  [Kotlin to Swift from objcExport](https://github.com/kotlin-hands-on/kotlin-swift-interopedia/tree/main/docs/types)
+ *  Note: Nullable primitive types are wrapped in special Kotlin wrapper types (e.g., Int? -> KotlinInt?)
+ *  Exceptions: String? -> String?, Char? -> Any?
  */
-private fun convertToSwiftFromObjcExport(baseType: String): String {
+private fun convertToSwiftFromObjcExport(baseType: String, isNullable: Boolean = false): String {
     return when (baseType) {
         "Unit" -> "Void"
         "List" -> "Array"
         "MutableList" -> "NSMutableArray"
         "Set" -> "Set"
+        "MutableSet" -> "KotlinMutableSet"
         "Map" -> "Dictionary"
         "MutableMap" -> "NSMutableDictionary"
-        "Byte" -> "KotlinByte"
-        "UByte" -> "KotlinUByte"
-        "Short" -> "KotlinShort"
-        "UShort" -> "KotlinUShort"
-        "Int" -> "KotlinInt"
-        "UInt" -> "KotlinUInt"
-        "Long" -> "KotlinLong"
-        "ULong" -> "KotlinULong"
-        "Float" -> "KotlinFloat"
-        "Double" -> "KotlinDouble"
-        "Boolean" -> "KotlinBoolean"
+        "Char" -> if (isNullable) "Any" else "unichar"
+        // Primitive types - when nullable, they need to be wrapped
+        "Byte", "UByte", "Short", "UShort", "Int", "UInt", "Long", "ULong", "Float", "Double", "Boolean" -> {
+            if (isNullable) {
+                "Kotlin$baseType"
+            } else {
+                "Kotlin$baseType"
+            }
+        }
+        "String" -> "String"  // String? -> String? (no wrapper needed)
         else -> baseType
     }
 }
