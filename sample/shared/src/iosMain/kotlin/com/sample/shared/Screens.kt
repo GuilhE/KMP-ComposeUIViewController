@@ -28,7 +28,3 @@ internal fun GradientScreen(@ComposeUIViewControllerState state: ScreenState, ra
         }
     }
 }
-
-@ComposeUIViewController
-@Composable
-internal fun Test(v1: Boolean, v2: (Boolean) -> Unit) {}

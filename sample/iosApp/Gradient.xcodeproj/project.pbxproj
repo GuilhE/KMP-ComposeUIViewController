@@ -12,7 +12,6 @@
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
 		439ED11B5A5BAEE6BDBE023C /* GradientScreenUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3FF275EAC64A2DAFEA7F4E7 /* GradientScreenUIViewControllerRepresentable.swift */; };
 		7555FF83242A565900829871 /* SharedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* SharedView.swift */; };
-		CDCC0AB40ED2A38A759CB0DD /* TestUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 839595DDA19980C067E6663F /* TestUIViewControllerRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,7 +34,6 @@
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* SharedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		839595DDA19980C067E6663F /* TestUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TestUIViewControllerRepresentable.swift; path = Representables/TestUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		D3FF275EAC64A2DAFEA7F4E7 /* GradientScreenUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenUIViewControllerRepresentable.swift; path = Representables/GradientScreenUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -62,7 +60,6 @@
 			isa = PBXGroup;
 			children = (
 				D3FF275EAC64A2DAFEA7F4E7 /* GradientScreenUIViewControllerRepresentable.swift */,
-				839595DDA19980C067E6663F /* TestUIViewControllerRepresentable.swift */,
 			);
 			name = Representables;
 			sourceTree = "<group>";
@@ -202,7 +199,6 @@
 				2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */,
 				7555FF83242A565900829871 /* SharedView.swift in Sources */,
 				439ED11B5A5BAEE6BDBE023C /* GradientScreenUIViewControllerRepresentable.swift in Sources */,
-				CDCC0AB40ED2A38A759CB0DD /* TestUIViewControllerRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

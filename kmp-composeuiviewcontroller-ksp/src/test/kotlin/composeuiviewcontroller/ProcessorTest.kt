@@ -142,7 +142,7 @@ class ProcessorTest {
             generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithoutState(
                 params = listOf(
                     "data" to "SomeClass",
-                    "value" to "KotlinInt",
+                    "value" to "Int32",  // Direct parameter uses native type
                     "callBack" to "() -> Void"
                 )
             )
