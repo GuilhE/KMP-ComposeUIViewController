@@ -1,5 +1,4 @@
 [versions]
-
 kotlin = "2.3.0-RC3"
 composeMultiplatform = "1.10.0-rc02"
 
@@ -16,7 +15,6 @@ kotlinx-collections  = { group = "org.jetbrains.kotlinx", name = "kotlinx-collec
 jetbrains-compose-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "composeMultiplatform" }
 jetbrains-compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "composeMultiplatform" }
 jetbrains-compose-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "composeMultiplatform" }
-jetbrains-compose-ui-tooling-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview", version.ref = "composeMultiplatform" }
 jetbrains-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "composeMaterial3" }
 
 [bundles]
@@ -24,6 +22,5 @@ jetbrains-compose = [
     "jetbrains-compose-foundation",
     "jetbrains-compose-runtime",
     "jetbrains-compose-ui",
-    "jetbrains-compose-ui-tooling-preview",
     "jetbrains-compose-material3"
 ]

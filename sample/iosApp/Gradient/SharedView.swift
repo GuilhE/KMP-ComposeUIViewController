@@ -1,5 +1,4 @@
 import Composables
-import Models
 import SwiftUI
 
 struct SharedView: View {

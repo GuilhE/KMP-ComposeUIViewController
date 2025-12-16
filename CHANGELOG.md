@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.3.0-RC3-1.10.0-rc02-3]
+
+- Fixes type conversion from Kotlin to Swift (from objcExport)
+
+---
+
+## [2.3.0-RC3-1.10.0-rc02-2]
+
+- Improves Xcode code export script
+
+---
+
+## [2.3.0-RC3-1.10.0-rc02-1]
+
+- Improves Xcode code export script and sets xcodeproj minimum version to 1.27.0
+
+---
+
 ## [2.3.0-RC3-1.10.0-rc02]
 
 - Kotlin 2.3.0-RC3
