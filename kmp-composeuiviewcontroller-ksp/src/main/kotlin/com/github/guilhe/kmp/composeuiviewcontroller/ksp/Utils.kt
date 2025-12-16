@@ -291,23 +291,24 @@ internal fun extractImportsFromExternalPackages(
     parameters: List<KSValueParameter>,
     stateParameter: KSValueParameter? = null
 ): List<String> {
-    val parameterSet = setOf<KSValueParameter>()
-        .plus(makeParameters)
-        .plus(parameters)
-    stateParameter?.let { parameters.plus(it) }
-    return parameterSet
+    val allParameters = buildList {
+        addAll(makeParameters)
+        addAll(parameters)
+        stateParameter?.let { add(it) }
+    }
+
+    val seen = mutableSetOf<String>()
+    return allParameters
         .mapNotNull {
             val resolvedType = it.type.resolve()
             if (resolvedType.isError) throw ValueParameterResolutionError(it)
             val typeDeclaration = resolvedType.declaration
-//            println(">> Type: ${it.type}, Resolved: $resolvedType, Declaration: $typeDeclaration")
             val typePackage = (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
-//            println(">> Type Package: $typePackage")
             if (typePackage != null && packageName != typePackage && !typePackage.startsWith("kotlin")) {
                 "$typePackage.${resolvedType.declaration.simpleName.asString()}"
             } else null
         }
-        .distinct()
+        .filter { seen.add(it) }
 }
 
 /**

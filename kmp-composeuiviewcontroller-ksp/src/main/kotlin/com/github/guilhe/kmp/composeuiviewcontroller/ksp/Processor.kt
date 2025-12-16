@@ -111,35 +111,13 @@ internal class Processor(
                     }
 
                     if (swiftExportEnabled) {
-                        val externalPackages = externalImports.map { it.substringBeforeLast('.') }.distinct().plus(packageName)
-                        modulesMetadata
-                            .filter { module -> !module.flattenPackageConfigured }
-                            .distinct()
-                            .forEach { module ->
-                                val internalImport = module.packageNames.any { modulePackage ->
-                                    modulePackage.startsWith(packageName) || modulePackage == packageName
-                                }
-                                if (internalImport) {
-                                    accumulatedTypeAliases.add(
-                                        TypeAliasInfo(name = "${composable.name()}UIViewController", packageName = packageName)
-                                    )
-                                }
-
-                                val hasExternalPackages = module.packageNames.any { it in externalPackages }
-                                if (hasExternalPackages) {
-                                    externalPackages.forEach { externalModule ->
-                                        if (module.packageNames.contains(externalModule)) {
-                                            val typesFromThisModule = externalImports
-                                                .filter { it.startsWith("$externalModule.") }
-                                                .map { it.substringAfterLast(".") }
-                                            typesFromThisModule.forEach { typeName ->
-                                                val typeAlias = TypeAliasInfo(name = typeName, packageName = externalModule)
-                                                accumulatedTypeAliases.add(typeAlias)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        collectTypeAliases(
+                            externalImports = externalImports,
+                            packageName = packageName,
+                            composableName = composable.name(),
+                            modulesMetadata = modulesMetadata,
+                            accumulatedTypeAliases = accumulatedTypeAliases
+                        )
                     }
                 }
             }
@@ -163,6 +141,47 @@ internal class Processor(
             stateParameters.size > 1 -> throw MultipleComposeUIViewControllerStateException(composable)
         }
         return stateParameters
+    }
+
+    private fun collectTypeAliases(
+        externalImports: List<String>,
+        packageName: String,
+        composableName: String,
+        modulesMetadata: List<ModuleMetadata>,
+        accumulatedTypeAliases: MutableSet<TypeAliasInfo>
+    ) {
+        val unflattenedModules = modulesMetadata.filter { !it.flattenPackageConfigured }
+        if (unflattenedModules.isEmpty()) return
+
+        val packageToModule = unflattenedModules
+            .flatMap { module -> module.packageNames.map { it to module } }
+            .toMap()
+
+        val module = packageToModule[packageName] ?: packageToModule.entries.firstOrNull { (key, _) ->
+            key.startsWith(packageName) || packageName.startsWith(key)
+        }?.value
+
+        if (module != null) {
+            accumulatedTypeAliases.add(
+                TypeAliasInfo(name = "${composableName}UIViewController", packageName = packageName)
+            )
+        }
+
+        for (import in externalImports) {
+            val lastDotIndex = import.lastIndexOf('.')
+            if (lastDotIndex == -1) continue
+
+            val typeName = import.substring(lastDotIndex + 1)
+            val pkg = import.take(lastDotIndex)
+
+            val importModule = packageToModule[pkg] ?: packageToModule.entries.firstOrNull { (key, _) ->
+                key.startsWith(pkg) || pkg.startsWith(key)
+            }?.value
+
+            if (importModule != null) {
+                accumulatedTypeAliases.add(TypeAliasInfo(name = typeName, packageName = pkg))
+            }
+        }
     }
 
     private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
