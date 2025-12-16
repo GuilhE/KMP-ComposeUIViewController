@@ -67,6 +67,13 @@ private fun convertGenericType(type: KSType, toSwift: Boolean, withSwiftExport: 
     return if (isNullable) "$result?" else result
 }
 
+private val PRIMITIVE_TYPES = setOf(
+    "Byte", "UByte", "Short", "UShort", "Int", "UInt",
+    "Long", "ULong", "Float", "Double", "Boolean", "Char", "String"
+)
+
+private fun isPrimitiveType(type: String): Boolean = type in PRIMITIVE_TYPES
+
 /**
  * Handle collection types with primitive elements according to ObjC/Swift export rules
  * Collections with primitive types (except String) require wrapper types:
@@ -109,10 +116,6 @@ private fun convertCollectionType(type: KSType, baseType: String, isNullable: Bo
     return if (isNullable) "$result?" else result
 }
 
-private fun isPrimitiveType(type: String): Boolean {
-    return type in listOf("Byte", "UByte", "Short", "UShort", "Int", "UInt", "Long", "ULong", "Float", "Double", "Boolean", "Char", "String")
-}
-
 /**
  * Convert primitive types when used inside collections
  * According to ObjC export rules, primitives in collections are wrapped (except String)
@@ -142,6 +145,22 @@ private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullabl
     }
 }
 
+private val OBJC_COLLECTION_TYPES = mapOf(
+    "Unit" to null,
+    "List" to null,
+    "MutableList" to "NSMutableArray",
+    "Set" to null,
+    "MutableSet" to "KotlinMutableSet",
+    "Map" to null,
+    "MutableMap" to "NSMutableDictionary",
+    "String" to null
+)
+
+private val OBJC_PRIMITIVE_WRAPPERS = setOf(
+    "Byte", "UByte", "Short", "UShort", "Int", "UInt",
+    "Long", "ULong", "Float", "Double", "Boolean"
+)
+
 /**
  *  [Kotlin to Swift from objcExport](https://github.com/kotlin-hands-on/kotlin-swift-interopedia/tree/main/docs/types)
  *  Note:
@@ -151,77 +170,21 @@ private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullabl
  *  Exceptions: String? -> String?, Char? -> Any?
  */
 private fun convertToSwiftFromObjcExport(baseType: String, isNullable: Boolean = false, insideFunctionType: Boolean = false): String {
-    return when (baseType) {
-        "Unit" -> convertToSwiftFromSwiftExport(baseType)
-        "List" -> convertToSwiftFromSwiftExport(baseType)
-        "MutableList" -> "NSMutableArray"
-        "Set" -> convertToSwiftFromSwiftExport(baseType)
-        "MutableSet" -> "KotlinMutableSet"
-        "Map" -> convertToSwiftFromSwiftExport(baseType)
-        "MutableMap" -> "NSMutableDictionary"
-        "Char" -> when {
-            isNullable -> "Any"
-            insideFunctionType -> "Any"
-            else -> "unichar"
-        }
-        "Byte" -> when {
-            isNullable -> "KotlinByte"
-            insideFunctionType -> "KotlinByte"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "UByte" -> when {
-            isNullable -> "KotlinUByte"
-            insideFunctionType -> "KotlinUByte"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "Short" -> when {
-            isNullable -> "KotlinShort"
-            insideFunctionType -> "KotlinShort"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "UShort" -> when {
-            isNullable -> "KotlinUShort"
-            insideFunctionType -> "KotlinUShort"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "Int" -> when {
-            isNullable -> "KotlinInt"
-            insideFunctionType -> "KotlinInt"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "UInt" -> when {
-            isNullable -> "KotlinUInt"
-            insideFunctionType -> "KotlinUInt"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "Long" -> when {
-            isNullable -> "KotlinLong"
-            insideFunctionType -> "KotlinLong"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "ULong" -> when {
-            isNullable -> "KotlinULong"
-            insideFunctionType -> "KotlinULong"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "Float" -> when {
-            isNullable -> "KotlinFloat"
-            insideFunctionType -> "KotlinFloat"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "Double" -> when {
-            isNullable -> "KotlinDouble"
-            insideFunctionType -> "KotlinDouble"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "Boolean" -> when {
-            isNullable -> "KotlinBoolean"
-            insideFunctionType -> "KotlinBoolean"
-            else -> convertToSwiftFromSwiftExport(baseType)
-        }
-        "String" -> convertToSwiftFromSwiftExport(baseType)
-        else -> baseType
+    OBJC_COLLECTION_TYPES[baseType]?.let { return it }
+    if (baseType in OBJC_COLLECTION_TYPES) return convertToSwiftFromSwiftExport(baseType)
+
+    if (baseType == "Char") {
+        return if (isNullable || insideFunctionType) "Any" else "unichar"
     }
+
+    if (baseType in OBJC_PRIMITIVE_WRAPPERS) {
+        return when {
+            isNullable || insideFunctionType -> "Kotlin$baseType"
+            else -> convertToSwiftFromSwiftExport(baseType)
+        }
+    }
+
+    return baseType
 }
 
 /**
@@ -329,12 +292,13 @@ internal fun extractFrameworkBaseNames(
     parameters: List<KSValueParameter>,
     stateParameter: KSValueParameter? = null
 ): List<String> {
-    val parameterSet = setOf<KSValueParameter>()
-        .plus(makeParameters)
-        .plus(parameters)
-    stateParameter?.let { parameters.plus(it) }
+    val allParameters = buildList {
+        addAll(makeParameters)
+        addAll(parameters)
+        stateParameter?.let { add(it) }
+    }
 
-    val parameterPackages = parameterSet
+    val parameterPackages = allParameters
         .mapNotNull {
             val resolvedType = it.type.resolve()
             if (resolvedType.isError) throw ValueParameterResolutionError(it)
@@ -342,9 +306,7 @@ internal fun extractFrameworkBaseNames(
         }
         .filterNot { it.startsWith("kotlin") }
         .distinct()
-        .toMutableList()
-
-    parameterPackages.add(composable.packageName.asString())
+        .plus(composable.packageName.asString())
 
     return parameterPackages
         .mapNotNull { pkg -> moduleMetadata.find { it.packageNames.any { packageName -> packageName.startsWith(pkg) } }?.frameworkBaseName }
@@ -396,4 +358,3 @@ internal class TypeResolutionError(parameter: KSType) : IllegalArgumentException
 
 internal class ModuleDecodeException(e: Exception) :
     IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
-
