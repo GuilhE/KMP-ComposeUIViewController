@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection", "LoggingSimilarMessage")
 
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
@@ -10,7 +10,6 @@ import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.PluginInstantiationException
 import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -23,19 +22,22 @@ import org.jetbrains.kotlin.konan.target.Family
 import java.io.BufferedReader
 import java.io.File
 
+public class PluginConfigurationException(message: String, cause: Throwable? = null) : GradleException(message, cause)
+
 /**
  * Heavy lifts gradle configurations when using [KMP-ComposeUIViewController](https://github.com/GuilhE/KMP-ComposeUIViewController) library.
  */
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        println("> $LOG_TAG:")
+        project.logger.info("> $LOG_TAG: Applying plugin to project '${project.name}'")
         with(project) {
             if (!plugins.hasPlugin(PLUGIN_KMP)) {
                 throw PluginInstantiationException(ERROR_MISSING_KMP)
             }
 
             if (!plugins.hasPlugin(PLUGIN_KSP)) {
+                logger.info("\t> Auto-applying KSP plugin")
                 project.pluginManager.apply(PLUGIN_KSP)
             }
 
@@ -43,67 +45,96 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             configureCleanTempFilesLogic(tempFolder)
 
             setupTargets()
-            with(extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)) {
+
+            val extension = extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)
+            with(extension) {
                 configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = this, tempFolder = tempFolder)
                 configureTaskToFinalizeByCopyFilesToXcode(this)
-                project.afterEvaluate {
-                    val packageNames = retrieveModulePackagesFromCommonMain()
+            }
+
+            val packageResolver = PackageResolver(this, logger)
+            project.afterEvaluate {
+                try {
+                    validateExtensionParameters(extension)
+                    val packageNames = packageResolver.resolvePackages()
                     val (frameworkNames, swiftExport, flattenPackage) = retrieveFrameworkBaseNamesFromIosTargets(packageNames)
                     writeModuleMetadataToDisk(
                         swiftExportEnabled = swiftExport,
                         flattenPackageConfigured = flattenPackage,
                         args = buildFrameworkPackages(packageNames, frameworkNames)
                     )
+                } catch (e: PluginConfigurationException) {
+                    throw e
+                } catch (e: Exception) {
+                    throw PluginConfigurationException("Failed to configure plugin: ${e.message}", e)
                 }
             }
         }
     }
 
     private fun Project.configureCleanTempFilesLogic(tempFolder: File) {
-        tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) { it.doLast { deleteTempFolder(tempFolder) } }
-        tasks.named("clean").configure { it.finalizedBy(TASK_CLEAN_TEMP_FILES_FOLDER) }
-        gradle.addBuildListener(object : org.gradle.BuildListener {
-            override fun settingsEvaluated(settings: org.gradle.api.initialization.Settings) {}
-            override fun projectsLoaded(gradle: Gradle) {}
-            override fun projectsEvaluated(gradle: Gradle) {}
-
-            @Suppress("OVERRIDE_DEPRECATION")
-            override fun buildFinished(result: org.gradle.BuildResult) {
-                if (result.failure != null) {
-                    deleteTempFolder(tempFolder)
+        val cleanupTaskProvider = tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) { task ->
+            task.group = "composeuiviewcontroller"
+            task.description = "Cleans up temporary files created by the plugin"
+            task.inputs.dir(tempFolder).optional()
+            task.outputs.upToDateWhen { !tempFolder.exists() }
+            task.doLast {
+                if (tempFolder.exists()) {
+                    val deleted = tempFolder.deleteRecursively()
+                    logger.info("\n> $LOG_TAG:\n\t> Temp folder deleted: $deleted")
                 }
             }
-        })
-    }
+        }
 
-    private fun deleteTempFolder(folder: File) {
-        if (folder.exists()) {
-            println("\n> $LOG_TAG:\n\t> Temp folder deleted: ${folder.deleteRecursively()}")
-        } else {
-            println("\n> $LOG_TAG:\n\t> Temp folder already deleted")
+        tasks.named("clean").configure { it.finalizedBy(cleanupTaskProvider) }
+
+        // Note: This is deprecated but necessary until FlowProviders API is stable and available
+        @Suppress("DEPRECATION")
+        gradle.buildFinished { result ->
+            if (result.failure != null && tempFolder.exists()) {
+                val deleted = tempFolder.deleteRecursively()
+                logger.info("\n> $LOG_TAG:\n\t> Build failed - Temp folder deleted: $deleted")
+            }
         }
     }
+
+    private fun Project.validateExtensionParameters(parameters: ComposeUiViewControllerParameters) {
+        require(parameters.iosAppFolderName.isNotBlank()) {
+            "iosAppFolderName cannot be blank. Current value: '${parameters.iosAppFolderName}'"
+        }
+        require(parameters.iosAppName.isNotBlank()) {
+            "iosAppName cannot be blank. Current value: '${parameters.iosAppName}'"
+        }
+        require(parameters.targetName.isNotBlank()) {
+            "targetName cannot be blank. Current value: '${parameters.targetName}'"
+        }
+        require(parameters.exportFolderName.isNotBlank()) {
+            "exportFolderName cannot be blank. Current value: '${parameters.exportFolderName}'"
+        }
+        logger.debug("\t> Extension parameters validated successfully")
+    }
+
 
     private fun Project.setupTargets() {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
         val commonMainSourceSet = kmp.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
         configurations.getByName(commonMainSourceSet.implementationConfigurationName).dependencies.apply {
             add(dependencies.create(LIB_ANNOTATION))
-            println("\t> Adding $LIB_ANNOTATION to ${commonMainSourceSet.implementationConfigurationName}")
+            logger.info("\t> Adding $LIB_ANNOTATION to ${commonMainSourceSet.implementationConfigurationName}")
         }
 
         kmp.targets.configureEach { target ->
             if (!target.fromIosFamily()) return@configureEach
             val kspConfigName = "ksp${target.targetName.replaceFirstChar { it.uppercaseChar() }}"
             dependencies.add(kspConfigName, LIB_KSP)
-            println("\t> Adding $LIB_KSP to $kspConfigName")
+            logger.info("\t> Adding $LIB_KSP to $kspConfigName")
         }
     }
 
     private fun Project.retrieveFrameworkBaseNamesFromIosTargets(packageNames: Set<String>): Triple<Set<String>, Boolean, Boolean> {
         val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
 
-        // Priority 1: Framework baseName (Obcjective-C/Swift interoperability)
+        // Priority 1: Framework baseName (Objective-C/Swift interoperability)
         val frameworkNames = mutableSetOf<String>()
         kmp.targets.configureEach { target ->
             if (target.fromIosFamily()) {
@@ -113,7 +144,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             }
         }
         if (frameworkNames.isNotEmpty()) {
-            println("\t> $INFO_MODULE_NAME_BY_FRAMEWORK $frameworkNames")
+            logger.info("\t> $INFO_MODULE_NAME_BY_FRAMEWORK $frameworkNames")
             return Triple(frameworkNames, false, false)
         }
 
@@ -125,24 +156,24 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             packageNames.any { it.startsWith("$flatten.") } || packageNames.contains(flatten)
         } ?: false
         if (flattenConfigured) {
-            println("\t> Info: flattenPackage '$flattenPackage' matches sourceSet.")
+            logger.info("\t> Info: flattenPackage '$flattenPackage' matches sourceSet.")
         }
         if (!moduleName.isNullOrBlank()) {
-            println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
+            logger.info("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
             return Triple(setOf(moduleName), true, flattenConfigured)
         }
 
         // Priority 3: SwiftExport in all Projects
         getSwiftExportConfigForProject()?.let { (moduleName, flattenPackage) ->
             if (!moduleName.isNullOrBlank()) {
-                println("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
+                logger.info("\t> $INFO_MODULE_NAME_BY_SWIFT_EXPORT [$moduleName]")
                 val flattenConfigured = flattenPackage?.let { flatten ->
                     packageNames.any { it.startsWith("$flatten.") } || packageNames.contains(flatten)
                 } ?: false
                 if (flattenConfigured) {
-                    println("\t> Info: flattenPackage '$flattenPackage' matches sourceSet.")
+                    logger.info("\t> Info: flattenPackage '$flattenPackage' matches sourceSet.")
                 } else {
-                    println("\t> Warning: flattenPackage '$flattenPackage' does NOT match sourceSet. Typealias will be generated")
+                    logger.warn("\t> Warning: flattenPackage '$flattenPackage' does NOT match sourceSet. Typealias will be generated")
                 }
                 return Triple(setOf(moduleName), true, flattenConfigured)
             }
@@ -150,27 +181,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
         // Priority 4: Project name (fallback)
         val projectModuleName = name.toPascalCase()
-        println("\t> $INFO_MODULE_NAME_BY_PROJECT [$projectModuleName]")
+        logger.info("\t> $INFO_MODULE_NAME_BY_PROJECT [$projectModuleName]")
         return Triple(setOf(projectModuleName), true, flattenConfigured)
-    }
-
-    private fun Project.retrieveModulePackagesFromCommonMain(): Set<String> {
-        val kmp = extensions.getByType(KotlinMultiplatformExtension::class.java)
-        val commonMainSourceSet = kmp.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
-        val packages = mutableSetOf<String>()
-        commonMainSourceSet.kotlin.srcDirs.forEach { dir ->
-            dir.walkTopDown().forEach { file ->
-                if (file.isFile && file.extension == "kt") {
-                    val relativePath = file.relativeTo(dir).parentFile?.path ?: ""
-                    val packagePath = relativePath.replace(File.separator, ".")
-                    if (packagePath.isNotEmpty()) {
-                        packages.add(packagePath)
-                    }
-                }
-            }
-        }
-        println("\t> $INFO_MODULE_PACKAGES $packages")
-        return packages.ifEmpty { throw GradleException(ERROR_MISSING_PACKAGE) }
     }
 
     private fun Project.buildFrameworkPackages(packageNames: Set<String>, frameworkNames: Set<String>): Map<String, Set<String>> {
@@ -190,23 +202,36 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     private fun Project.writeModuleMetadataToDisk(swiftExportEnabled: Boolean, flattenPackageConfigured: Boolean, args: Map<String, Set<String>>) {
         val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
-        val moduleMetadata = try {
-            Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
-        } catch (_: Exception) {
+        file.parentFile?.mkdirs()
+
+        val moduleMetadata = if (file.exists() && file.length() > 0) {
+            try {
+                Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
+            } catch (e: Exception) {
+                logger.warn("\t> Failed to parse existing metadata, starting fresh: ${e.message}")
+                mutableSetOf()
+            }
+        } else {
             mutableSetOf()
         }
-        args.forEach { (key, value) ->
-            moduleMetadata.add(
-                ModuleMetadata(
-                    name = name,
-                    packageNames = value,
-                    frameworkBaseName = key,
-                    swiftExportEnabled = swiftExportEnabled,
-                    flattenPackageConfigured = flattenPackageConfigured
-                )
+
+        val newMetadata = args.map { (key, value) ->
+            ModuleMetadata(
+                name = name,
+                packageNames = value,
+                frameworkBaseName = key,
+                swiftExportEnabled = swiftExportEnabled,
+                flattenPackageConfigured = flattenPackageConfigured
             )
         }
-        file.writeText(Json.encodeToString(moduleMetadata))
+
+        val changed = moduleMetadata.addAll(newMetadata)
+        if (changed || !file.exists()) {
+            file.writeText(Json.encodeToString(moduleMetadata))
+            logger.debug("\t> Module metadata written to: ${file.absolutePath}")
+        } else {
+            logger.debug("\t> Module metadata unchanged, skipping write")
+        }
     }
 
     private fun Project.configureTaskToRegisterCopyFilesToXcode(
@@ -215,53 +240,49 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         tempFolder: File
     ) {
         tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
+            task.group = "composeuiviewcontroller"
+            task.description = "Copies generated files to Xcode project"
+            task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
+            task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toList()}") }
+
             val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
-            println("\t> parameters: ${extensionParameters.toList()}")
             val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_SCRIPT")
             val script = inputStream?.use { stream ->
                 stream.bufferedReader().use(BufferedReader::readText)
-            } ?: throw GradleException("Unable to read resource file")
+            } ?: throw PluginConfigurationException("Unable to read resource file: $FILE_NAME_SCRIPT. Ensure the plugin is correctly packaged.")
 
             val modifiedScript = script
-                .replace(
-                    oldValue = "$PARAM_KMP_MODULE=\"shared\"",
-                    newValue = "$PARAM_KMP_MODULE=\"${project.name}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_FOLDER=\"iosApp\"",
-                    newValue = "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_APP_NAME=\"iosApp\"",
-                    newValue = "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_TARGET=\"iosApp\"",
-                    newValue = "$PARAM_TARGET=\"${extensionParameters.targetName}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_GROUP=\"Representables\"",
-                    newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
-                )
+                .replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
+                .replace("$PARAM_FOLDER=\"iosApp\"", "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\"")
+                .replace("$PARAM_APP_NAME=\"iosApp\"", "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\"")
+                .replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
+                .replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
 
             val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SCRIPT_TEMP}")
                 .also { it.createNewFile() }
+
             if (tempFile.exists()) {
-                with(tempFile) {
-                    writeText(modifiedScript)
-                    setExecutable(true)
-                    task.workingDir = project.rootDir
-                    try {
-                        task.commandLine("bash", "-c", tempFile.absolutePath)
-                        if (!keepScriptFile) {
-                            task.doLast { deleteTempFolder(tempFolder) }
+                tempFile.writeText(modifiedScript)
+                tempFile.setExecutable(true)
+                task.workingDir = project.rootDir
+
+                try {
+                    task.commandLine("bash", "-c", tempFile.absolutePath)
+                    if (!keepScriptFile) {
+                        task.doLast {
+                            if (tempFolder.exists()) {
+                                tempFolder.deleteRecursively()
+                            }
                         }
-                    } catch (e: Exception) {
-                        println("\t> Error running script: ${e.message}")
                     }
+                } catch (e: Exception) {
+                    throw PluginConfigurationException(
+                        "Failed to configure script execution for task '$TASK_COPY_FILES_TO_XCODE'. Script path: ${tempFile.absolutePath}",
+                        e
+                    )
                 }
             } else {
-                println("\t> Error creating $FILE_NAME_SCRIPT_TEMP")
+                throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_SCRIPT_TEMP at ${tempFile.absolutePath}")
             }
         }
     }
@@ -273,7 +294,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
                     it.name == TASK_SYNC_FRAMEWORK
         }.configureEach { task ->
             if (extensionParameters.autoExport) {
-                println("\n> $LOG_TAG:\n\t> ${task.name} will be finalizedBy $TASK_COPY_FILES_TO_XCODE task")
+                logger.info("\n> $LOG_TAG:\n\t> Task '${task.name}' will be finalized by '$TASK_COPY_FILES_TO_XCODE' task")
                 task.finalizedBy(TASK_COPY_FILES_TO_XCODE)
             }
         }
@@ -316,8 +337,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val PARAM_TARGET = "iosApp_target_name"
         internal const val PARAM_GROUP = "group_name"
         internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
-        internal const val INFO_MODULE_PACKAGES = "Module packages found:"
-        internal const val ERROR_MISSING_PACKAGE = "Cloud not determine project's package"
+        internal const val ERROR_MISSING_PACKAGE = "Could not determine project's package"
         internal const val INFO_MODULE_NAME_BY_FRAMEWORK =
             "SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName:"
         internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName:"

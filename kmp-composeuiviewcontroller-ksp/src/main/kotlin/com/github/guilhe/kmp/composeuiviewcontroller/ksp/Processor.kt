@@ -43,6 +43,8 @@ internal class Processor(
         }
 
         val trimmedCandidates = candidates.distinctBy { it.containingFile?.fileName }
+        val modulesMetadata = getFrameworkMetadataFromDisk()
+        val swiftExportEnabled: Boolean = modulesMetadata.firstOrNull()?.swiftExportEnabled ?: false
 
         val accumulatedTypeAliases = mutableSetOf<TypeAliasInfo>()
         for (node in trimmedCandidates) {
@@ -64,15 +66,13 @@ internal class Processor(
                             .also { if (parameters.size != it.size + 1) throw InvalidParametersException() }
                     }
                     val externalImports = extractImportsFromExternalPackages(packageName, makeParameters, parameters)
-                    val modulesMetadata = getFrameworkMetadataFromDisk()
-                    val swiftExportEnabled: Boolean = modulesMetadata.firstOrNull()?.swiftExportEnabled ?: false
                     val externalModuleTypes = if (swiftExportEnabled) {
                         buildExternalModuleParameters(modulesMetadata, externalImports)
                     } else {
                         emptyMap()
                     }
                     val frameworkBaseNames = if (swiftExportEnabled) {
-                        getFrameworkBaseNames(composable, node, makeParameters, parameters)
+                        getFrameworkBaseNames(composable, node, makeParameters, parameters, modulesMetadata, stateParameter)
                     } else {
                         listOf(trimFrameworkBaseNames(node, modulesMetadata, packageName))
                     }
@@ -111,35 +111,13 @@ internal class Processor(
                     }
 
                     if (swiftExportEnabled) {
-                        val externalPackages = externalImports.map { it.substringBeforeLast('.') }.distinct().plus(packageName)
-                        modulesMetadata
-                            .filter { module -> !module.flattenPackageConfigured }
-                            .distinct()
-                            .forEach { module ->
-                                val internalImport = module.packageNames.any { modulePackage ->
-                                    modulePackage.startsWith(packageName) || modulePackage == packageName
-                                }
-                                if (internalImport) {
-                                    accumulatedTypeAliases.add(
-                                        TypeAliasInfo(name = "${composable.name()}UIViewController", packageName = packageName)
-                                    )
-                                }
-
-                                val hasExternalPackages = module.packageNames.any { it in externalPackages }
-                                if (hasExternalPackages) {
-                                    externalPackages.forEach { externalModule ->
-                                        if (module.packageNames.contains(externalModule)) {
-                                            val typesFromThisModule = externalImports
-                                                .filter { it.startsWith("$externalModule.") }
-                                                .map { it.substringAfterLast(".") }
-                                            typesFromThisModule.forEach { typeName ->
-                                                val typeAlias = TypeAliasInfo(name = typeName, packageName = externalModule)
-                                                accumulatedTypeAliases.add(typeAlias)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        collectTypeAliases(
+                            externalImports = externalImports,
+                            packageName = packageName,
+                            composableName = composable.name(),
+                            modulesMetadata = modulesMetadata,
+                            accumulatedTypeAliases = accumulatedTypeAliases
+                        )
                     }
                 }
             }
@@ -155,15 +133,55 @@ internal class Processor(
 
     private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
         val stateParameters = parameters.filter {
-            it.annotations
-                .filter { annotation -> annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name() }
-                .toList()
-                .isNotEmpty()
+            it.annotations.any { annotation ->
+                annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name()
+            }
         }
         when {
             stateParameters.size > 1 -> throw MultipleComposeUIViewControllerStateException(composable)
         }
         return stateParameters
+    }
+
+    private fun collectTypeAliases(
+        externalImports: List<String>,
+        packageName: String,
+        composableName: String,
+        modulesMetadata: List<ModuleMetadata>,
+        accumulatedTypeAliases: MutableSet<TypeAliasInfo>
+    ) {
+        val unflattenedModules = modulesMetadata.filter { !it.flattenPackageConfigured }
+        if (unflattenedModules.isEmpty()) return
+
+        val packageToModule = unflattenedModules
+            .flatMap { module -> module.packageNames.map { it to module } }
+            .toMap()
+
+        val module = packageToModule[packageName] ?: packageToModule.entries.firstOrNull { (key, _) ->
+            key.startsWith(packageName) || packageName.startsWith(key)
+        }?.value
+
+        if (module != null) {
+            accumulatedTypeAliases.add(
+                TypeAliasInfo(name = "${composableName}UIViewController", packageName = packageName)
+            )
+        }
+
+        for (import in externalImports) {
+            val lastDotIndex = import.lastIndexOf('.')
+            if (lastDotIndex == -1) continue
+
+            val typeName = import.substring(lastDotIndex + 1)
+            val pkg = import.take(lastDotIndex)
+
+            val importModule = packageToModule[pkg] ?: packageToModule.entries.firstOrNull { (key, _) ->
+                key.startsWith(pkg) || pkg.startsWith(key)
+            }?.value
+
+            if (importModule != null) {
+                accumulatedTypeAliases.add(TypeAliasInfo(name = typeName, packageName = pkg))
+            }
+        }
     }
 
     private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
@@ -178,16 +196,22 @@ internal class Processor(
         return moduleMetadata
     }
 
-    private fun buildExternalModuleParameters(moduleMetadata: List<ModuleMetadata>, imports: List<String>): MutableMap<String, String> {
-        val result = mutableMapOf<String, String>()
-        imports.forEach {
-            val type = it.split(".").last()
-            val import = it.split(".$type").first()
-            moduleMetadata
-                .filter { module -> module.packageNames.contains(import) }
-                .forEach { _ -> result[type] = type }
-        }
-        return result
+    private fun buildExternalModuleParameters(moduleMetadata: List<ModuleMetadata>, imports: List<String>): Map<String, String> {
+        val knownPackages = moduleMetadata
+            .flatMap { it.packageNames }
+            .toSet()
+
+        return imports
+            .mapNotNull { import ->
+                val lastDotIndex = import.lastIndexOf('.')
+                if (lastDotIndex == -1) return@mapNotNull null
+
+                val typeName = import.substring(lastDotIndex + 1)
+                val packageName = import.take(lastDotIndex)
+
+                if (packageName in knownPackages) typeName to typeName else null
+            }
+            .toMap()
     }
 
     private fun trimFrameworkBaseNames(node: KSAnnotated, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
@@ -201,22 +225,13 @@ internal class Processor(
         node: KSAnnotated,
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>,
+        modulesMetadata: List<ModuleMetadata>,
         stateParameter: KSValueParameter? = null
     ): List<String> {
-        val frameworkBaseNames = mutableListOf<String>()
-        frameworkBaseNames.addAll(
-            extractFrameworkBaseNames(
-                composable,
-                getFrameworkMetadataFromDisk(),
-                makeParameters,
-                parameters,
-                stateParameter
-            )
-        )
-        frameworkBaseNames.removeIf { it.isBlank() }
-        frameworkBaseNames.ifEmpty { getFrameworkBaseNameFromAnnotation(node)?.let { frameworkBaseNames.add(it) } }
-        frameworkBaseNames.ifEmpty { throw EmptyFrameworkBaseNameException() }
-        return frameworkBaseNames
+        return extractFrameworkBaseNames(composable, modulesMetadata, makeParameters, parameters, stateParameter)
+            .filter { it.isNotBlank() }
+            .ifEmpty { listOfNotNull(getFrameworkBaseNameFromAnnotation(node)) }
+            .ifEmpty { throw EmptyFrameworkBaseNameException() }
     }
 
     private fun getFrameworkBaseNameFromAnnotation(node: KSAnnotated): String? {
@@ -324,9 +339,7 @@ internal class Processor(
         val makeParametersParsed = makeParameters.joinToString(", ") { "${it.name()}: ${it.name()}" }
         val letParameters = makeParameters.joinToString("\n") {
             val type = it.resolveType(toSwift = true, withSwiftExport = swiftExportEnabled)
-            val finalType = if (externalParameters.containsKey(type)) {
-                externalParameters[type]
-            } else type
+            val finalType = externalParameters[type] ?: type
             "let ${it.name()}: $finalType"
         }
 

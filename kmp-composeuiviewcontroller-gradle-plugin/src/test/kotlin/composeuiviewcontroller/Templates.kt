@@ -84,10 +84,18 @@ object Templates {
         forwardOutput: Boolean = true,
         expectFailure: Boolean = false
     ): BuildResult {
+        val allArgs = if ("--info" !in args && "--debug" !in args) {
+            args + "--info"
+        } else {
+            args
+        }
+
         var runner = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
+            .withArguments(allArgs)
+
         if (forwardOutput) runner = runner.forwardOutput()
-        return if (expectFailure) runner.withArguments(args).buildAndFail() else runner.withArguments(args).build()
+        return if (expectFailure) runner.buildAndFail() else runner.build()
     }
 }

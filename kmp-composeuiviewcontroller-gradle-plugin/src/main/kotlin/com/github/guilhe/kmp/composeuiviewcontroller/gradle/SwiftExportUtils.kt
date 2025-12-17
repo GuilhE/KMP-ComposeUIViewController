@@ -6,14 +6,8 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension
 
-internal data class SwiftExportConfig(
-    val moduleName: String?,
-    val flattenPackage: String?
-)
+internal data class SwiftExportConfig(val moduleName: String?, val flattenPackage: String?)
 
-/**
- * Utility functions for handling SwiftExport configurations
- */
 internal object SwiftExportUtils {
 
     /**
@@ -24,11 +18,10 @@ internal object SwiftExportUtils {
      */
     fun Project.getSwiftExportConfigForProject(): SwiftExportConfig? {
         return try {
-            println("\t> Looking for SwiftExport config that references project: ${this.name}")
+            logger.debug("\t> Looking for SwiftExport config that references project: ${this.name}")
 
             val rootSwiftExportConfig = rootProject.findSwiftExportConfigForProject(this)
             if (rootSwiftExportConfig != null) {
-//                println("\t> Found SwiftExport config in root project: $rootSwiftExportConfig")
                 return rootSwiftExportConfig
             }
 
@@ -36,7 +29,6 @@ internal object SwiftExportUtils {
             while (currentProject != null) {
                 val parentSwiftExportConfig = currentProject.findSwiftExportConfigForProject(this)
                 if (parentSwiftExportConfig != null) {
-//                    println("\t> Found SwiftExport config in parent project ${currentProject.name}: $parentSwiftExportConfig")
                     return parentSwiftExportConfig
                 }
                 currentProject = currentProject.parent
@@ -46,14 +38,13 @@ internal object SwiftExportUtils {
                 if (project != this) {
                     val projectSwiftExportConfig = project.findSwiftExportConfigForProject(this)
                     if (projectSwiftExportConfig != null) {
-//                        println("\t> Found SwiftExport config in project ${project.name}: $projectSwiftExportConfig")
                         return projectSwiftExportConfig
                     }
                 }
             }
             null
         } catch (e: Exception) {
-            println("\t> Exception while searching for SwiftExport config: ${e.message}")
+            logger.warn("\t> Exception while searching for SwiftExport config: ${e.message}")
             null
         }
     }
