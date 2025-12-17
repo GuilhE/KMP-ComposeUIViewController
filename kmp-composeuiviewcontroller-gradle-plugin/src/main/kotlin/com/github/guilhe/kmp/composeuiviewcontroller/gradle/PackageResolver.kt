@@ -26,19 +26,21 @@ internal class PackageResolver(private val project: Project, private val logger:
 
         val kmp = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
         val commonMainSourceSet = kmp.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME)
-        val packages = mutableSetOf<String>()
+        val packages = HashSet<String>()
 
         commonMainSourceSet.kotlin.srcDirs.asSequence()
-            .filter { it.exists() }
+            .filter { it.exists() && it.isDirectory }
             .forEach { dir ->
                 logger.debug("\t> Scanning directory: ${dir.absolutePath}")
+
                 dir.walkTopDown()
-                    .maxDepth(10) // Limit depth to prevent excessive traversal
+                    .maxDepth(10)
+                    .onEnter { file -> !file.name.startsWith(".") && file.name != "build" }
                     .filter { it.isFile && it.extension == "kt" }
                     .forEach { file ->
                         val relativePath = file.relativeTo(dir).parentFile?.path ?: ""
-                        val packagePath = relativePath.replace(File.separator, ".")
-                        if (packagePath.isNotEmpty()) {
+                        if (relativePath.isNotEmpty()) {
+                            val packagePath = relativePath.replace(File.separatorChar, '.')
                             packages.add(packagePath)
                         }
                     }
@@ -62,4 +64,3 @@ internal class PackageResolver(private val project: Project, private val logger:
         logger.debug("\t> Package cache cleared")
     }
 }
-

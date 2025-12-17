@@ -73,7 +73,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
     }
 
     private fun Project.configureCleanTempFilesLogic(tempFolder: File) {
-        tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) { task ->
+        val cleanupTaskProvider = tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) { task ->
+            task.group = "composeuiviewcontroller"
+            task.description = "Cleans up temporary files created by the plugin"
+            task.inputs.dir(tempFolder).optional()
+            task.outputs.upToDateWhen { !tempFolder.exists() }
             task.doLast {
                 if (tempFolder.exists()) {
                     val deleted = tempFolder.deleteRecursively()
@@ -82,8 +86,9 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             }
         }
 
-        tasks.named("clean").configure { it.finalizedBy(TASK_CLEAN_TEMP_FILES_FOLDER) }
+        tasks.named("clean").configure { it.finalizedBy(cleanupTaskProvider) }
 
+        // Note: This is deprecated but necessary until FlowProviders API is stable and available
         @Suppress("DEPRECATION")
         gradle.buildFinished { result ->
             if (result.failure != null && tempFolder.exists()) {
@@ -197,23 +202,36 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
     private fun Project.writeModuleMetadataToDisk(swiftExportEnabled: Boolean, flattenPackageConfigured: Boolean, args: Map<String, Set<String>>) {
         val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
-        val moduleMetadata = try {
-            Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
-        } catch (_: Exception) {
+        file.parentFile?.mkdirs()
+
+        val moduleMetadata = if (file.exists() && file.length() > 0) {
+            try {
+                Json.decodeFromString<MutableSet<ModuleMetadata>>(file.readText())
+            } catch (e: Exception) {
+                logger.warn("\t> Failed to parse existing metadata, starting fresh: ${e.message}")
+                mutableSetOf()
+            }
+        } else {
             mutableSetOf()
         }
-        args.forEach { (key, value) ->
-            moduleMetadata.add(
-                ModuleMetadata(
-                    name = name,
-                    packageNames = value,
-                    frameworkBaseName = key,
-                    swiftExportEnabled = swiftExportEnabled,
-                    flattenPackageConfigured = flattenPackageConfigured
-                )
+
+        val newMetadata = args.map { (key, value) ->
+            ModuleMetadata(
+                name = name,
+                packageNames = value,
+                frameworkBaseName = key,
+                swiftExportEnabled = swiftExportEnabled,
+                flattenPackageConfigured = flattenPackageConfigured
             )
         }
-        file.writeText(Json.encodeToString(moduleMetadata))
+
+        val changed = moduleMetadata.addAll(newMetadata)
+        if (changed || !file.exists()) {
+            file.writeText(Json.encodeToString(moduleMetadata))
+            logger.debug("\t> Module metadata written to: ${file.absolutePath}")
+        } else {
+            logger.debug("\t> Module metadata unchanged, skipping write")
+        }
     }
 
     private fun Project.configureTaskToRegisterCopyFilesToXcode(
@@ -222,57 +240,59 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         tempFolder: File
     ) {
         tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
+            task.group = "composeuiviewcontroller"
+            task.description = "Copies generated files to Xcode project"
+
             val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
-            logger.info("\t> Extension parameters: ${extensionParameters.toList()}")
+
+            // Note: We don't add kspGenDir as input because it may not exist in all scenarios
+            // and the task dependencies are already handled via finalizedBy
+            task.inputs.property("iosAppFolderName", extensionParameters.iosAppFolderName)
+            task.inputs.property("iosAppName", extensionParameters.iosAppName)
+            task.inputs.property("targetName", extensionParameters.targetName)
+            task.inputs.property("exportFolderName", extensionParameters.exportFolderName)
+
+            val outputDir = project.rootProject.projectDir.resolve(extensionParameters.iosAppFolderName)
+                .resolve(extensionParameters.iosAppName)
+                .resolve(extensionParameters.exportFolderName)
+            task.outputs.dir(outputDir).optional()
+
+            task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toList()}") }
+
             val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_SCRIPT")
             val script = inputStream?.use { stream ->
                 stream.bufferedReader().use(BufferedReader::readText)
             } ?: throw PluginConfigurationException("Unable to read resource file: $FILE_NAME_SCRIPT. Ensure the plugin is correctly packaged.")
 
             val modifiedScript = script
-                .replace(
-                    oldValue = "$PARAM_KMP_MODULE=\"shared\"",
-                    newValue = "$PARAM_KMP_MODULE=\"${project.name}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_FOLDER=\"iosApp\"",
-                    newValue = "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_APP_NAME=\"iosApp\"",
-                    newValue = "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_TARGET=\"iosApp\"",
-                    newValue = "$PARAM_TARGET=\"${extensionParameters.targetName}\""
-                )
-                .replace(
-                    oldValue = "$PARAM_GROUP=\"Representables\"",
-                    newValue = "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\""
-                )
+                .replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
+                .replace("$PARAM_FOLDER=\"iosApp\"", "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\"")
+                .replace("$PARAM_APP_NAME=\"iosApp\"", "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\"")
+                .replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
+                .replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
 
             val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SCRIPT_TEMP}")
                 .also { it.createNewFile() }
+
             if (tempFile.exists()) {
-                with(tempFile) {
-                    writeText(modifiedScript)
-                    setExecutable(true)
-                    task.workingDir = project.rootDir
-                    try {
-                        task.commandLine("bash", "-c", tempFile.absolutePath)
-                        if (!keepScriptFile) {
-                            task.doLast {
-                                if (tempFolder.exists()) {
-                                    tempFolder.deleteRecursively()
-                                }
+                tempFile.writeText(modifiedScript)
+                tempFile.setExecutable(true)
+                task.workingDir = project.rootDir
+
+                try {
+                    task.commandLine("bash", "-c", tempFile.absolutePath)
+                    if (!keepScriptFile) {
+                        task.doLast {
+                            if (tempFolder.exists()) {
+                                tempFolder.deleteRecursively()
                             }
                         }
-                    } catch (e: Exception) {
-                        throw PluginConfigurationException(
-                            "Failed to configure script execution for task '$TASK_COPY_FILES_TO_XCODE'. Script path: ${tempFile.absolutePath}",
-                            e
-                        )
                     }
+                } catch (e: Exception) {
+                    throw PluginConfigurationException(
+                        "Failed to configure script execution for task '$TASK_COPY_FILES_TO_XCODE'. Script path: ${tempFile.absolutePath}",
+                        e
+                    )
                 }
             } else {
                 throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_SCRIPT_TEMP at ${tempFile.absolutePath}")

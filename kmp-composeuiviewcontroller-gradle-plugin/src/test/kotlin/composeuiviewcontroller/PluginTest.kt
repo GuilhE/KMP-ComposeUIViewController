@@ -458,7 +458,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Method retrieveModulePackagesFromCommonMain throws exception when package not found`() {
+    fun `Method PackageResolver throws exception when package not found`() {
         val buildFile = Templates.writeBuildGradle(
             projectDir,
             """
@@ -486,7 +486,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Method retrieveModulePackagesFromCommonMain successfuly retrieves package information`() {
+    fun `Method PackageResolver successfuly retrieves package information`() {
         val classFile = Templates.createCommonMainSource(projectDir, packageName = "com.test")
         assertTrue(classFile.exists())
 
@@ -504,6 +504,13 @@ class PluginTest {
                     iosAppName = "iosApp"
                     targetName = "iosTarget"
                     exportFolderName = "Composables"
+                }
+                
+                kotlin {
+                    iosSimulatorArm64()
+                    swiftExport {
+                        moduleName = "DefaultModule"
+                    }
                 }
                 """
         )
