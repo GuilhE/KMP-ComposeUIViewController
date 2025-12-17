@@ -242,23 +242,10 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
             task.group = "composeuiviewcontroller"
             task.description = "Copies generated files to Xcode project"
-
-            val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
-
-            // Note: We don't add kspGenDir as input because it may not exist in all scenarios
-            // and the task dependencies are already handled via finalizedBy
-            task.inputs.property("iosAppFolderName", extensionParameters.iosAppFolderName)
-            task.inputs.property("iosAppName", extensionParameters.iosAppName)
-            task.inputs.property("targetName", extensionParameters.targetName)
-            task.inputs.property("exportFolderName", extensionParameters.exportFolderName)
-
-            val outputDir = project.rootProject.projectDir.resolve(extensionParameters.iosAppFolderName)
-                .resolve(extensionParameters.iosAppName)
-                .resolve(extensionParameters.exportFolderName)
-            task.outputs.dir(outputDir).optional()
-
+            task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
             task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toList()}") }
 
+            val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
             val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_SCRIPT")
             val script = inputStream?.use { stream ->
                 stream.bufferedReader().use(BufferedReader::readText)
