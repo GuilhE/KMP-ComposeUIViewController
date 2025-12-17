@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-1.10.0-rc02-1]
+
+- Fixes state type in swift export and name in composable export
+
+---
+
 ## [2.3.0-1.10.0-rc02]
 
 - Kotlin 2.3.0
