@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-1.10.0-rc02]
+
+- Kotlin 2.3.0
+
+---
+
 ## [2.3.0-RC3-1.10.0-rc02-4]
 
 - Global code review for improvements and optimization
