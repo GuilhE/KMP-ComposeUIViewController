@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0-RC3-1.10.0-rc02-4]
+
+- Global code review for improvements and optimization
+- KSP 2.3.4
+
+---
+
 ## [2.3.0-RC3-1.10.0-rc02-3]
 
 - Fixes type conversion from Kotlin to Swift (from objcExport)
