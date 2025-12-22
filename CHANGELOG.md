@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-1.10.0-rc02-2]
+
+- Improves swift output to match `swiftformat` default rules
+
+---
+
 ## [2.3.0-1.10.0-rc02-1]
 
 - Fixes state type in swift export and name in composable export

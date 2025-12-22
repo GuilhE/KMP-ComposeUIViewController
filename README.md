@@ -6,7 +6,7 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 | Version               | Kotlin |  KSP  | Compose Multiplatform | Xcode  |
 |-----------------------|:------:|:-----:|:---------------------:|:------:|
-| `2.3.0-1.10.0-rc02-1` | 2.3.0  | 2.3.4 |      1.10.0-rc02      | 26.2.0 |
+| `2.3.0-1.10.0-rc02-2` | 2.3.0  | 2.3.4 |      1.10.0-rc02      | 26.2.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
@@ -112,17 +112,16 @@ object ComposeSimpleViewUIViewController {
 ```
 and also a `ComposeSimpleViewRepresentable`:
 ```swift
-import SwiftUI
 import Shared
+import SwiftUI
 
 public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
-
-    func makeUIViewController(context: Context) -> UIViewController {
+    func makeUIViewController(context _: Context) -> UIViewController {
         ComposeSimpleViewUIViewController().make()
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        //unused
+    func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+        // unused
     }
 }
 ```    
@@ -157,18 +156,18 @@ object ComposeAdvancedViewUIViewController {
 ```
 and also a `ComposeAdvancedViewRepresentable`:
 ```swift
-import SwiftUI
 import Shared
+import SwiftUI
 
 public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
     @Binding var viewState: ViewState
     let callback: () -> Void
 
-    func makeUIViewController(context: Context) -> UIViewController {
+    func makeUIViewController(context _: Context) -> UIViewController {
         ComposeAdvancedViewUIViewController().make(callback: callback)
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+    func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
         ComposeAdvancedViewUIViewController().update(viewState: viewState)
     }
 }
