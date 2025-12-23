@@ -103,7 +103,7 @@ class ProcessorTest {
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
         val generatedSwiftFile = generatedSwiftFiles.first().readText()
-        assertEquals(generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithState())
+        assertEquals(ExpectedOutputs.swiftRepresentableWithState(), generatedSwiftFile)
     }
 
     @Test
@@ -129,9 +129,8 @@ class ProcessorTest {
 
         val generatedKotlinFile = generatedKotlinFiles.first().readText()
         assertEquals(
-            generatedKotlinFile, ExpectedOutputs.kotlinUIViewControllerWithoutState(
-                params = "data: SomeClass, value: Int, callBack: () -> Unit"
-            )
+            ExpectedOutputs.kotlinUIViewControllerWithoutState(params = "data: SomeClass, value: Int, callBack: () -> Unit"),
+            generatedKotlinFile
         )
 
         val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
@@ -139,14 +138,30 @@ class ProcessorTest {
 
         val generatedSwiftFile = generatedSwiftFiles.first().readText()
         assertEquals(
-            generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithoutState(
+            ExpectedOutputs.swiftRepresentableWithoutState(
                 params = listOf(
                     "data" to "SomeClass",
                     "value" to "Int32",  // Direct parameter uses native type
                     "callBack" to "() -> Void"
                 )
-            )
+            ),
+            generatedSwiftFile
         )
+    }
+
+    @Test
+    fun `Basic screen without params respects SwiftFormat Template`() {
+        val code = CodeTemplates.basicScreenWithoutStateAndParams()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+        assertTrue(generatedSwiftFiles.isNotEmpty())
+
+        val generatedSwiftFile = generatedSwiftFiles.first().readText()
+        assertEquals(ExpectedOutputs.swiftFormatTemplate1(), generatedSwiftFile)
     }
 
     @Test
@@ -176,21 +191,21 @@ class ProcessorTest {
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
+            4,
             TestFileUtils.countGeneratedFiles(
                 compilation,
                 "ScreenAUIViewController.kt", "ScreenAUIViewControllerRepresentable.swift",
                 "ScreenBUIViewController.kt", "ScreenBUIViewControllerRepresentable.swift"
             ),
-            4
         )
 
         val generatedKotlinFiles = TestFileUtils.findGeneratedKotlinFile(compilation, "ScreenAUIViewController.kt")
         val generatedKotlinFile = generatedKotlinFiles.first().readText()
-        assertEquals(generatedKotlinFile, ExpectedOutputs.kotlinUIViewControllerWithState())
+        assertEquals(ExpectedOutputs.kotlinUIViewControllerWithState(), generatedKotlinFile)
 
         val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenAUIViewControllerRepresentable.swift")
         val generatedSwiftFile = generatedSwiftFiles.first().readText()
-        assertEquals(generatedSwiftFile, ExpectedOutputs.swiftRepresentableWithState(functionName = "ScreenA", stateType = "ViewAState"))
+        assertEquals(ExpectedOutputs.swiftRepresentableWithState(functionName = "ScreenA", stateType = "ViewAState"), generatedSwiftFile)
     }
 
     @Test
@@ -226,13 +241,13 @@ class ProcessorTest {
         val result = compilation.compile()
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         assertEquals(
+            6,
             TestFileUtils.countGeneratedFiles(
                 compilation,
                 "ScreenAUIViewController.kt", "ScreenAUIViewControllerRepresentable.swift",
                 "ScreenBUIViewController.kt", "ScreenBUIViewControllerRepresentable.swift",
                 "ScreenCUIViewController.kt", "ScreenCUIViewControllerRepresentable.swift"
-            ),
-            6
+            )
         )
     }
 
@@ -304,7 +319,7 @@ class ProcessorTest {
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
         val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithExternalDependency()
-        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+        assertEquals(expectedSwiftOutput, generatedSwiftFiles.first().readText())
     }
 
     @Test
@@ -332,7 +347,7 @@ class ProcessorTest {
             functionName = "Screen"
         )
 
-        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+        assertEquals(expectedSwiftOutput, generatedSwiftFiles.first().readText())
     }
 
     @Test
@@ -395,7 +410,7 @@ class ProcessorTest {
             //This typealias can be avoided if you use the `flattenPackage = "com.mycomposable.data"` in KMP swiftExport settings
             typealias Data = ExportedKotlinPackages.com.mycomposable.data.Data
         """.trimIndent()
-        assertEquals(generatedSwiftFiles.first().readText(), expectedTypeAliasSwiftOutput)
+        assertEquals(expectedTypeAliasSwiftOutput, generatedSwiftFiles.first().readText())
     }
 
     @Test
@@ -411,7 +426,7 @@ class ProcessorTest {
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
         val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithObjCTypes()
-        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+        assertEquals(expectedSwiftOutput, generatedSwiftFiles.first().readText())
     }
 
     @Test
@@ -427,7 +442,7 @@ class ProcessorTest {
         assertTrue(generatedSwiftFiles.isNotEmpty())
 
         val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithSwiftExportTypes()
-        assertEquals(generatedSwiftFiles.first().readText(), expectedSwiftOutput)
+        assertEquals(expectedSwiftOutput, generatedSwiftFiles.first().readText())
     }
 
     @Test

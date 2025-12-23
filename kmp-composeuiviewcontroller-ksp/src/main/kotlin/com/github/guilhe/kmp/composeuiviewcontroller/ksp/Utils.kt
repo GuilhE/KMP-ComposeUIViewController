@@ -240,6 +240,28 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
 }
 
 /**
+ * Removes empty lines between struct declaration and the first public func in generated Swift code
+ * when there are no parameters. This ensures proper formatting ([swiftformat](https://github.com/nicklockwood/SwiftFormat)) of the generated code.
+ */
+internal fun removeEmptyLineBetweenStructAndFunc(code: String): String {
+    val lines = code.lines().toMutableList()
+    var i = 0
+    while (i < lines.size - 1) {
+        val currentLine = lines[i].trim()
+        val nextLine = lines.getOrNull(i + 1)?.trim() ?: ""
+
+        if (currentLine.endsWith("UIViewControllerRepresentable {") &&
+            nextLine.isEmpty() &&
+            i + 2 < lines.size &&
+            lines[i + 2].trim().startsWith("public func")) {
+            lines.removeAt(i + 1)
+        }
+        i++
+    }
+    return lines.joinToString("\n")
+}
+
+/**
  * Iterates all parameters and returns package names that do not belong to the module's [packageName].
  *
  * @param packageName Module package name
@@ -358,3 +380,4 @@ internal class TypeResolutionError(parameter: KSType) : IllegalArgumentException
 
 internal class ModuleDecodeException(e: Exception) :
     IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
+

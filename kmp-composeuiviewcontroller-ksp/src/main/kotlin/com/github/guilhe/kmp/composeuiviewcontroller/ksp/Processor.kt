@@ -357,7 +357,8 @@ internal class Processor(
                 }
             }
         """.trimIndent()
-        val updatedCode = indentParameters(indentParameters(code, frameworks), letParameters)
+        val indentedCode = indentParameters(indentParameters(code, frameworks), letParameters)
+        val updatedCode = removeEmptyLineBetweenStructAndFunc(indentedCode)
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
