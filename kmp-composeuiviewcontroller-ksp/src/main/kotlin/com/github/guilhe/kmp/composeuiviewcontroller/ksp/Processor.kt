@@ -352,13 +352,13 @@ internal class Processor(
                     ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.make($makeParametersParsed)
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     // unused
                 }
             }
         """.trimIndent()
         val indentedCode = indentParameters(indentParameters(code, frameworks), letParameters)
-        val updatedCode = if (letParameters.isEmpty()) removeEmptyLineBetweenStructAndFunc(indentedCode) else indentedCode
+        val updatedCode = (if (letParameters.isEmpty()) removeEmptyLineBetweenStructAndFunc(indentedCode) else indentedCode).plus("\n")
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),
@@ -399,12 +399,12 @@ internal class Processor(
                     ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.make($makeParametersParsed)
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.update($stateParameterName: $stateParameterName)
                 }
             }
         """.trimIndent()
-        val updatedCode = indentParameters(indentParameters(code, frameworks), letParameters)
+        val updatedCode = indentParameters(indentParameters(code, frameworks), letParameters).plus("\n")
         codeGenerator
             .createNewFile(
                 dependencies = Dependencies(true),

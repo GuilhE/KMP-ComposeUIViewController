@@ -120,7 +120,7 @@ public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
         ComposeSimpleViewUIViewController().make()
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+    func updateUIViewController(_: UIViewController, context _: Context) {
         // unused
     }
 }
@@ -167,7 +167,7 @@ public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
         ComposeAdvancedViewUIViewController().make(callback: callback)
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+    func updateUIViewController(_: UIViewController, context _: Context) {
         ComposeAdvancedViewUIViewController().update(viewState: viewState)
     }
 }

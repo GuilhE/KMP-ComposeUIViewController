@@ -584,10 +584,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
         ${functionName}UIViewController${if (isSharedInstance) ".shared" else "()"}.make(${params.joinToString(", ") { "${it.first}: ${it.first}" }})
     }
 
-    public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+    public func updateUIViewController(_: UIViewController, context _: Context) {
         // unused
     }
 }
+
 """.trimIndent()
 
         fun swiftRepresentableWithState(
@@ -607,10 +608,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                     ${functionName}UIViewController${if (isSharedInstance) ".shared" else "()"}.make()
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     ${functionName}UIViewController${if (isSharedInstance) ".shared" else "()"}.update(state: state)
                 }
             }
+            
         """.trimIndent()
 
         fun swiftRepresentableWithExternalDependency(framework: String = DEFAULT_FRAMEWORK, functionName: String = "Screen") = """
@@ -625,10 +627,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                     ${functionName}UIViewController().make(data: data)
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     // unused
                 }
             }
+            
         """.trimIndent()
 
         fun swiftRepresentableWithExternalDependencies(
@@ -648,10 +651,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                     ${functionName}UIViewController.shared.make(data: data)
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     // unused
                 }
             }
+            
         """.trimIndent()
 
         fun swiftRepresentableWithObjCTypes(
@@ -686,10 +690,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                     ${functionName}UIViewController().make(callBackA: callBackA, callBackB: callBackB, callBackS: callBackS, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     ${functionName}UIViewController().update(state: state)
                 }
             }
+            
         """.trimIndent()
 
         fun swiftRepresentableWithSwiftExportTypes(
@@ -724,10 +729,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                     ${functionName}UIViewController.shared.make(callBackA: callBackA, callBackB: callBackB, callBackS: callBackS, callBackC: callBackC, callBackD: callBackD, callBackE: callBackE, callBackF: callBackF, callBackG: callBackG, callBackH: callBackH, callBackI: callBackI, callBackJ: callBackJ, callBackK: callBackK, callBackL: callBackL, callBackM: callBackM, callBackN: callBackN, callBackO: callBackO, callBackP: callBackP)
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     ${functionName}UIViewController.shared.update(state: state)
                 }
             }
+            
         """.trimIndent()
 
         fun swiftTypeAliasForExternalDependencies() = """
@@ -754,10 +760,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                     ScreenUIViewController().make()
                 }
 
-                public func updateUIViewController(_ uiViewController: UIViewController, context _: Context) {
+                public func updateUIViewController(_: UIViewController, context _: Context) {
                     // unused
                 }
             }
+            
         """.trimIndent()
     }
 
