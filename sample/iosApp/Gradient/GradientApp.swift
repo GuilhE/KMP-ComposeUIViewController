@@ -4,7 +4,7 @@ import SwiftUI
 struct GradientApp: App {
 	var body: some Scene {
 		WindowGroup {
-			SharedView()            
+			GradientScreenMixed()            
 		}
 	}
 }

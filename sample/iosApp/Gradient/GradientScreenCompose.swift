@@ -1,7 +1,7 @@
 import Composables
 import SwiftUI
 
-struct SharedView: View {
+struct GradientScreenCompose: View {
     @State private var screenState: ScreenState = ScreenState (
         startColor: Color.red.asInt64,
         endColor: Color.blue.asInt64
@@ -20,7 +20,7 @@ struct SharedView: View {
     }()
     
     var body: some View {
-        GradientScreenRepresentable(state: $screenState, randomize: { millis in
+        GradientScreenComposeRepresentable(state: $screenState, randomize: { millis in
             print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(milliseconds: Int64(truncating: millis as NSNumber))))", terminator: "\n")
             let randomColors = colorValues.shuffled().prefix(2)
             screenState = ScreenState(
@@ -66,5 +66,5 @@ private extension Color {
 }
 
 #Preview {
-    SharedView()
+    GradientScreenCompose()
 }

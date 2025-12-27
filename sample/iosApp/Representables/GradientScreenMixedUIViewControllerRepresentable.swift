@@ -2,15 +2,15 @@
 import Composables
 import SwiftUI
 
-public struct GradientScreenRepresentable: UIViewControllerRepresentable {
+public struct GradientScreenMixedRepresentable: UIViewControllerRepresentable {
     @Binding var state: ScreenState
-    let randomize: (KotlinLong) -> Void
+    let controller: UIViewController
 
     public func makeUIViewController(context _: Context) -> UIViewController {
-        GradientScreenUIViewController().make(randomize: randomize)
+        GradientScreenMixedUIViewController().make(controller: controller)
     }
 
     public func updateUIViewController(_: UIViewController, context _: Context) {
-        GradientScreenUIViewController().update(state: state)
+        GradientScreenMixedUIViewController().update(state: state)
     }
 }
