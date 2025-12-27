@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.0-1.10.0-rc02-4]
+
+- Improves Processor `importsParsed` logic
+- Adds new Sample with 3 cases:
+  - `GradientScreenCompose`: 100% Compose UI with state managed by iOS
+  - `GradientScreenSwift`: 100% Swift UI with state managed by iOS
+  - `GradientScreenMixed`: 50% Compose UI with state managed by iOS and 50% Swift View inside Composable
+
+---
+
 ## [2.3.0-1.10.0-rc02-3]
 
 - Improves swift output to match `swiftformat` default rules
