@@ -4,9 +4,9 @@
 
 KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIViewControllerRepresentable` files when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
-| Version                   |  Kotlin   |  KSP  | Compose Multiplatform | Xcode  |
-|---------------------------|:---------:|:-----:|:---------------------:|:------:|
-| `2.3.0-RC3-1.10.0-rc02-3` | 2.3.0-RC3 | 2.3.3 |      1.10.0-rc02      | 26.2.0 |
+| Version               | Kotlin |  KSP  | Compose Multiplatform | Xcode  |
+|-----------------------|:------:|:-----:|:---------------------:|:------:|
+| `2.3.0-1.10.0-rc02-4` | 2.3.0  | 2.3.4 |      1.10.0-rc02      | 26.2.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
@@ -16,12 +16,17 @@ As the project expands, the codebase required naturally grows, which can quickly
 It can be used for **simple** and **advanced** use cases.
 
 ### Simple
-`@Composable` UI state is managed inside the common code from the KMP module.
+In simple scenarios, the rendering and state management of the `@Composable` or `UIViewController` are handled entirely within a single platform 
+— either in the shared KMP module or directly in the iOS app. It’s simply a matter of embedding the component in one platform or the other, with 
+no cross-platform coordination required.
 
 ### Advanced
-`@Composable` UI state is managed by the iOS app.
+In advanced scenarios, rendering and state management are collaborative between platforms. Certain operations — such as emitting state updates or 
+embedding a `@Composable` or `UIViewController` — can be delegated from one platform to the other. This enables more complex integrations, where 
+state and UI responsibilities are shared or transferred as needed between the KMP module and the iOS app.
 
-Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
+Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of incremental adoption and sharing only what you require. 
+ Consequently, the support for this specific use-case - in my opinion - is of paramount importance, especially in its capacity to entice iOS developers to embrace Compose Multiplatform.
 
 > [!NOTE]
 > This library takes care of the heavy lifting for you, but if you're interested in understanding how it works, the detailed approach is explained here: [Compose Multiplatform — Managing UI State on iOS](https://proandroiddev.com/compose-multiplatform-managing-ui-state-on-ios-45d37effeda9).
@@ -69,10 +74,10 @@ swiftExport {
 Don't forget to import the plugin in each module. Check the swift export [sample](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/7a7385f8f7f92c422d5f9d68b122ce652df98e18/sample/shared-models/build.gradle.kts#L5).
 
 > [!IMPORTANT]
-> When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - follow this steps:
-> 1. Delete the `Representables` folder inside your `iosApp` using Xcode;
-> 2. Delete the `Derived Data` using Xcode or DevCleaner app;
-> 3. Run `./gradlew clean --no-build-cache`.
+> When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - it's recommended to follow this 
+> steps:
+> 1. Delete the `Derived Data` using Xcode or DevCleaner app;
+> 2. Run `./gradlew clean --no-build-cache`.
 
 ## Code generation
 
@@ -94,8 +99,6 @@ To annotate the parameter as the composable state variable (for **advanced** use
 <details><summary>Simple</summary>
 
 ```kotlin
-//iosMain
-
 @ComposeUIViewController
 @Composable
 internal fun ComposeSimpleView() { }
@@ -112,17 +115,16 @@ object ComposeSimpleViewUIViewController {
 ```
 and also a `ComposeSimpleViewRepresentable`:
 ```swift
-import SwiftUI
 import Shared
+import SwiftUI
 
 public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
-
-    func makeUIViewController(context: Context) -> UIViewController {
+    func makeUIViewController(context _: Context) -> UIViewController {
         ComposeSimpleViewUIViewController().make()
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        //unused
+    func updateUIViewController(_: UIViewController, context _: Context) {
+        // unused
     }
 }
 ```    
@@ -131,8 +133,6 @@ public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
 <details><summary>Advanced</summary>
 
 ```kotlin
-//iosMain
-
 data class ViewState(val isLoading: Boolean)
 
 @ComposeUIViewController
@@ -157,26 +157,23 @@ object ComposeAdvancedViewUIViewController {
 ```
 and also a `ComposeAdvancedViewRepresentable`:
 ```swift
-import SwiftUI
 import Shared
+import SwiftUI
 
 public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
     @Binding var viewState: ViewState
     let callback: () -> Void
 
-    func makeUIViewController(context: Context) -> UIViewController {
+    func makeUIViewController(context _: Context) -> UIViewController {
         ComposeAdvancedViewUIViewController().make(callback: callback)
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+    func updateUIViewController(_: UIViewController, context _: Context) {
         ComposeAdvancedViewUIViewController().update(viewState: viewState)
     }
 }
 ```
 </details>
-
-> [!TIP]
-> The `@ComposeUIViewController` has a `frameworkBaseName` parameter to manually set the framework name. This parameter will only be used <ins>if detection fails within the Processor</ins>.
 
 ### iOSApp
 
@@ -202,24 +199,33 @@ struct SomeView: View {
 ## Sample
 For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
 
-```bash
-> Task :shared:kspKotlinIosSimulatorArm64
-note: [ksp] loaded provider(s): [com.github.guilhe.kmp.composeuiviewcontroller.ksp.ProcessorProvider]
-note: [ksp] GradientScreenUIViewController created!
-note: [ksp] GradientScreenUIViewControllerRepresentable created!
+You'll find tree scenarios demonstrating the different use cases:
+- `GradientScreenCompose`: A screen rendered entirely in Compose with its state controlled by iOS;
+- `GradientScreenMixed`: A screen rendered in Compose with a Swift UIViewController embedded in it;
+- `GradientScreenSwift`: A screen rendered entirely in Swift and embedded in Compose.
 
-> Task :CopyFilesToXcode
-> Copying files to iosApp/Representables/
-> Checking for new references to be added to xcodeproj
-> GradientScreenUIViewControllerRepresentable.swift added!
-> Done
-```
+You can also find other working samples in:  
 
-<p align="center">
-<img alt="outputs" src="/media/outputs.png" height="800"/></br></br>
-You can also find other working samples in:</br></br>
 <a href="https://github.com/GuilhE/Expressus" target="_blank"><img alt="Expressus" src="https://raw.githubusercontent.com/GuilhE/Expressus/main/media/icon.png" height="100"/></a> <a href="https://github.com/GuilhE/WhosNext" target="_blank"><img alt="WhosNext" src="https://raw.githubusercontent.com/GuilhE/WhosNext/main/media/icon.png" height="100"/></a>
-</p>
+
+#### Build output
+
+When building the KMP module, you should see output similar to this:
+```bash
+> Task :shared:copyFilesToXcode
+  > Starting smart sync process
+  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedUIViewControllerRepresentable.swift
+  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Summary: 0 unchanged, 3 copied, 0 removed
+  > Detected changes. Rebuilding Xcode references
+  > Created new group "Representables"
+  > Adding: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Adding: GradientScreenMixedUIViewControllerRepresentable.swift
+  > Adding: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > Summary: 3 added, 0 removed, 0 unchanged
+  > Done
+```
 
 ## LICENSE
 
