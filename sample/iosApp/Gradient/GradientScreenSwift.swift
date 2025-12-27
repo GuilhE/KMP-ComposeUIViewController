@@ -21,11 +21,11 @@ private struct GradientView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .ignoresSafeArea()
                 .animation(.easeInOut(duration: 0.5), value: colors)
 
             ButtonView(onClick: { colors = getRandomColors() })
         }
+        .ignoresSafeArea()
     }
 }
 

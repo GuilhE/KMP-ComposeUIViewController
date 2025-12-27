@@ -9,10 +9,11 @@ struct ButtonView: View {
             printMilis()
         }) {
             Text("Shuffle")
-                .font(.body)
+                .font(.system(size: 14))
+                .bold()
                 .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
         }
         .buttonStyle(PillButtonStyle())
     }
@@ -26,4 +27,8 @@ struct ButtonView: View {
                 .opacity(configuration.isPressed ? 0.85 : 1)
         }
     }
+}
+
+#Preview {
+    ButtonView {}
 }
