@@ -1,3 +1,4 @@
+import Composables
 import SwiftUI
 
 private let availableColors: [Color] = [.red, .green, .blue, .yellow, .orange, .purple]
@@ -40,12 +41,12 @@ private let dateFormatter: DateFormatter = {
     return formatter
 }()
 
-private func dateFromMilliseconds(milliseconds: Int64) -> Date {
+private func dateFromMilliseconds(_ milliseconds: Int64) -> Date {
     let timeInterval = TimeInterval(milliseconds) / 1000.0
     return Date(timeIntervalSince1970: timeInterval)
 }
 
-func printMilis() {
-    let millis = Int64(Date().timeIntervalSince1970 * 1000)
-    print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(milliseconds: Int64(truncating: millis as NSNumber))))", terminator: "\n")
+func printMilis(_ milis: KotlinLong? = nil, _ label: String = "") {
+    let mi = milis == nil ? Int64(Date().timeIntervalSince1970 * 1000) : Int64(truncating: milis! as NSNumber)
+    print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(mi))) \(label)", terminator: "\n")
 }

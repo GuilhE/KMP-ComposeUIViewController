@@ -3,7 +3,7 @@ import UIKit
 
 struct GradientScreenSwift: View {
     var body: some View {
-        GradientScreenSwiftRepresentable(controller: GradientViewController())
+        GradientScreenSwiftRepresentable(controller: UIHostingController(rootView: GradientView()))
             .ignoresSafeArea()
     }
 }
@@ -26,23 +26,6 @@ private struct GradientView: View {
             ButtonView(onClick: { colors = getRandomColors() })
         }
         .ignoresSafeArea()
-    }
-}
-
-private class GradientViewController: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        let hostingController = UIHostingController(rootView: GradientView())
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(hostingController.view)
-
-        NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-        ])
     }
 }
 

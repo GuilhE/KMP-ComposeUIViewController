@@ -94,8 +94,8 @@
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* GradientApp.swift */,
 				5C5EAB222EFF781500DBC1C5 /* GradientScreenCompose.swift */,
-				5C5EAB202EFF742F00DBC1C5 /* GradientScreenSwift.swift */,
 				7555FF82242A565900829871 /* GradientScreenMixed.swift */,
+				5C5EAB202EFF742F00DBC1C5 /* GradientScreenSwift.swift */,
 				5CBA8AF42F0040C30020F6E0 /* ButtonView.swift */,
 				5CBA8AF62F0041D70020F6E0 /* Utils.swift */,
 			);

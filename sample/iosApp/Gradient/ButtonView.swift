@@ -6,7 +6,7 @@ struct ButtonView: View {
     var body: some View {
         Button(action: {
             onClick?()
-            printMilis()
+            printMilis(nil, "SwiftUI")
         }) {
             Text("Shuffle")
                 .font(.system(size: 14))
