@@ -199,7 +199,7 @@ struct SomeView: View {
 ## Sample
 For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
 
-You'll find tree scenarios demonstrating the different use cases:
+You'll find three different use cases:
 - `GradientScreenCompose`: A screen rendered entirely in Compose with its state controlled by iOS;
 - `GradientScreenMixed`: A screen rendered in Compose with a Swift UIViewController embedded in it;
 - `GradientScreenSwift`: A screen rendered entirely in Swift and embedded in Compose.
