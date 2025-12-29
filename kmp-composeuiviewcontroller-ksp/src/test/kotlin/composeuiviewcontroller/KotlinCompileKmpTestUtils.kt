@@ -87,11 +87,35 @@ object TestUtils {
                 "ComposeUi.kt",
                 """
                     package androidx.compose.ui.window
-                    
+
                     import androidx.compose.runtime.Composable
+                    import androidx.compose.ui.ExperimentalComposeUiApi
+                    import androidx.compose.ui.scene.ComposeHostingViewController
+                    import androidx.compose.ui.uikit.ComposeUIViewControllerConfiguration
                     import platform.UIKit.UIViewController
                     
-                    fun ComposeUIViewController(content: @Composable () -> Unit): UIViewController = UIViewController()
+                    
+                    @OptIn(ExperimentalComposeUiApi::class)
+                    fun ComposeUIViewController(
+                        configure: ComposeUIViewControllerConfiguration.() -> Unit = {},
+                        content: @Composable () -> Unit
+                    ): UIViewController = ComposeHostingViewController(
+                        configuration = ComposeUIViewControllerConfiguration().apply(configure),
+                        content = content,
+                    )
+
+                    fun ComposeUIViewController(content: @Composable () -> Unit): UIViewController =
+                        ComposeUIViewController(configure = {}, content = content)
+
+                    // Novo método simulado para testes
+                    @ExperimentalComposeUiApi
+                    fun ComposeUIViewController(
+                        opaque: Boolean = true,
+                        content: @Composable () -> Unit
+                    ): UIViewController = ComposeHostingViewController(
+                        configuration = ComposeUIViewControllerConfiguration().apply { this.opaque = opaque },
+                        content = content,
+                    )
                 """.trimIndent()
             ),
             kotlin(
@@ -110,6 +134,39 @@ object TestUtils {
                             override var value: T = initialValue
                         }
                     }
+                """.trimIndent()
+            ),
+            kotlin(
+                "ComposeHostingViewController.kt",
+                """
+                    package androidx.compose.ui.scene
+                    import androidx.compose.runtime.Composable
+                    import androidx.compose.ui.uikit.ComposeUIViewControllerConfiguration
+                    import platform.UIKit.UIViewController
+
+                    fun ComposeHostingViewController(
+                        configuration: ComposeUIViewControllerConfiguration,
+                        content: @Composable () -> Unit
+                    ): UIViewController = UIViewController()
+                """.trimIndent()
+            ),
+            kotlin(
+                "ComposeUIViewControllerConfiguration.kt",
+                """
+                    package androidx.compose.ui.uikit
+                    
+                    class ComposeUIViewControllerConfiguration {
+                        var opaque: Boolean = true
+                    }
+                """.trimIndent()
+            ),
+            kotlin(
+                "ExperimentalComposeUiApi.kt",
+                """
+                    package androidx.compose.ui
+                    
+                    @RequiresOptIn(level = RequiresOptIn.Level.WARNING)
+                    annotation class ExperimentalComposeUiApi
                 """.trimIndent()
             )
         )

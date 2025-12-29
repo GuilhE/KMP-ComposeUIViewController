@@ -117,6 +117,22 @@ class ProcessorTest {
     }
 
     @Test
+    fun `When opaque is set to false it generates UIViewController with opaque configuration disabled`() {
+        val code = CodeTemplates.screenWithOpaqueDisabled()
+        val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        val generatedKotlinFiles = TestFileUtils.findGeneratedKotlinFile(compilation, "ScreenUIViewController.kt")
+        assertTrue(generatedKotlinFiles.isNotEmpty())
+
+        val generatedKotlinFile = generatedKotlinFiles.first().readText()
+        assertEquals(ExpectedOutputs.kotlinUIViewControllerWithOpaqueDisabled(), generatedKotlinFile)
+        assertContains(generatedKotlinFile, "opaque = false")
+    }
+
+    @Test
     fun `Not using @ComposeUIViewControllerState will generate files without state`() {
         val code = CodeTemplates.screenWithoutState()
         val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())

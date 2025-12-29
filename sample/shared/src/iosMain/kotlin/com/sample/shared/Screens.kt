@@ -16,6 +16,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerStat
 import com.sample.models.ScreenState
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
+import platform.UIKit.UIColor
 import platform.UIKit.UIViewController
 
 /**
@@ -39,14 +40,17 @@ internal fun GradientScreenCompose(@ComposeUIViewControllerState state: ScreenSt
  * A screen rendered in Compose with a Swift UIViewController embedded in it.
  * The state is controlled by the UIViewController and passed to Compose to render the gradient background.
  */
-@ComposeUIViewController
+@ComposeUIViewController(opaque = false)
 @Composable
 internal fun GradientScreenMixed(@ComposeUIViewControllerState state: ScreenState, controller: UIViewController) {
     Box(contentAlignment = Alignment.Center) {
         Crossfade(targetState = state) {
             Gradient(it.colors)
         }
-        UIKitViewController(factory = { controller })
+        UIKitViewController(factory = {
+            controller.view.backgroundColor = UIColor.clearColor
+            controller
+        })
     }
 }
 

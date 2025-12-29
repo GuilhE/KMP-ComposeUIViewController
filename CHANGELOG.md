@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-1.10.0-rc02-5]
+
+- Adds `opaque` property to `@ComposeUIViewController` to activate `ComposeUIViewController` `opaque` configuration.
+
+---
+
 ## [2.3.0-1.10.0-rc02-4]
 
 - Improves Processor `importsParsed` logic

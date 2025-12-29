@@ -205,7 +205,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew exportFrameworkForXcode\n";
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew exportFrameworkForXcode --no-build-cache\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
