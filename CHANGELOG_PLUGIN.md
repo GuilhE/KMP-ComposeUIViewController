@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-1.10.0-rc02-6]
+
+- Compatible with 2.3.0-1.10.0-rc02-6
+
+---
+
 ## [2.3.0-1.10.0-rc02-5]
 
 - Compatible with 2.3.0-1.10.0-rc02-5

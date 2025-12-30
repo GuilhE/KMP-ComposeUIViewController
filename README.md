@@ -6,7 +6,7 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 | Version               | Kotlin |  KSP  | Compose Multiplatform | Xcode  |
 |-----------------------|:------:|:-----:|:---------------------:|:------:|
-| `2.3.0-1.10.0-rc02-5` | 2.3.0  | 2.3.4 |      1.10.0-rc02      | 26.2.0 |
+| `2.3.0-1.10.0-rc02-6` | 2.3.0  | 2.3.4 |      1.10.0-rc02      | 26.2.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
@@ -201,7 +201,7 @@ For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run
 
 You'll find three different use cases:
 - `GradientScreenCompose`: A screen rendered entirely in Compose with its state controlled by iOS;
-- `GradientScreenMixed`: A screen rendered in Compose with a Swift UIViewController embedded in it;
+- `GradientScreenMixed`: A screen rendered in Compose with a SwiftUI View embedded in it;
 - `GradientScreenSwift`: A screen rendered entirely in Swift and embedded in Compose.
 
 You can also find other working samples in:  

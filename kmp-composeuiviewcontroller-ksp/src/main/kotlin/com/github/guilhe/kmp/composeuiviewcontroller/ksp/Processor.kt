@@ -14,6 +14,7 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import kotlinx.serialization.json.Json
@@ -73,11 +74,11 @@ internal class Processor(
                     }
 
                     val frameworkBaseNames = if (swiftExportEnabled) {
-                        getFrameworkBaseNames(composable, node, makeParameters, parameters, modulesMetadata, stateParameter)
+                        getFrameworkBaseNames(composable, makeParameters, parameters, modulesMetadata, stateParameter)
                     } else {
-                        listOf(trimFrameworkBaseNames(node, modulesMetadata, packageName))
+                        listOf(trimFrameworkBaseNames(composable, modulesMetadata, packageName))
                     }
-                    val opaqueConfiguration = getOpaqueConfigurationFromAnnotation(node)
+                    val opaqueConfiguration = getOpaqueConfigurationFromAnnotation(composable.annotations)
 
                     if (stateParameter == null) {
                         createKotlinFileWithoutState(packageName, externalImports, composable, makeParameters, parameters, opaqueConfiguration).also {
@@ -95,7 +96,14 @@ internal class Processor(
                     } else {
                         val stateParameterName = stateParameter.name()
                         createKotlinFileWithState(
-                            packageName, externalImports, composable, stateParameterName, stateParameter, makeParameters, parameters, opaqueConfiguration
+                            packageName,
+                            externalImports,
+                            composable,
+                            stateParameterName,
+                            stateParameter,
+                            makeParameters,
+                            parameters,
+                            opaqueConfiguration
                         ).also {
                             logger.info("${composable.name()}UIViewController created!")
                         }
@@ -216,15 +224,14 @@ internal class Processor(
             .toMap()
     }
 
-    private fun trimFrameworkBaseNames(node: KSAnnotated, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
+    private fun trimFrameworkBaseNames(composable: KSFunctionDeclaration, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
         val framework = moduleMetadata.firstOrNull { it.packageNames.any { p -> p.startsWith(packageName) } }?.frameworkBaseName ?: ""
-        framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(node) ?: throw EmptyFrameworkBaseNameException() }
+        framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(composable.annotations) ?: throw EmptyFrameworkBaseNameException() }
         return framework
     }
 
     private fun getFrameworkBaseNames(
         composable: KSFunctionDeclaration,
-        node: KSAnnotated,
         makeParameters: List<KSValueParameter>,
         parameters: List<KSValueParameter>,
         modulesMetadata: List<ModuleMetadata>,
@@ -232,12 +239,12 @@ internal class Processor(
     ): List<String> {
         return extractFrameworkBaseNames(composable, modulesMetadata, makeParameters, parameters, stateParameter)
             .filter { it.isNotBlank() }
-            .ifEmpty { listOfNotNull(getFrameworkBaseNameFromAnnotation(node)) }
+            .ifEmpty { listOfNotNull(getFrameworkBaseNameFromAnnotation(composable.annotations)) }
             .ifEmpty { throw EmptyFrameworkBaseNameException() }
     }
 
-    private fun getFrameworkBaseNameFromAnnotation(node: KSAnnotated): String? {
-        val annotation = node.annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+    private fun getFrameworkBaseNameFromAnnotation(annotations: Sequence<KSAnnotation>): String? {
+        val annotation = annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
         if (annotation != null) {
             val argument = annotation.arguments.firstOrNull { it.name?.asString() == frameworkBaseNameAnnotationParameter }
             if (argument != null) {
@@ -250,8 +257,8 @@ internal class Processor(
         return null
     }
 
-    private fun getOpaqueConfigurationFromAnnotation(node: KSAnnotated): Boolean {
-        val annotation = node.annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+    private fun getOpaqueConfigurationFromAnnotation(annotations: Sequence<KSAnnotation>): Boolean {
+        val annotation = annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
         if (annotation != null) {
             val argument = annotation.arguments.firstOrNull { it.name?.asString() == composeUIViewControllerOpaqueConfiguration }
             if (argument != null) {
