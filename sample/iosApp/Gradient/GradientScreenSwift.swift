@@ -21,7 +21,7 @@ private struct GradientView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .animation(.easeInOut(duration: 0.5), value: colors)
+                .animation(.easeInOut(), value: colors)
 
             ButtonView(onClick: { colors = getRandomColors() })
         }

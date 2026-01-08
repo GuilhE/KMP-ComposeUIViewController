@@ -116,7 +116,6 @@ class PluginTest {
         val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.apply {
             jvm()
-            iosX64()
             iosArm64()
         }
 
@@ -140,7 +139,6 @@ class PluginTest {
         val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
         kotlin.apply {
             jvm()
-            iosX64()
             iosArm64()
             iosSimulatorArm64()
         }
