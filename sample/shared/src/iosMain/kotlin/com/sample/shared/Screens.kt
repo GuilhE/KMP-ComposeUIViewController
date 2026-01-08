@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+@file:OptIn(ExperimentalComposeUiApi::class)
 
 package com.sample.shared
 
@@ -9,7 +10,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
 import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewControllerState
@@ -39,7 +42,7 @@ internal fun GradientScreenCompose(@ComposeUIViewControllerState state: ScreenSt
 /**
  * A screen rendered in Compose with a Swift UIViewController embedded in it.
  * The state is controlled by the UIViewController and passed to Compose to render the gradient background.
- * 
+ *
  * In this particular sample you'll notice a white background, that due to: [CMP-9469](https://shorturl.at/TwOtb)
  *
  * Follow: [Research-alternative-interop-methods](https://youtrack.jetbrains.com/issue/CMP-8588/Research-alternative-interop-methods)
@@ -51,10 +54,13 @@ internal fun GradientScreenMixed(@ComposeUIViewControllerState state: ScreenStat
         Crossfade(targetState = state) {
             Gradient(it.colors)
         }
-        UIKitViewController(factory = {
-            controller.view.backgroundColor = UIColor.clearColor
-            controller
-        })
+        UIKitViewController(
+            factory = {
+                controller.view.backgroundColor = UIColor.clearColor
+                controller
+            },
+            properties = UIKitInteropProperties(placedAsOverlay = true)
+        )
     }
 }
 
