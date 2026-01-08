@@ -107,7 +107,6 @@ object TestUtils {
                     fun ComposeUIViewController(content: @Composable () -> Unit): UIViewController =
                         ComposeUIViewController(configure = {}, content = content)
 
-                    // Novo método simulado para testes
                     @ExperimentalComposeUiApi
                     fun ComposeUIViewController(
                         opaque: Boolean = true,
