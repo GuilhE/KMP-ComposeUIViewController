@@ -43,7 +43,6 @@ internal fun GradientScreenCompose(@ComposeUIViewControllerState state: ScreenSt
  * A screen rendered in Compose with a Swift UIViewController embedded in it.
  * The state is controlled by the UIViewController and passed to Compose to render the gradient background.
  *
- * In this particular sample you'll notice a white background, that due to: [CMP-9469](https://shorturl.at/TwOtb)
  *
  * Follow: [Research-alternative-interop-methods](https://youtrack.jetbrains.com/issue/CMP-8588/Research-alternative-interop-methods)
  */
