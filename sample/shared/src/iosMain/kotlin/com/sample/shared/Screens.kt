@@ -46,7 +46,7 @@ internal fun GradientScreenCompose(@ComposeUIViewControllerState state: ScreenSt
  *
  * Follow: [Research-alternative-interop-methods](https://youtrack.jetbrains.com/issue/CMP-8588/Research-alternative-interop-methods)
  */
-@ComposeUIViewController(opaque = false)
+@ComposeUIViewController
 @Composable
 internal fun GradientScreenMixed(@ComposeUIViewControllerState state: ScreenState, controller: UIViewController) {
     Box(contentAlignment = Alignment.Center) {
