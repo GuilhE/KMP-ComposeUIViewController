@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0-Beta1-1.10.0-rc02]
+
+- Kotlin 2.3.0-Beta1
+
+---
+
 ## [2.3.0-1.10.0-rc02-6]
 
 - Fixes `Processor` bug when fetching annotations parameters
