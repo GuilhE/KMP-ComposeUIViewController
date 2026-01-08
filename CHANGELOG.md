@@ -1,8 +1,8 @@
 # Changelog
 
-## [2.3.0-Beta1-1.10.0-rc02]
+## [2.3.20-Beta1-1.10.0-rc02]
 
-- Kotlin 2.3.0-Beta1
+- Kotlin 2.3.20-Beta1
 
 ---
 
