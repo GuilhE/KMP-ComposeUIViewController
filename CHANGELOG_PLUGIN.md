@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.20-Beta1-1.10.0]
+
+- Compatible with 2.3.20-Beta1-1.10.0
+
+---
+
 ## [2.3.20-Beta1-1.10.0-rc02]
 
 - Compatible with 2.3.20-Beta1-1.10.0-rc02
