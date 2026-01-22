@@ -5,8 +5,6 @@ import kotlin.native.HidesFromObjC
 
 /**
  * Used to annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the iOS app.
- * The `@ComposeUIViewController` has a `frameworkBaseName` parameter to manually set the framework name. This parameter will only be used if detection fails within the Processor.
- * [More here](https://github.com/GuilhE/KMP-ComposeUIViewController?tab=readme-ov-file#kmp-module)
  * @param frameworkBaseName Kotlin Multiplatform library iOS targets framework base name
  * @param opaque Determines whether the Compose view should have an opaque background. Warning: disabling opaque layer may affect performance.
  */
