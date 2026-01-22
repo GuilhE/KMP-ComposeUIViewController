@@ -10,14 +10,19 @@ struct GradientApp: App {
                         Label("Compose", systemImage: "paintbrush.fill")
                     }
 
+                GradientScreenMixedA()
+                    .tabItem {
+                        Label("Mixed A", systemImage: "shuffle")
+                    }
+
+                GradientScreenMixedB()
+                    .tabItem {
+                        Label("Mixed B", systemImage: "shuffle")
+                    }
+
                 GradientScreenSwift()
                     .tabItem {
                         Label("Swift", systemImage: "swift")
-                    }
-
-                GradientScreenMixed()
-                    .tabItem {
-                        Label("Mixed", systemImage: "shuffle")
                     }
             }
         }

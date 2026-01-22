@@ -2,15 +2,15 @@
 import Composables
 import SwiftUI
 
-public struct GradientScreenMixedRepresentable: UIViewControllerRepresentable {
+public struct GradientScreenMixedBRepresentable: UIViewControllerRepresentable {
     @Binding var state: ScreenState
     let controller: UIViewController
 
     public func makeUIViewController(context _: Context) -> UIViewController {
-        GradientScreenMixedUIViewController().make(controller: controller)
+        GradientScreenMixedBUIViewController().make(controller: controller)
     }
 
     public func updateUIViewController(_: UIViewController, context _: Context) {
-        GradientScreenMixedUIViewController().update(state: state)
+        GradientScreenMixedBUIViewController().update(state: state)
     }
 }

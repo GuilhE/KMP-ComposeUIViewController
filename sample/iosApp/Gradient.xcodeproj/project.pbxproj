@@ -10,14 +10,16 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
+		28AC066D19EF198E4922EAB7 /* GradientScreenMixedBUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED50C09E295921C82BA7AADB /* GradientScreenMixedBUIViewControllerRepresentable.swift */; };
 		5C5EAB212EFF742F00DBC1C5 /* GradientScreenSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5EAB202EFF742F00DBC1C5 /* GradientScreenSwift.swift */; };
-		5C5EAB232EFF781500DBC1C5 /* GradientScreenCompose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5EAB222EFF781500DBC1C5 /* GradientScreenCompose.swift */; };
+		5C5EAB232EFF781500DBC1C5 /* GradientScreenMixedA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5EAB222EFF781500DBC1C5 /* GradientScreenMixedA.swift */; };
+		5CB6C5242F22E5DB00B7CC02 /* GradientScreenCompose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB6C5232F22E5DB00B7CC02 /* GradientScreenCompose.swift */; };
 		5CBA8AF52F0040C30020F6E0 /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBA8AF42F0040C30020F6E0 /* ButtonView.swift */; };
 		5CBA8AF72F0041D80020F6E0 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBA8AF62F0041D70020F6E0 /* Utils.swift */; };
-		7555FF83242A565900829871 /* GradientScreenMixed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* GradientScreenMixed.swift */; };
+		7555FF83242A565900829871 /* GradientScreenMixedB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* GradientScreenMixedB.swift */; };
+		A7F70F852634A281891B2306 /* GradientScreenMixedAUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0320E7342F693CC6FB5E20 /* GradientScreenMixedAUIViewControllerRepresentable.swift */; };
 		CEBB1C03BBF153E13B92F001 /* GradientScreenComposeUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF9C7201FE2DB9FE49BF11A6 /* GradientScreenComposeUIViewControllerRepresentable.swift */; };
 		D501F8E0D70C58DA13CD2B3F /* GradientScreenSwiftUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 164014A85E8DE172978BB9B3 /* GradientScreenSwiftUIViewControllerRepresentable.swift */; };
-		DF38027D32EFDF605221FB4A /* GradientScreenMixedUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9435C17157F679F02C3D2234 /* GradientScreenMixedUIViewControllerRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,14 +41,16 @@
 		164014A85E8DE172978BB9B3 /* GradientScreenSwiftUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenSwiftUIViewControllerRepresentable.swift; path = Representables/GradientScreenSwiftUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* GradientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientApp.swift; sourceTree = "<group>"; };
 		5C5EAB202EFF742F00DBC1C5 /* GradientScreenSwift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenSwift.swift; sourceTree = "<group>"; };
-		5C5EAB222EFF781500DBC1C5 /* GradientScreenCompose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenCompose.swift; sourceTree = "<group>"; };
+		5C5EAB222EFF781500DBC1C5 /* GradientScreenMixedA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenMixedA.swift; sourceTree = "<group>"; };
+		5CB6C5232F22E5DB00B7CC02 /* GradientScreenCompose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenCompose.swift; sourceTree = "<group>"; };
 		5CBA8AF42F0040C30020F6E0 /* ButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonView.swift; sourceTree = "<group>"; };
 		5CBA8AF62F0041D70020F6E0 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		7555FF82242A565900829871 /* GradientScreenMixed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenMixed.swift; sourceTree = "<group>"; };
+		7555FF82242A565900829871 /* GradientScreenMixedB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenMixedB.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		9435C17157F679F02C3D2234 /* GradientScreenMixedUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenMixedUIViewControllerRepresentable.swift; path = Representables/GradientScreenMixedUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
+		8E0320E7342F693CC6FB5E20 /* GradientScreenMixedAUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenMixedAUIViewControllerRepresentable.swift; path = Representables/GradientScreenMixedAUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		DF9C7201FE2DB9FE49BF11A6 /* GradientScreenComposeUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenComposeUIViewControllerRepresentable.swift; path = Representables/GradientScreenComposeUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
+		ED50C09E295921C82BA7AADB /* GradientScreenMixedBUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenMixedBUIViewControllerRepresentable.swift; path = Representables/GradientScreenMixedBUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,8 +97,9 @@
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* GradientApp.swift */,
-				5C5EAB222EFF781500DBC1C5 /* GradientScreenCompose.swift */,
-				7555FF82242A565900829871 /* GradientScreenMixed.swift */,
+				5CB6C5232F22E5DB00B7CC02 /* GradientScreenCompose.swift */,
+				5C5EAB222EFF781500DBC1C5 /* GradientScreenMixedA.swift */,
+				7555FF82242A565900829871 /* GradientScreenMixedB.swift */,
 				5C5EAB202EFF742F00DBC1C5 /* GradientScreenSwift.swift */,
 				5CBA8AF42F0040C30020F6E0 /* ButtonView.swift */,
 				5CBA8AF62F0041D70020F6E0 /* Utils.swift */,
@@ -113,8 +118,9 @@
 			isa = PBXGroup;
 			children = (
 				DF9C7201FE2DB9FE49BF11A6 /* GradientScreenComposeUIViewControllerRepresentable.swift */,
-				9435C17157F679F02C3D2234 /* GradientScreenMixedUIViewControllerRepresentable.swift */,
 				164014A85E8DE172978BB9B3 /* GradientScreenSwiftUIViewControllerRepresentable.swift */,
+				8E0320E7342F693CC6FB5E20 /* GradientScreenMixedAUIViewControllerRepresentable.swift */,
+				ED50C09E295921C82BA7AADB /* GradientScreenMixedBUIViewControllerRepresentable.swift */,
 			);
 			name = Representables;
 			sourceTree = "<group>";
@@ -149,7 +155,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1130;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2620;
 				ORGANIZATIONNAME = orgName;
 				TargetAttributes = {
 					7555FF7A242A565900829871 = {
@@ -217,12 +223,14 @@
 				2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */,
 				5CBA8AF72F0041D80020F6E0 /* Utils.swift in Sources */,
 				5C5EAB212EFF742F00DBC1C5 /* GradientScreenSwift.swift in Sources */,
+				5CB6C5242F22E5DB00B7CC02 /* GradientScreenCompose.swift in Sources */,
 				5CBA8AF52F0040C30020F6E0 /* ButtonView.swift in Sources */,
-				5C5EAB232EFF781500DBC1C5 /* GradientScreenCompose.swift in Sources */,
-				7555FF83242A565900829871 /* GradientScreenMixed.swift in Sources */,
+				5C5EAB232EFF781500DBC1C5 /* GradientScreenMixedA.swift in Sources */,
+				7555FF83242A565900829871 /* GradientScreenMixedB.swift in Sources */,
 				CEBB1C03BBF153E13B92F001 /* GradientScreenComposeUIViewControllerRepresentable.swift in Sources */,
-				DF38027D32EFDF605221FB4A /* GradientScreenMixedUIViewControllerRepresentable.swift in Sources */,
 				D501F8E0D70C58DA13CD2B3F /* GradientScreenSwiftUIViewControllerRepresentable.swift in Sources */,
+				A7F70F852634A281891B2306 /* GradientScreenMixedAUIViewControllerRepresentable.swift in Sources */,
+				28AC066D19EF198E4922EAB7 /* GradientScreenMixedBUIViewControllerRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -285,6 +293,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -339,6 +348,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;

@@ -2,11 +2,12 @@ import SwiftUI
 
 struct ButtonView: View {
     let onClick: (() -> Void)?
+    var lbl: String = "Swift"
 
     var body: some View {
         Button(action: {
             onClick?()
-            printMilis(nil, "SwiftUI")
+            printMilis(nil, lbl)
         }) {
             Text("Shuffle")
                 .font(.system(size: 14))

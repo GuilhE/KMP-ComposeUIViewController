@@ -3,14 +3,11 @@ import Composables
 import SwiftUI
 
 public struct GradientScreenComposeRepresentable: UIViewControllerRepresentable {
-    @Binding var state: ScreenState
-    let randomize: (KotlinLong) -> Void
-
     public func makeUIViewController(context _: Context) -> UIViewController {
-        GradientScreenComposeUIViewController().make(randomize: randomize)
+        GradientScreenComposeUIViewController().make()
     }
 
     public func updateUIViewController(_: UIViewController, context _: Context) {
-        GradientScreenComposeUIViewController().update(state: state)
+        // unused
     }
 }
