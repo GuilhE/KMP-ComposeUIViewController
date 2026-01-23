@@ -19,6 +19,6 @@ java {
 
 tasks.compileKotlin.configure {
     compilerOptions {
-        freeCompilerArgs = listOf("-Xjvm-default=all")
+        freeCompilerArgs.add("-jvm-default=no-compatibility")
     }
 }
