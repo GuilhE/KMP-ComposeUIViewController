@@ -27,7 +27,7 @@ dependencies {
     testImplementation(libs.test.kotlin)
 }
 
-version = "2.3.20-Beta1-1.10.0"
+version = "2.3.20-Beta2-1.10.0"
 group = "io.github.guilhe.kmp"
 
 gradlePlugin {
