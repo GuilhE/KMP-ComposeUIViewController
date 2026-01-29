@@ -6,11 +6,11 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_FRAMEWORK_CONFIG
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_FRAMEWORK
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_PROJECT
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_SWIFT_EXPORT
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_ANNOTATIONS_NAME
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_GROUP
@@ -307,7 +307,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with fallback to project name as moduleName`() {
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets throws exception when no moduleName exists`() {
         Templates.createCommonMainSource(projectDir, packageName = "com.test")
 
         val buildFile = Templates.writeBuildGradle(
@@ -322,7 +322,6 @@ class PluginTest {
 
                 kotlin {
                     iosSimulatorArm64()
-                    swiftExport {}
                 }
                 """
         )
@@ -331,8 +330,8 @@ class PluginTest {
         val settingsFile = Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
         assertTrue(settingsFile.exists())
 
-        val result = Templates.runGradle(projectDir)
-        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_PROJECT [TestProject]"))
+        val result = Templates.runGradle(projectDir, expectFailure = true)
+        assertTrue(result.output.contains(ERROR_MISSING_FRAMEWORK_CONFIG))
     }
 
     @Test
@@ -394,7 +393,7 @@ class PluginTest {
     }
 
     @Test
-    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with exported module fallback to project name`() {
+    fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with exported module with explicit moduleName`() {
         val commonFile = Templates.createCommonMainSource(projectDir, packageName = "com.test")
         assertTrue(commonFile.exists())
 
@@ -434,7 +433,8 @@ class PluginTest {
                     swiftExport {
                         moduleName = "DefaultModule"
                         export(projects.abc) {
-                            flattenPackage = "com.123"
+                            moduleName = "AbcModule"
+                            flattenPackage = "com.abc"
                         }
                     }
                 }
@@ -452,7 +452,7 @@ class PluginTest {
 
         val result = Templates.runGradle(projectDir)
         assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [DefaultModule]"))
-        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_PROJECT [Abc]"))
+        assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [AbcModule]"))
     }
 
     @Test
@@ -550,7 +550,9 @@ class PluginTest {
             
             kotlin {
                 iosSimulatorArm64()
-                swiftExport {}
+                swiftExport {
+                    moduleName = "TestModule"
+                }
             }
         """
         )

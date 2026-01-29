@@ -179,10 +179,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
             }
         }
 
-        // Priority 4: Project name (fallback)
-        val projectModuleName = name.toPascalCase()
-        logger.info("\t> $INFO_MODULE_NAME_BY_PROJECT [$projectModuleName]")
-        return Triple(setOf(projectModuleName), true, flattenConfigured)
+        throw PluginConfigurationException(ERROR_MISSING_FRAMEWORK_CONFIG_FULL)
     }
 
     private fun Project.buildFrameworkPackages(packageNames: Set<String>, frameworkNames: Set<String>): Map<String, Set<String>> {
@@ -300,13 +297,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         }
     }
 
-    private fun String.toPascalCase(): String {
-        return split("-")
-            .joinToString("") { segment ->
-                segment.replaceFirstChar { it.uppercaseChar() }
-            }
-    }
-
     private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
     private fun ComposeUiViewControllerParameters.toList() =
@@ -338,9 +328,13 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
         internal const val PARAM_GROUP = "group_name"
         internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
         internal const val ERROR_MISSING_PACKAGE = "Could not determine project's package"
+        internal const val ERROR_MISSING_FRAMEWORK_CONFIG = "No framework configuration found."
+        internal const val ERROR_MISSING_FRAMEWORK_CONFIG_FULL =
+            "$ERROR_MISSING_FRAMEWORK_CONFIG Please configure in the exporting module either:\n" +
+            "\t1. iOS framework baseName, or\n" +
+            "\t2. SwiftExport with moduleName"
         internal const val INFO_MODULE_NAME_BY_FRAMEWORK =
             "SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName:"
         internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName:"
-        internal const val INFO_MODULE_NAME_BY_PROJECT = "No configurations found for moduleName. Fallback to project module name:"
     }
 }

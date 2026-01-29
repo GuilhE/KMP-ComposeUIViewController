@@ -3,6 +3,7 @@
 ## [2.3.20-Beta2-1.10.0]
 
 - Compatible with 2.3.20-Beta2-1.10.0
+- Plugin now throws when no iOS export configuration is found, instead of defaulting to module name
 
 ---
 

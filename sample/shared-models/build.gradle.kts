@@ -5,7 +5,9 @@ plugins {
 }
 
 kotlin {
-    listOf(iosArm64(), iosSimulatorArm64()).forEach { target -> target.binaries.framework { baseName = "Models" } }
+    iosArm64()
+    iosSimulatorArm64()
+
     sourceSets {
         commonMain.dependencies {
             implementation(local.kotlinx.collections)
