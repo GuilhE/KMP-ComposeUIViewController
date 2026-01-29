@@ -262,6 +262,30 @@ internal fun removeEmptyLineBetweenStructAndFunc(code: String): String {
 }
 
 /**
+ * Recursively extracts all types from a KSType, including generic type arguments.
+ *
+ * @param type The KSType to extract from
+ * @param packageName The current module's package name
+ * @param result Accumulator for found types
+ */
+private fun extractTypesRecursively(type: KSType, packageName: String, result: MutableSet<String>) {
+    if (type.isError) return
+
+    val typeDeclaration = type.declaration
+    val typePackage = (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
+
+    if (typePackage != null && packageName != typePackage && !typePackage.startsWith("kotlin")) {
+        result.add("$typePackage.${type.declaration.simpleName.asString()}")
+    }
+
+    type.arguments.forEach { typeArgument ->
+        typeArgument.type?.resolve()?.let { argType ->
+            extractTypesRecursively(argType, packageName, result)
+        }
+    }
+}
+
+/**
  * Iterates all parameters and returns package names that do not belong to the module's [packageName].
  *
  * @param packageName Module package name
@@ -283,17 +307,13 @@ internal fun extractImportsFromExternalPackages(
     }
 
     val seen = mutableSetOf<String>()
-    return allParameters
-        .mapNotNull {
-            val resolvedType = it.type.resolve()
-            if (resolvedType.isError) throw ValueParameterResolutionError(it)
-            val typeDeclaration = resolvedType.declaration
-            val typePackage = (typeDeclaration as? KSClassDeclaration)?.packageName?.asString()
-            if (typePackage != null && packageName != typePackage && !typePackage.startsWith("kotlin")) {
-                "$typePackage.${resolvedType.declaration.simpleName.asString()}"
-            } else null
-        }
-        .filter { seen.add(it) }
+    allParameters.forEach {
+        val resolvedType = it.type.resolve()
+        if (resolvedType.isError) throw ValueParameterResolutionError(it)
+        extractTypesRecursively(resolvedType, packageName, seen)
+    }
+
+    return seen.toList()
 }
 
 /**

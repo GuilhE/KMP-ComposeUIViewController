@@ -360,6 +360,20 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState, data: Data) { }
         """.trimIndent()
 
+        fun screenWithExternalDataInCollections(packageName: String = TEST_PACKAGE) = """
+            package $packageName
+            $COMMON_IMPORTS
+            import $DATA_PACKAGE.Data
+
+            @ComposeUIViewController
+            @Composable
+            fun Screen(
+                items: List<Data>,
+                itemsMap: Map<String, Data>,
+                nestedItems: List<List<Data>>
+            ) { }
+        """.trimIndent()
+
         fun screenWithDirectPrimitives(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS

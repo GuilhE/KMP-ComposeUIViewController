@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.3.20-Beta2-1.10.0-1]
+
+- Fixed: Import generation now correctly handles external types nested in generic collections (List<Data>, Map<String, CustomType>, etc.)
+
 ## [2.3.20-Beta2-1.10.0]
 
 - Kotlin 2.3.20-Beta2

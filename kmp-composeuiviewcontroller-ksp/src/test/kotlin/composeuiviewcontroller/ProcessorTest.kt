@@ -392,6 +392,33 @@ class ProcessorTest {
     }
 
     @Test
+    fun `External types inside collections generate correct imports in Kotlin files`() {
+        tempArgs.writeText(ModuleConfigs.twoModules())
+
+        val dataCode = CodeTemplates.dataFile()
+        val screenCode = CodeTemplates.screenWithExternalDataInCollections()
+
+        val compilation = prepareCompilation(
+            kotlin("Screen.kt", screenCode),
+            kotlin("Data.kt", dataCode),
+            *klibSourceFiles().toTypedArray()
+        )
+
+        val result = compilation.compile()
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+        // Verify Kotlin file has the import for external Data type
+        val generatedKotlinFiles = TestFileUtils.findGeneratedKotlinFile(compilation, "ScreenUIViewController.kt")
+        assertTrue(generatedKotlinFiles.isNotEmpty())
+
+        val kotlinContent = generatedKotlinFiles.first().readText()
+        assertContains(kotlinContent, "import $DATA_PACKAGE.Data")
+        assertContains(kotlinContent, "items: List<Data>")
+        assertContains(kotlinContent, "itemsMap: Map<String, Data>")
+        assertContains(kotlinContent, "nestedItems: List<List<Data>>")
+    }
+
+    @Test
     fun `TypeAliasForExternalDependencies file will exclude external dependencies with flattenPackage configurations`() {
         tempArgs.writeText(
             ModuleConfigs.treeModules(
