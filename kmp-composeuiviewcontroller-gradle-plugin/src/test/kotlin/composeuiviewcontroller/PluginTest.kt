@@ -9,7 +9,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_FRAMEWORK_CONFIG
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_PACKAGE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SCRIPT_TEMP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_COPY_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_FRAMEWORK
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_SWIFT_EXPORT
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_ANNOTATIONS_NAME
@@ -523,7 +523,7 @@ class PluginTest {
         )
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))
 
-        val script = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
+        val script = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_COPY_SCRIPT_TEMP")
         assertTrue(script.exists())
 
         val modifiedScriptContent = script.readText()
@@ -564,7 +564,7 @@ class PluginTest {
         val result = Templates.runGradle(projectDir)
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))
 
-        val tempFile = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_SCRIPT_TEMP")
+        val tempFile = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_COPY_SCRIPT_TEMP")
         assertFalse(tempFile.exists())
     }
 

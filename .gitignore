@@ -252,6 +252,9 @@ iOSInjectionProject/
 # Ignore Gradle GUI config
 gradle-app.setting
 
+# Gradle daemon JVM properties (auto-generated)
+gradle/gradle-daemon-jvm.properties
+
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 

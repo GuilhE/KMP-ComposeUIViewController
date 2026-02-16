@@ -1,0 +1,18 @@
+root = true
+
+[*.{kt,kts}]
+indent_style = tab
+indent_size = 4
+max_line_length = 150
+insert_final_newline = false
+ktlint_code_style = android_studio
+ktlint_standard_final-newline = disabled
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
+ktlint_standard_function-naming = disabled
+ktlint_standard_class-signature = disabled
+ktlint_standard_function-signature = disabled
+ktlint_standard_parameter-list-wrapping = disabled
+ktlint_standard_argument-list-wrapping = disabled
+ktlint_standard_wrapping = disabled
+ktlint_standard_indent = disabled
