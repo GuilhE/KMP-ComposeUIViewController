@@ -565,9 +565,9 @@ class ProcessorTest {
         assertContains(swiftContent, "let intList: Array<KotlinInt>")
         assertContains(swiftContent, "let boolSet: Set<KotlinBoolean>")
         assertContains(swiftContent, "let stringMap: Dictionary<String, KotlinInt>")
-        assertContains(swiftContent, "let mutableIntList: NSMutableArray<KotlinInt>")
+        assertContains(swiftContent, "let mutableIntList: NSMutableArray")
         assertContains(swiftContent, "let mutableBoolSet: KotlinMutableSet<KotlinBoolean>")
-        assertContains(swiftContent, "let mutableStringMap: NSMutableDictionary<String, KotlinInt>")
+        assertContains(swiftContent, "let mutableStringMap: NSMutableDictionary")
     }
 
     @Test

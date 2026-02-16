@@ -730,9 +730,9 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                 let callBackA: () -> Void
                 let callBackB: (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>
                 let callBackS: (Set<KotlinInt>) -> Void
-                let callBackC: (NSMutableArray<String>) -> Void
+                let callBackC: (NSMutableArray) -> Void
                 let callBackD: (Dictionary<String, String>) -> Void
-                let callBackE: (NSMutableDictionary<String, String>) -> Void
+                let callBackE: (NSMutableDictionary) -> Void
                 let callBackF: (KotlinByte) -> Void
                 let callBackG: (KotlinUByte) -> Void
                 let callBackH: (KotlinShort) -> Void
