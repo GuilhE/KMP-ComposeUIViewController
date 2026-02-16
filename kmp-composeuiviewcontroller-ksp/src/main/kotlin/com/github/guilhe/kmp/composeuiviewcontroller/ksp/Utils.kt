@@ -110,8 +110,12 @@ private fun convertCollectionType(type: KSType, baseType: String, isNullable: Bo
         else -> baseType
     }
 
-    // NSMutableArray and NSMutableDictionary DO support generics in Swift (they are bridged from ObjC)
-    val result = "$convertedCollection<${generics.joinToString(", ")}>"
+    // NSMutableArray and NSMutableDictionary do NOT support generics in Swift (ObjC types without generic syntax)
+    val result = if (convertedCollection == "NSMutableArray" || convertedCollection == "NSMutableDictionary") {
+        convertedCollection
+    } else {
+        "$convertedCollection<${generics.joinToString(", ")}>"
+    }
 
     return if (isNullable) "$result?" else result
 }

@@ -101,3 +101,25 @@ internal fun GradientScreenSwift(controller: UIViewController) {
         modifier = Modifier.fillMaxSize()
     )
 }
+
+@ComposeUIViewController
+@Composable
+internal fun Test(
+	callBackA: () -> Unit,
+	callBackB: (List<Map<String, List<Int>>>) -> List<String>,
+	callBackS: (Set<Int>) -> Unit,
+	callBackC: (MutableList<String>) -> Unit,
+	callBackD: (Map<String, String>) -> Unit,
+	callBackE: (MutableMap<String, String>) -> Unit,
+	callBackF: (Byte) -> Unit,
+	callBackG: (UByte) -> Unit,
+	callBackH: (Short) -> Unit,
+	callBackI: (UShort) -> Unit,
+	callBackJ: (Int) -> Unit,
+	callBackK: (UInt) -> Unit,
+	callBackL: (Long) -> Unit,
+	callBackM: (ULong) -> Unit,
+	callBackN: (Float) -> Unit,
+	callBackO: (Double) -> Unit,
+	callBackP: (Boolean) -> Unit
+) { }
