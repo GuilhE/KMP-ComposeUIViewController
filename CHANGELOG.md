@@ -1,18 +1,30 @@
 # Changelog
 
+## [2.3.20-RC2-1.10.1]
+
+- Kotlin 2.3.20-RC2
+
+---
+
 ## [2.3.20-RC-1.10.1]
 
 - Kotlin 2.3.20-RC
 - KSP 2.3.6
+
+---
 
 ## [2.3.20-Beta2-1.10.1]
 
 - CMP 1.10.1
 - Adds swiftFormat Task to format generated .swift files with `swiftformat` default rules. This task is executed after the KSP code generation.
 
+---
+
 ## [2.3.20-Beta2-1.10.0-1]
 
 - Fixed: Import generation now correctly handles external types nested in generic collections (List<Data>, Map<String, CustomType>, etc.)
+
+---
 
 ## [2.3.20-Beta2-1.10.0]
 
