@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.20-1.10.1]
+
+- Compatible with 2.3.20-1.10.1
+
+---
+
 ## [2.3.20-RC2-1.10.1]
 
 - Compatible with 2.3.20-RC2-1.10.1
