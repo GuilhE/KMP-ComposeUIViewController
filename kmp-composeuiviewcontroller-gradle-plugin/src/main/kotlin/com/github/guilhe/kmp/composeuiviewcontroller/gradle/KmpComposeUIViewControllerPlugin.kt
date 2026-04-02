@@ -6,6 +6,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.SwiftExportUtils.getSwiftExportConfigForProject
+import com.google.devtools.ksp.gradle.KspExtension
 import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -64,6 +65,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 						flattenPackageConfigured = flattenPackage,
 						args = buildFrameworkPackages(packageNames, frameworkNames)
 					)
+					configureKspTasksForCacheInvalidation()
 				} catch (e: PluginConfigurationException) {
 					throw e
 				} catch (e: Exception) {
@@ -231,6 +233,41 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		}
 	}
 
+	/**
+	 * Registers the shared metadata file ([FILE_NAME_ARGS]) as a declared Gradle input on every
+	 * task whose name starts with "ksp", and propagates a content hash as a KSP processor argument.
+	 *
+	 * **Why this matters – two independent caching layers that can cause false UP-TO-DATE results:**
+	 *
+	 * 1. **Gradle task-level cache** – Gradle only re-runs a task when at least one of its *declared*
+	 *    inputs has changed.  The metadata file is written at configuration time (in `afterEvaluate`)
+	 *    and consumed by the KSP `Processor` at execution time, but it was never declared as a task input.
+	 *    Registering it here makes Gradle aware of the file so the KSP task is considered
+	 *    OUT-OF-DATE whenever the metadata content changes.
+	 *
+	 * 2. **KSP internal incremental layer** – Even after Gradle decides to run the KSP task, KSP's
+	 *    own incremental engine may skip re-processing if no `.kt` source files changed.  Passing the
+	 *    metadata content hash as a processor argument forces KSP to treat the options map as stale
+	 *    (KSP serialises `apOptions` as part of its own input fingerprint), triggering a full
+	 *    re-processing round whenever the metadata changes.
+	 */
+	private fun Project.configureKspTasksForCacheInvalidation() {
+		val metadataFile = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
+
+		//Gradle level
+		tasks.matching { it.name.startsWith("ksp") }.configureEach { task ->
+			task.inputs.file(metadataFile).optional()
+			logger.info("\t> Registered $FILE_NAME_ARGS as input for task '${task.name}'")
+		}
+
+		//KSP level
+		if (metadataFile.exists()) {
+			val metadataHash = metadataFile.readText().hashCode().toString()
+			extensions.findByType(KspExtension::class.java)?.arg(KSP_ARG_METADATA_HASH, metadataHash)
+			logger.info("\t> Passed metadata hash ($metadataHash) to KSP processor as '$KSP_ARG_METADATA_HASH'")
+		}
+	}
+
 	private fun Project.configureTaskToRegisterSwiftFormat(project: Project) {
 		tasks.register(TASK_FORMAT_SWIFT_FILES, Exec::class.java) { task ->
 			task.group = "composeuiviewcontroller"
@@ -347,7 +384,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
 	internal companion object {
-		private const val VERSION_LIBRARY = "2.4.0-Beta1-1.11.0-beta01"
+		private const val VERSION_LIBRARY = "2.4.0-Beta1-1.11.0-beta01-1"
 		private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
 		internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
 		internal const val PLUGIN_KSP = "com.google.devtools.ksp"
@@ -373,6 +410,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		internal const val PARAM_APP_NAME = "iosApp_name"
 		internal const val PARAM_TARGET = "iosApp_target_name"
 		internal const val PARAM_GROUP = "group_name"
+		internal const val KSP_ARG_METADATA_HASH = "composeuiviewcontroller.metadataHash"
 		internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
 		internal const val ERROR_MISSING_PACKAGE = "Could not determine project's package"
 		internal const val ERROR_MISSING_FRAMEWORK_CONFIG = "No framework configuration found."

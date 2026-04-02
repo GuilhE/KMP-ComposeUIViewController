@@ -1,36 +1,36 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
-    id("kmp-composeuiviewcontroller-publish")
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.dokka)
+	id("kmp-composeuiviewcontroller-publish")
+	alias(libs.plugins.kotlin.multiplatform)
+	alias(libs.plugins.kotlin.dokka)
 }
 
 kotlin {
-    explicitApi()
-    jvmToolchain(17)
+	explicitApi()
+	jvmToolchain(17)
 
-    macosArm64()
-    iosArm64()
-    iosSimulatorArm64()
-    watchosArm32()
-    watchosArm64()
-    watchosSimulatorArm64()
-    watchosDeviceArm64()
-    tvosArm64()
-    tvosSimulatorArm64()
-    jvm()
-    js {
-        browser()
-        nodejs()
-    }
-    linuxArm64()
-    linuxX64()
-    mingwX64()
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-        nodejs()
-        d8()
-    }
+	macosArm64()
+	iosArm64()
+	iosSimulatorArm64()
+	watchosArm32()
+	watchosArm64()
+	watchosSimulatorArm64()
+	watchosDeviceArm64()
+	tvosArm64()
+	tvosSimulatorArm64()
+	jvm()
+	js {
+		browser()
+		nodejs()
+	}
+	linuxArm64()
+	linuxX64()
+	mingwX64()
+	@OptIn(ExperimentalWasmDsl::class)
+	wasmJs {
+		browser()
+		nodejs()
+		d8()
+	}
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.0-Beta1-1.11.0-beta01-1]
+
+- Compatible with 2.4.0-Beta1-1.11.0-beta01-1
+
+---
+
 ## [2.4.0-Beta1-1.11.0-beta01]
 
 - Compatible with 2.4.0-Beta1-1.11.0-beta01

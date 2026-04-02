@@ -12,107 +12,107 @@ import java.io.File
 
 object Templates {
 
-    const val TEST_PACKAGE = "com.mycomposable.test"
-    const val DATA_PACKAGE = "com.mycomposable.data"
-    const val STATE_PACKAGE = "com.mycomposable.state"
-    const val DEFAULT_FRAMEWORK = "ComposablesFramework"
-    const val FRAMEWORK_2 = "ComposablesFramework2"
-    const val FRAMEWORK_3 = "ComposablesFramework3"
-    val COMMON_IMPORTS = """
+	const val TEST_PACKAGE = "com.mycomposable.test"
+	const val DATA_PACKAGE = "com.mycomposable.data"
+	const val STATE_PACKAGE = "com.mycomposable.state"
+	const val DEFAULT_FRAMEWORK = "ComposablesFramework"
+	const val FRAMEWORK_2 = "ComposablesFramework2"
+	const val FRAMEWORK_3 = "ComposablesFramework3"
+	val COMMON_IMPORTS = """
         import $composeUIViewControllerAnnotationName
         import $composeUIViewControllerStateAnnotationName
         import androidx.compose.runtime.Composable
     """.trimIndent()
 
-    object DataClasses {
-        val viewState = """
+	object DataClasses {
+		val viewState = """
             data class ViewState(val field: Int = 0)
         """.trimIndent()
 
-        val viewAState = """
+		val viewAState = """
             data class ViewAState(val field: Int)
         """.trimIndent()
 
-        val viewBState = """
+		val viewBState = """
             data class ViewBState(val field: Int)
         """.trimIndent()
 
-        val someClass = """
+		val someClass = """
             data class SomeClass(val field: Int)
         """.trimIndent()
 
-        val genericData = """
+		val genericData = """
             data class GenericData<T>(val value: T)
         """.trimIndent()
 
-        val data = """
+		val data = """
             data class Data(val field: Int)
         """.trimIndent()
-    }
+	}
 
-    object Composables {
-        fun composableWithoutAnnotation(
-            functionName: String = "Screen",
-            stateType: String = "ViewState"
-        ) = """
+	object Composables {
+		fun composableWithoutAnnotation(
+			functionName: String = "Screen",
+			stateType: String = "ViewState"
+		) = """
             @Composable
             fun $functionName(state: $stateType) { }
         """.trimIndent()
 
-        fun simpleComposableWithoutState(
-            functionName: String = "Screen",
-            framework: String = DEFAULT_FRAMEWORK,
-            params: String
-        ) = """
+		fun simpleComposableWithoutState(
+			functionName: String = "Screen",
+			framework: String = DEFAULT_FRAMEWORK,
+			params: String
+		) = """
             @ComposeUIViewController("$framework")
             @Composable
             fun $functionName($params) { }
         """.trimIndent()
 
-        fun simpleComposableWithState(
-            functionName: String = "Screen",
-            stateType: String = "ViewState",
-            framework: String = DEFAULT_FRAMEWORK,
-            additionalParams: String = ""
-        ) = """
+		fun simpleComposableWithState(
+			functionName: String = "Screen",
+			stateType: String = "ViewState",
+			framework: String = DEFAULT_FRAMEWORK,
+			additionalParams: String = ""
+		) = """
             @ComposeUIViewController("$framework")
             @Composable
             fun $functionName(@ComposeUIViewControllerState state: $stateType${if (additionalParams.isNotEmpty()) ", $additionalParams" else ""}) { }
         """.trimIndent()
 
-        fun simpleComposableWithoutParams(
-            functionName: String = "Screen",
-            framework: String = DEFAULT_FRAMEWORK,
-        ) = """
+		fun simpleComposableWithoutParams(
+			functionName: String = "Screen",
+			framework: String = DEFAULT_FRAMEWORK,
+		) = """
             @ComposeUIViewController("$framework")
             @Composable
             fun $functionName() { }
         """.trimIndent()
 
-        fun composableWithStateAnnotationOnly(
-            functionName: String = "Screen",
-            stateType: String = "ViewState"
-        ) = """
+		fun composableWithStateAnnotationOnly(
+			functionName: String = "Screen",
+			stateType: String = "ViewState"
+		) = """
             @Composable
             fun $functionName(@ComposeUIViewControllerState state: $stateType) { }
         """.trimIndent()
-    }
+	}
 
-    object CodeTemplates {
-        fun viewStateFile(packageName: String = STATE_PACKAGE) = """
+	object CodeTemplates {
+		fun viewStateFile(packageName: String = STATE_PACKAGE) = """
             package $packageName
             ${DataClasses.viewState}
         """.trimIndent()
 
-        fun dataFile(packageName: String = DATA_PACKAGE) = """
+		fun dataFile(packageName: String = DATA_PACKAGE) = """
             package $packageName
             ${DataClasses.data}
         """.trimIndent()
 
-        fun basicScreenWithState(
-            framework: String = DEFAULT_FRAMEWORK,
-            packageName: String = TEST_PACKAGE
-        ) = """
+		fun basicScreenWithState(
+			framework: String = DEFAULT_FRAMEWORK,
+			packageName: String = TEST_PACKAGE
+		) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -121,10 +121,10 @@ object Templates {
             ${Composables.simpleComposableWithState(framework = framework)}
         """.trimIndent()
 
-        fun screenWithOpaqueDisabled(
-            framework: String = DEFAULT_FRAMEWORK,
-            packageName: String = TEST_PACKAGE
-        ) = """
+		fun screenWithOpaqueDisabled(
+			framework: String = DEFAULT_FRAMEWORK,
+			packageName: String = TEST_PACKAGE
+		) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -135,34 +135,34 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-        fun basicScreenWithoutStateAndParams(
-            framework: String = DEFAULT_FRAMEWORK,
-            packageName: String = TEST_PACKAGE
-        ) = """
+		fun basicScreenWithoutStateAndParams(
+			framework: String = DEFAULT_FRAMEWORK,
+			packageName: String = TEST_PACKAGE
+		) = """
             package $packageName
             $COMMON_IMPORTS
             
             ${Composables.simpleComposableWithoutParams(framework = framework)}
         """.trimIndent()
 
-        fun screenWithoutState(
-            framework: String = DEFAULT_FRAMEWORK,
-            packageName: String = TEST_PACKAGE
-        ) = """
+		fun screenWithoutState(
+			framework: String = DEFAULT_FRAMEWORK,
+			packageName: String = TEST_PACKAGE
+		) = """
             package $packageName
             $COMMON_IMPORTS
             
             ${DataClasses.someClass}
             
             ${
-            Composables.simpleComposableWithoutState(
-                framework = framework,
-                params = "data: SomeClass, value: Int, callBack: () -> Unit"
-            )
-        }
+			Composables.simpleComposableWithoutState(
+				framework = framework,
+				params = "data: SomeClass, value: Int, callBack: () -> Unit"
+			)
+		}
         """.trimIndent()
 
-        fun screenWithoutAnnotations(packageName: String = TEST_PACKAGE) = """
+		fun screenWithoutAnnotations(packageName: String = TEST_PACKAGE) = """
             package $packageName
             
             import $composeUIViewControllerStateAnnotationName
@@ -175,7 +175,7 @@ object Templates {
             ${Composables.composableWithStateAnnotationOnly("ScreenB")}
         """.trimIndent()
 
-        fun multipleScreensInSameFile(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
+		fun multipleScreensInSameFile(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             import androidx.compose.ui.window.ComposeUIViewController
@@ -189,15 +189,15 @@ object Templates {
             ${Composables.simpleComposableWithState("ScreenB", framework = framework, additionalParams = "callBackA: () -> Unit")}
             
             ${
-            Composables.simpleComposableWithState(
-                "ScreenC",
-                framework = framework,
-                additionalParams = "callBackA: () -> Unit, callBackB: () -> Unit"
-            )
-        }
+			Composables.simpleComposableWithState(
+				"ScreenC",
+				framework = framework,
+				additionalParams = "callBackA: () -> Unit, callBackB: () -> Unit"
+			)
+		}
         """.trimIndent()
 
-        fun multipleScreensWithDifferentStates(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
+		fun multipleScreensWithDifferentStates(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -211,7 +211,7 @@ object Templates {
             ${Composables.simpleComposableWithState("ScreenB", "ViewBState", framework)}
         """.trimIndent()
 
-        fun screenWithKotlinTypes(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
+		fun screenWithKotlinTypes(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             import $packageName.ViewState                       
@@ -242,12 +242,12 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithCrossPackageImport(
-            functionName: String = "ScreenA",
-            packageName: String = TEST_PACKAGE,
-            dataPackage: String = DATA_PACKAGE,
-            framework: String = DEFAULT_FRAMEWORK
-        ) = """
+		fun screenWithCrossPackageImport(
+			functionName: String = "ScreenA",
+			packageName: String = TEST_PACKAGE,
+			dataPackage: String = DATA_PACKAGE,
+			framework: String = DEFAULT_FRAMEWORK
+		) = """
             package $packageName
             $COMMON_IMPORTS
             import $dataPackage.*
@@ -255,7 +255,7 @@ object Templates {
             ${Composables.simpleComposableWithState(functionName, "ViewState", framework)}
         """.trimIndent()
 
-        fun screenWithMultipleStateAnnotations(packageName: String = TEST_PACKAGE) = """
+		fun screenWithMultipleStateAnnotations(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -266,7 +266,7 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
         """.trimIndent()
 
-        fun screenWithComposableParameter(packageName: String = TEST_PACKAGE) = """
+		fun screenWithComposableParameter(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -281,7 +281,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithEmptyFramework(packageName: String = TEST_PACKAGE) = """
+		fun screenWithEmptyFramework(packageName: String = TEST_PACKAGE) = """
             package $packageName
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -293,7 +293,7 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-        fun screenWithFrameworkOverride(packageName: String = TEST_PACKAGE, annotationFramework: String = "MyFramework") = """
+		fun screenWithFrameworkOverride(packageName: String = TEST_PACKAGE, annotationFramework: String = "MyFramework") = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -304,7 +304,7 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-        fun screenWithExternalData(packageName: String = TEST_PACKAGE) = """
+		fun screenWithExternalData(packageName: String = TEST_PACKAGE) = """
             package $packageName
             import $composeUIViewControllerAnnotationName
             import $composeUIViewControllerStateAnnotationName
@@ -316,7 +316,7 @@ object Templates {
             fun Screen(data: Data) { }
         """.trimIndent()
 
-        fun screenWithParameterType(parameterType: String, packageName: String = TEST_PACKAGE) = """
+		fun screenWithParameterType(parameterType: String, packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -327,7 +327,7 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState, callback: ($parameterType) -> Unit) { }
         """.trimIndent()
 
-        fun screenWithGenericData(packageName: String = TEST_PACKAGE) = """
+		fun screenWithGenericData(packageName: String = TEST_PACKAGE) = """
             package $packageName
             import $composeUIViewControllerAnnotationName
             import androidx.compose.runtime.Composable
@@ -339,7 +339,7 @@ object Templates {
             fun Screen(data: GenericData<Int>) { }
         """.trimIndent()
 
-        fun screenWithComplexGenerics(packageName: String = TEST_PACKAGE) = """
+		fun screenWithComplexGenerics(packageName: String = TEST_PACKAGE) = """
             package $packageName
             import $composeUIViewControllerAnnotationName
             import androidx.compose.runtime.Composable
@@ -349,7 +349,7 @@ object Templates {
             fun Screen(callback: (Map<String, List<Map<String, Int>>>) -> List<Map<String, String>>) { }
         """.trimIndent()
 
-        fun screenWithExternalStateAndData(packageName: String = TEST_PACKAGE) = """
+		fun screenWithExternalStateAndData(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             import $DATA_PACKAGE.Data
@@ -360,7 +360,7 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState, data: Data) { }
         """.trimIndent()
 
-        fun screenWithExternalDataInCollections(packageName: String = TEST_PACKAGE) = """
+		fun screenWithExternalDataInCollections(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             import $DATA_PACKAGE.Data
@@ -374,7 +374,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithDirectPrimitives(packageName: String = TEST_PACKAGE) = """
+		fun screenWithDirectPrimitives(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -392,7 +392,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithNullablePrimitives(packageName: String = TEST_PACKAGE) = """
+		fun screenWithNullablePrimitives(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -406,7 +406,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithPrimitivesInClosures(packageName: String = TEST_PACKAGE) = """
+		fun screenWithPrimitivesInClosures(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -420,7 +420,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithPrimitivesInCollections(packageName: String = TEST_PACKAGE) = """
+		fun screenWithPrimitivesInCollections(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -436,7 +436,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithMixedContexts(packageName: String = TEST_PACKAGE) = """
+		fun screenWithMixedContexts(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -454,7 +454,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithNullableCollections(packageName: String = TEST_PACKAGE) = """
+		fun screenWithNullableCollections(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -467,7 +467,7 @@ object Templates {
             ) { }
         """.trimIndent()
 
-        fun screenWithCharType(packageName: String = TEST_PACKAGE) = """
+		fun screenWithCharType(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
@@ -480,31 +480,31 @@ object Templates {
                 charCallback: (Char) -> Unit
             ) { }
         """.trimIndent()
-    }
+	}
 
-    object ModuleConfigs {
-        fun singleModule(
-            moduleName: String = "module-test",
-            packageName: String = TEST_PACKAGE,
-            framework: String = DEFAULT_FRAMEWORK,
-            swiftExportEnabled: Boolean = false,
-            flattenPackageConfigured: Boolean = false
-        ) = """[{"name":"$moduleName","packageNames":["$packageName"],"frameworkBaseName":"$framework","swiftExportEnabled":$swiftExportEnabled,
+	object ModuleConfigs {
+		fun singleModule(
+			moduleName: String = "module-test",
+			packageName: String = TEST_PACKAGE,
+			framework: String = DEFAULT_FRAMEWORK,
+			swiftExportEnabled: Boolean = false,
+			flattenPackageConfigured: Boolean = false
+		) = """[{"name":"$moduleName","packageNames":["$packageName"],"frameworkBaseName":"$framework","swiftExportEnabled":$swiftExportEnabled,
             |"flattenPackageConfigured":$flattenPackageConfigured}]""".trimMargin()
 
-        fun twoModules(
-            testFramework: String = DEFAULT_FRAMEWORK,
-            dataFramework: String = FRAMEWORK_2,
-        ) = twoModules(moduleA = testFramework, moduleB = dataFramework)
+		fun twoModules(
+			testFramework: String = DEFAULT_FRAMEWORK,
+			dataFramework: String = FRAMEWORK_2,
+		) = twoModules(moduleA = testFramework, moduleB = dataFramework)
 
-        fun twoModules(
-            moduleA: String = DEFAULT_FRAMEWORK,
-            moduleASwiftExport: Boolean = false,
-            moduleAFlattenPackage: Boolean = false,
-            moduleB: String = FRAMEWORK_2,
-            moduleBSwiftExport: Boolean = false,
-            moduleBFlattenPackage: Boolean = false
-        ) = """
+		fun twoModules(
+			moduleA: String = DEFAULT_FRAMEWORK,
+			moduleASwiftExport: Boolean = false,
+			moduleAFlattenPackage: Boolean = false,
+			moduleB: String = FRAMEWORK_2,
+			moduleBSwiftExport: Boolean = false,
+			moduleBFlattenPackage: Boolean = false
+		) = """
             [
                 {"name":"module-test","packageNames":["$TEST_PACKAGE"],"frameworkBaseName":"$moduleA","swiftExportEnabled":$moduleASwiftExport,
                 "flattenPackageConfigured":"$moduleAFlattenPackage"},
@@ -513,23 +513,23 @@ object Templates {
             ]
         """.trimIndent()
 
-        fun treeModules(
-            testFramework: String = DEFAULT_FRAMEWORK,
-            dataFramework: String = FRAMEWORK_2,
-            stateFramework: String = FRAMEWORK_3,
-        ) = treeModules(moduleA = testFramework, moduleB = dataFramework, moduleC = stateFramework)
+		fun treeModules(
+			testFramework: String = DEFAULT_FRAMEWORK,
+			dataFramework: String = FRAMEWORK_2,
+			stateFramework: String = FRAMEWORK_3,
+		) = treeModules(moduleA = testFramework, moduleB = dataFramework, moduleC = stateFramework)
 
-        fun treeModules(
-            moduleA: String = DEFAULT_FRAMEWORK,
-            moduleASwiftExport: Boolean = false,
-            moduleAFlattenPackage: Boolean = false,
-            moduleB: String = FRAMEWORK_2,
-            moduleBSwiftExport: Boolean = false,
-            moduleBFlattenPackage: Boolean = false,
-            moduleC: String = FRAMEWORK_3,
-            moduleCSwiftExport: Boolean = false,
-            moduleCFlattenPackage: Boolean = false
-        ) = """
+		fun treeModules(
+			moduleA: String = DEFAULT_FRAMEWORK,
+			moduleASwiftExport: Boolean = false,
+			moduleAFlattenPackage: Boolean = false,
+			moduleB: String = FRAMEWORK_2,
+			moduleBSwiftExport: Boolean = false,
+			moduleBFlattenPackage: Boolean = false,
+			moduleC: String = FRAMEWORK_3,
+			moduleCSwiftExport: Boolean = false,
+			moduleCFlattenPackage: Boolean = false
+		) = """
             [
                 {"name":"module-test","packageNames":["$TEST_PACKAGE"],"frameworkBaseName":"$moduleA","swiftExportEnabled":$moduleASwiftExport,
                 "flattenPackageConfigured":$moduleAFlattenPackage},
@@ -539,14 +539,14 @@ object Templates {
                 "flattenPackageConfigured":$moduleCFlattenPackage}
             ]
         """.trimIndent()
-    }
+	}
 
-    object ExpectedOutputs {
-        fun kotlinUIViewControllerWithoutState(
-            packageName: String = TEST_PACKAGE,
-            functionName: String = "Screen",
-            params: String = "data: SomeClass, value: Int, callBack: () -> Unit"
-        ) = """
+	object ExpectedOutputs {
+		fun kotlinUIViewControllerWithoutState(
+			packageName: String = TEST_PACKAGE,
+			functionName: String = "Screen",
+			params: String = "data: SomeClass, value: Int, callBack: () -> Unit"
+		) = """
             // This file is auto-generated by KSP. Do not edit manually.
             @file:Suppress("unused")
             @file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -564,11 +564,11 @@ object Templates {
             }
         """.trimIndent()
 
-        fun kotlinUIViewControllerWithState(
-            packageName: String = TEST_PACKAGE,
-            functionName: String = "ScreenA",
-            stateType: String = "ViewAState"
-        ) = """
+		fun kotlinUIViewControllerWithState(
+			packageName: String = TEST_PACKAGE,
+			functionName: String = "ScreenA",
+			stateType: String = "ViewAState"
+		) = """
             // This file is auto-generated by KSP. Do not edit manually.
             @file:Suppress("unused")
             @file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -593,11 +593,11 @@ object Templates {
             }
         """.trimIndent()
 
-        fun kotlinUIViewControllerWithOpaqueDisabled(
-            packageName: String = TEST_PACKAGE,
-            functionName: String = "Screen",
-            stateType: String = "ViewState"
-        ) = """
+		fun kotlinUIViewControllerWithOpaqueDisabled(
+			packageName: String = TEST_PACKAGE,
+			functionName: String = "Screen",
+			stateType: String = "ViewState"
+		) = """
             // This file is auto-generated by KSP. Do not edit manually.
             @file:Suppress("unused")
             @file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -622,16 +622,16 @@ object Templates {
             }
         """.trimIndent()
 
-        fun swiftRepresentableWithoutState(
-            framework: String = DEFAULT_FRAMEWORK,
-            functionName: String = "Screen",
-            params: List<Pair<String, String>> = listOf(
-                "data" to "SomeClass",
-                "value" to "KotlinInt",
-                "callBack" to "() -> Void"
-            ),
-            isSharedInstance: Boolean = false
-        ) = """
+		fun swiftRepresentableWithoutState(
+			framework: String = DEFAULT_FRAMEWORK,
+			functionName: String = "Screen",
+			params: List<Pair<String, String>> = listOf(
+				"data" to "SomeClass",
+				"value" to "KotlinInt",
+				"callBack" to "() -> Void"
+			),
+			isSharedInstance: Boolean = false
+		) = """
 // This file is auto-generated by KSP. Do not edit manually.
 import $framework
 import SwiftUI
@@ -650,12 +650,12 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
 
 """.trimIndent()
 
-        fun swiftRepresentableWithState(
-            framework: String = DEFAULT_FRAMEWORK,
-            functionName: String = "Screen",
-            stateType: String = "ViewState",
-            isSharedInstance: Boolean = false
-        ) = """
+		fun swiftRepresentableWithState(
+			framework: String = DEFAULT_FRAMEWORK,
+			functionName: String = "Screen",
+			stateType: String = "ViewState",
+			isSharedInstance: Boolean = false
+		) = """
             // This file is auto-generated by KSP. Do not edit manually.
             import $framework
             import SwiftUI
@@ -674,7 +674,7 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
             
         """.trimIndent()
 
-        fun swiftRepresentableWithExternalDependency(framework: String = DEFAULT_FRAMEWORK, functionName: String = "Screen") = """
+		fun swiftRepresentableWithExternalDependency(framework: String = DEFAULT_FRAMEWORK, functionName: String = "Screen") = """
             // This file is auto-generated by KSP. Do not edit manually.
             import $framework
             import SwiftUI
@@ -693,11 +693,11 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
             
         """.trimIndent()
 
-        fun swiftRepresentableWithExternalDependencies(
-            framework: String = DEFAULT_FRAMEWORK,
-            framework2: String = FRAMEWORK_2,
-            functionName: String = "Screen"
-        ) = """
+		fun swiftRepresentableWithExternalDependencies(
+			framework: String = DEFAULT_FRAMEWORK,
+			framework2: String = FRAMEWORK_2,
+			functionName: String = "Screen"
+		) = """
             // This file is auto-generated by KSP. Do not edit manually.
             import $framework
             import $framework2
@@ -717,10 +717,10 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
             
         """.trimIndent()
 
-        fun swiftRepresentableWithObjCTypes(
-            framework: String = DEFAULT_FRAMEWORK,
-            functionName: String = "Screen"
-        ) = """
+		fun swiftRepresentableWithObjCTypes(
+			framework: String = DEFAULT_FRAMEWORK,
+			functionName: String = "Screen"
+		) = """
             // This file is auto-generated by KSP. Do not edit manually.
             import $framework
             import SwiftUI
@@ -756,10 +756,10 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
             
         """.trimIndent()
 
-        fun swiftRepresentableWithSwiftExportTypes(
-            framework: String = DEFAULT_FRAMEWORK,
-            functionName: String = "Screen"
-        ) = """
+		fun swiftRepresentableWithSwiftExportTypes(
+			framework: String = DEFAULT_FRAMEWORK,
+			functionName: String = "Screen"
+		) = """
             // This file is auto-generated by KSP. Do not edit manually.
             import $framework
             import SwiftUI
@@ -795,7 +795,7 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
             
         """.trimIndent()
 
-        fun swiftTypeAliasForExternalDependencies() = """
+		fun swiftTypeAliasForExternalDependencies() = """
             // This file is auto-generated by KSP. Do not edit manually.
             // It contains typealias for external dependencies used in @ComposeUIViewController composables.
             // If you get errors about missing types, consider using the 'flattenPackage' property in KMP swiftExport settings.
@@ -809,7 +809,7 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
             typealias ViewState = ExportedKotlinPackages.com.mycomposable.state.ViewState
         """.trimIndent()
 
-        fun swiftFormatTemplate1() = """
+		fun swiftFormatTemplate1() = """
             // This file is auto-generated by KSP. Do not edit manually.
             import $DEFAULT_FRAMEWORK
             import SwiftUI
@@ -825,37 +825,37 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
             }
             
         """.trimIndent()
-    }
+	}
 
-    object TestFileUtils {
-        fun findGeneratedKotlinFile(compilation: KotlinCompilation, fileName: String): List<File> {
-            return compilation.kspSourcesDir
-                .walkTopDown()
-                .filter { it.name == fileName }
-                .toList()
-        }
+	object TestFileUtils {
+		fun findGeneratedKotlinFile(compilation: KotlinCompilation, fileName: String): List<File> {
+			return compilation.kspSourcesDir
+				.walkTopDown()
+				.filter { it.name == fileName }
+				.toList()
+		}
 
-        fun findGeneratedSwiftFile(compilation: KotlinCompilation, fileName: String): List<File> {
-            return compilation.kspSourcesDir
-                .walkTopDown()
-                .filter { it.name == fileName }
-                .toList()
-        }
+		fun findGeneratedSwiftFile(compilation: KotlinCompilation, fileName: String): List<File> {
+			return compilation.kspSourcesDir
+				.walkTopDown()
+				.filter { it.name == fileName }
+				.toList()
+		}
 
-        fun countGeneratedFiles(compilation: KotlinCompilation, vararg fileNames: String): Int {
-            return compilation.kspSourcesDir
-                .walkTopDown()
-                .filter { it.name in fileNames }
-                .toList()
-                .size
-        }
+		fun countGeneratedFiles(compilation: KotlinCompilation, vararg fileNames: String): Int {
+			return compilation.kspSourcesDir
+				.walkTopDown()
+				.filter { it.name in fileNames }
+				.toList()
+				.size
+		}
 
-        fun hasNoGeneratedFiles(compilation: KotlinCompilation): Boolean {
-            return compilation.kspSourcesDir
-                .walkTopDown()
-                .filter { it.extension == "kt" || it.extension == "swift" }
-                .toList()
-                .isEmpty()
-        }
-    }
+		fun hasNoGeneratedFiles(compilation: KotlinCompilation): Boolean {
+			return compilation.kspSourcesDir
+				.walkTopDown()
+				.filter { it.extension == "kt" || it.extension == "swift" }
+				.toList()
+				.isEmpty()
+		}
+	}
 }

@@ -1,24 +1,24 @@
 plugins {
-    id("kmp-composeuiviewcontroller-publish")
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlinx.serialization)
+	id("kmp-composeuiviewcontroller-publish")
+	alias(libs.plugins.kotlin.jvm)
+	alias(libs.plugins.kotlinx.serialization)
 }
 
 dependencies {
-    implementation(libs.kotlinx.serialization)
+	implementation(libs.kotlinx.serialization)
 }
 
 kotlin {
-    explicitApi()
-    jvmToolchain(17)
+	explicitApi()
+	jvmToolchain(17)
 }
 
 java {
-    withSourcesJar()
+	withSourcesJar()
 }
 
 tasks.compileKotlin.configure {
-    compilerOptions {
-        freeCompilerArgs.add("-jvm-default=no-compatibility")
-    }
+	compilerOptions {
+		freeCompilerArgs.add("-jvm-default=no-compatibility")
+	}
 }
