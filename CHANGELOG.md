@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.20-1.10.3]
+
+- CMP 1.10.3
+- Deprecates `frameworkBaseName`
+- Fixes false KSP UP-TO-DATE cache hits: `modules.json` is now declared as a Gradle task input
+  for all `ksp*` tasks, and its content hash is passed as a KSP processor argument — busting
+  both the Gradle-level and KSP-internal incremental caches whenever module metadata changes.
+
+---
+
 ## [2.4.0-Beta1-1.11.0-beta01-1]
 
 - Fixes false KSP UP-TO-DATE cache hits: `modules.json` is now declared as a Gradle task input
