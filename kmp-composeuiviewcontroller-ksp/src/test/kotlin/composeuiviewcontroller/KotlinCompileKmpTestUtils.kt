@@ -76,8 +76,7 @@ object TestUtils {
 	 *
 	 *  https://kotlinlang.slack.com/archives/C013BA8EQSE/p1732453625647829
 	 */
-	fun klibSourceFiles(): List<SourceFile> {
-		return listOf(
+	fun klibSourceFiles(): List<SourceFile> = listOf(
 			kotlin(
 				"Platform.kt",
 				"""
@@ -171,5 +170,4 @@ object TestUtils {
                 """.trimIndent()
 			)
 		)
-	}
 }

@@ -2,11 +2,11 @@
 
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
+import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import java.io.File
 
 /**
  * Resolves package names from Kotlin source sets with caching support.

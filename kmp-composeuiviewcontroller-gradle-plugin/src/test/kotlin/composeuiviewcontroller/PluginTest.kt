@@ -25,13 +25,6 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
-import kotlinx.serialization.json.Json
-import org.gradle.api.internal.project.DefaultProject
-import org.gradle.testfixtures.ProjectBuilder
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.konan.target.Family
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -40,6 +33,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.Json
+import org.gradle.api.internal.project.DefaultProject
+import org.gradle.testfixtures.ProjectBuilder
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.Family
 
 class PluginTest {
 
@@ -535,14 +535,14 @@ class PluginTest {
 		assertTrue(modifiedScriptContent.contains("$PARAM_GROUP=\"Composables\""))
 	}
 
-    @Test
-    fun `Task copyFilesToXcode will clear temp files after success`() {
-        val classFile = Templates.createCommonMainSource(projectDir, packageName = "com.test")
-        assertTrue(classFile.exists())
+	@Test
+	fun `Task copyFilesToXcode will clear temp files after success`() {
+		val classFile = Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		assertTrue(classFile.exists())
 
-        val buildFile = Templates.writeBuildGradle(
-            projectDir,
-            """
+		val buildFile = Templates.writeBuildGradle(
+			projectDir,
+			"""
             plugins {
                 id("$PLUGIN_KMP")
                 id("$PLUGIN_KSP")
@@ -556,55 +556,55 @@ class PluginTest {
                 }
             }
         """
-        )
-        assertTrue(buildFile.exists())
+		)
+		assertTrue(buildFile.exists())
 
-        val settingsFile = Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
-        assertTrue(settingsFile.exists())
+		val settingsFile = Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		assertTrue(settingsFile.exists())
 
-        val result = Templates.runGradle(projectDir)
-        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+		val result = Templates.runGradle(projectDir)
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
 
-        val tempFile = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_COPY_SCRIPT_TEMP")
-        assertFalse(tempFile.exists())
-    }
+		val tempFile = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_COPY_SCRIPT_TEMP")
+		assertFalse(tempFile.exists())
+	}
 
-    @Test
-    fun `configureKspTasksForCacheInvalidation declares metadata file as Gradle input to ksp tasks`() {
-        with(project) {
-            val fakeKspTaskProvider = tasks.register("kspFakeForCacheTest")
+	@Test
+	fun `configureKspTasksForCacheInvalidation declares metadata file as Gradle input to ksp tasks`() {
+		with(project) {
+			val fakeKspTaskProvider = tasks.register("kspFakeForCacheTest")
 
-            extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
-                iosSimulatorArm64().binaries.framework { baseName = "TestFramework" }
-            }
+			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
+				iosSimulatorArm64().binaries.framework { baseName = "TestFramework" }
+			}
 
-            // Source file is needed so PackageResolver can find a package and write the metadata.
-            val srcDir = File(rootProject.rootDir, "src/commonMain/kotlin/com/test").apply { mkdirs() }
-            File(srcDir, "Test.kt").writeText("package com.test\nclass Test()")
+			// Source file is needed so PackageResolver can find a package and write the metadata.
+			val srcDir = File(rootProject.rootDir, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+			File(srcDir, "Test.kt").writeText("package com.test\nclass Test()")
 
-            (this as DefaultProject).evaluate()
+			(this as DefaultProject).evaluate()
 
-            val metadataFile = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
-            assertTrue(metadataFile.exists(), "$FILE_NAME_ARGS must exist after evaluate() — writeModuleMetadataToDisk should have created it")
+			val metadataFile = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
+			assertTrue(metadataFile.exists(), "$FILE_NAME_ARGS must exist after evaluate() — writeModuleMetadataToDisk should have created it")
 
-            val fakeKspTask = fakeKspTaskProvider.get()
-            val resolvedInputPaths = fakeKspTask.inputs.files.files.map { it.absolutePath }
+			val fakeKspTask = fakeKspTaskProvider.get()
+			val resolvedInputPaths = fakeKspTask.inputs.files.files.map { it.absolutePath }
 
-            assertTrue(
-                resolvedInputPaths.any { it == metadataFile.absolutePath },
-                "Task '${fakeKspTask.name}' must declare '$FILE_NAME_ARGS' as a Gradle task input " +
-                    "so that Gradle's UP-TO-DATE check is invalidated whenever the metadata changes. " +
-                    "Resolved inputs found: ${resolvedInputPaths.map { File(it).name }}"
-            )
-        }
-    }
+			assertTrue(
+				resolvedInputPaths.any { it == metadataFile.absolutePath },
+				"Task '${fakeKspTask.name}' must declare '$FILE_NAME_ARGS' as a Gradle task input " +
+					"so that Gradle's UP-TO-DATE check is invalidated whenever the metadata changes. " +
+					"Resolved inputs found: ${resolvedInputPaths.map { File(it).name }}"
+			)
+		}
+	}
 
-    @Test
-    fun `configureKspTasksForCacheInvalidation propagates metadata content hash to KSP processor arguments`() {
-        Templates.createCommonMainSource(projectDir, packageName = "com.test")
-        Templates.writeBuildGradle(
-            projectDir,
-            """
+	@Test
+	fun `configureKspTasksForCacheInvalidation propagates metadata content hash to KSP processor arguments`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
             plugins {
                 id("$PLUGIN_KMP")
                 id("$PLUGIN_KSP")
@@ -616,23 +616,23 @@ class PluginTest {
                 }
             }
             """
-        )
-        Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
 
-        val result = Templates.runGradle(projectDir)
+		val result = Templates.runGradle(projectDir)
 
-        // The log line is emitted inside afterEvaluate (eager, not lazy) once the metadata file
-        // exists. Its presence confirms that KspExtension.arg(KSP_ARG_METADATA_HASH, hash) was
-        // called successfully, which is the only observable effect of Layer 2.
-        assertTrue(
-            result.output.contains("Passed metadata hash") && result.output.contains(KSP_ARG_METADATA_HASH),
-            "Build output should contain the metadata-hash confirmation log. " +
-                "This proves KspExtension.arg('$KSP_ARG_METADATA_HASH', …) was called, " +
-                "which busts KSP's internal incremental cache when metadata changes."
-        )
-    }
+		// The log line is emitted inside afterEvaluate (eager, not lazy) once the metadata file
+		// exists. Its presence confirms that KspExtension.arg(KSP_ARG_METADATA_HASH, hash) was
+		// called successfully, which is the only observable effect of Layer 2.
+		assertTrue(
+			result.output.contains("Passed metadata hash") && result.output.contains(KSP_ARG_METADATA_HASH),
+			"Build output should contain the metadata-hash confirmation log. " +
+				"This proves KspExtension.arg('$KSP_ARG_METADATA_HASH', …) was called, " +
+				"which busts KSP's internal incremental cache when metadata changes."
+		)
+	}
 
-    private companion object {
-        private const val PLUGIN_ID = "io.github.guilhe.kmp.plugin-composeuiviewcontroller"
-    }
+	private companion object {
+		private const val PLUGIN_ID = "io.github.guilhe.kmp.plugin-composeuiviewcontroller"
+	}
 }

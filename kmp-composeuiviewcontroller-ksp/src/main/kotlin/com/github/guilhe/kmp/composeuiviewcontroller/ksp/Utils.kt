@@ -15,7 +15,7 @@ import com.google.devtools.ksp.symbol.KSValueParameter
  * @throws ValueParameterResolutionError when type cannot be resolved
  */
 internal fun KSValueParameter.resolveType(toSwift: Boolean = false, withSwiftExport: Boolean = false): String {
-	//println(">> KSValueParameter type: ${type}")
+	// println(">> KSValueParameter type: ${type}")
 	val resolvedType = type.resolve()
 	return if (resolvedType.isFunctionType) {
 		buildString {
@@ -133,21 +133,23 @@ private fun convertPrimitiveInCollection(primitiveType: String, isNullable: Bool
 	}
 
 	val converted = when (primitiveType) {
-		"String" -> "String"  // Exception: String doesn't need wrapper
-		"Char" -> "Any"       // Exception: Char becomes Any in collections
-		else -> "Kotlin$primitiveType"  // All other primitives get Kotlin prefix
+		"String" -> "String"
+
+		// Exception: String doesn't need wrapper
+		"Char" -> "Any"
+
+		// Exception: Char becomes Any in collections
+		else -> "Kotlin$primitiveType" // All other primitives get Kotlin prefix
 	}
 
 	return if (isNullable) "$converted?" else converted
 }
 
-private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullable: Boolean = false, insideFunctionType: Boolean = false): String {
-	return if (withSwiftExport) {
+private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullable: Boolean = false, insideFunctionType: Boolean = false): String = if (withSwiftExport) {
 		convertToSwiftFromSwiftExport(baseType)
 	} else {
 		convertToSwiftFromObjcExport(baseType, isNullable, insideFunctionType)
 	}
-}
 
 private val OBJC_COLLECTION_TYPES = mapOf(
 	"Unit" to null,
@@ -194,8 +196,7 @@ private fun convertToSwiftFromObjcExport(baseType: String, isNullable: Boolean =
 /**
  *  [Kotlin to Swift mapping - Built-in types](https://github.com/JetBrains/kotlin/blob/master/docs/swift-export/language-mapping.md#built-in-types)
  */
-private fun convertToSwiftFromSwiftExport(baseType: String): String {
-	return when (baseType) {
+private fun convertToSwiftFromSwiftExport(baseType: String): String = when (baseType) {
 		"Unit" -> "Void"
 		"List" -> "Array"
 		"MutableList" -> "Array"
@@ -219,7 +220,6 @@ private fun convertToSwiftFromSwiftExport(baseType: String): String {
 		"Nothing" -> "Never"
 		else -> baseType
 	}
-}
 
 internal fun indentParameters(code: String, parameters: String): String {
 	parameters.ifEmpty {
@@ -234,14 +234,12 @@ internal fun indentParameters(code: String, parameters: String): String {
 	return codeLines.joinToString("\n").trimIndent()
 }
 
-private fun removeAdjacentEmptyLines(list: List<String>): List<String> {
-	return list.fold<String, MutableList<String>>(mutableListOf()) { acc, line ->
+private fun removeAdjacentEmptyLines(list: List<String>): List<String> = list.fold<String, MutableList<String>>(mutableListOf()) { acc, line ->
 		if (!(line.isBlank() && acc.lastOrNull()?.isBlank() == true)) {
 			acc.add(line)
 		}
 		acc
 	}.toList()
-}
 
 /**
  * Removes empty lines between struct declaration and the first public func in generated Swift code
@@ -388,11 +386,12 @@ internal fun KSFunctionDeclaration.name(): String = qualifiedName!!.getShortName
 internal fun KSValueParameter.name(): String = name!!.getShortName()
 
 internal class EmptyFrameworkBaseNameException : IllegalArgumentException(
-	"@${composeUIViewControllerAnnotationName.name()} requires a non-null and non-empty value for $frameworkBaseNameAnnotationParameter"
+	"@${COMPOSABLE_ANNOTATION_NAME.name()} could not resolve a frameworkBaseName. " +
+		"Make sure the Gradle plugin is applied and the iOS framework baseName or SwiftExport moduleName is configured."
 )
 
 internal class MultipleComposeUIViewControllerStateException(composable: KSFunctionDeclaration) : IllegalArgumentException(
-	"The composable ${composable.name()} has more than one parameter annotated with @${composeUIViewControllerStateAnnotationName.name()}."
+	"The composable ${composable.name()} has more than one parameter annotated with @${COMPOSABLE_STATE_ANNOTATION_NAME.name()}."
 )
 
 internal class InvalidParametersException : IllegalArgumentException("@Composable functions are not allowed as parameter")
@@ -405,4 +404,3 @@ internal class TypeResolutionError(parameter: KSType) : IllegalArgumentException
 
 internal class ModuleDecodeException(e: Exception) :
 	IllegalArgumentException("Could not decode $FILE_NAME_ARGS file with exception: ${e.localizedMessage}")
-

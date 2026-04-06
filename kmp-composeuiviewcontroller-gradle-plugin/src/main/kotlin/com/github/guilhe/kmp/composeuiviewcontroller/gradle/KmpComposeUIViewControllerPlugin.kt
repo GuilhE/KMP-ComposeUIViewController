@@ -7,6 +7,8 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.SwiftExportUtils.getSwiftExportConfigForProject
 import com.google.devtools.ksp.gradle.KspExtension
+import java.io.BufferedReader
+import java.io.File
 import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -20,8 +22,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension
 import org.jetbrains.kotlin.konan.target.Family
-import java.io.BufferedReader
-import java.io.File
 
 public class PluginConfigurationException(message: String, cause: Throwable? = null) : GradleException(message, cause)
 
@@ -187,7 +187,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 	private fun Project.buildFrameworkPackages(packageNames: Set<String>, frameworkNames: Set<String>): Map<String, Set<String>> {
 		packageNames.ifEmpty { return emptyMap() }
 		frameworkNames.ifEmpty { return emptyMap() }
-		val frameworkBaseName = frameworkNames.first() //let's assume for now all targets will have the same frameworkBaseName
+		val frameworkBaseName = frameworkNames.first() // let's assume for now all targets will have the same frameworkBaseName
 		val map = mutableMapOf<String, Set<String>>()
 		extensions.getByType(KotlinMultiplatformExtension::class.java).run {
 			targets.configureEach { target ->
@@ -254,13 +254,13 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 	private fun Project.configureKspTasksForCacheInvalidation() {
 		val metadataFile = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
 
-		//Gradle level
+		// Gradle level
 		tasks.matching { it.name.startsWith("ksp") }.configureEach { task ->
 			task.inputs.file(metadataFile).optional()
 			logger.info("\t> Registered $FILE_NAME_ARGS as input for task '${task.name}'")
 		}
 
-		//KSP level
+		// KSP level
 		if (metadataFile.exists()) {
 			val metadataHash = metadataFile.readText().hashCode().toString()
 			extensions.findByType(KspExtension::class.java)?.arg(KSP_ARG_METADATA_HASH, metadataHash)
@@ -283,7 +283,10 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
 			val modifiedScript = script.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
 			val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_FORMAT_SCRIPT_TEMP")
-				.also { it.parentFile?.mkdirs(); it.createNewFile() }
+				.also {
+					it.parentFile?.mkdirs()
+					it.createNewFile()
+				}
 
 			if (tempFile.exists()) {
 				tempFile.writeText(modifiedScript)

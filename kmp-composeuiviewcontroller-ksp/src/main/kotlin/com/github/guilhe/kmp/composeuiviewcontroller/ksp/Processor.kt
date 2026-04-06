@@ -17,13 +17,11 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
-import kotlinx.serialization.json.Json
 import java.io.File
+import kotlinx.serialization.json.Json
 
 public class ProcessorProvider : SymbolProcessorProvider {
-	override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-		return Processor(environment.codeGenerator, environment.logger)
-	}
+	override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor = Processor(environment.codeGenerator, environment.logger)
 }
 
 private data class TypeAliasInfo(
@@ -37,9 +35,9 @@ internal class Processor(
 ) : SymbolProcessor {
 
 	override fun process(resolver: Resolver): List<KSAnnotated> {
-		val candidates = resolver.getSymbolsWithAnnotation(composeUIViewControllerAnnotationName)
+		val candidates = resolver.getSymbolsWithAnnotation(COMPOSABLE_ANNOTATION_NAME)
 		if (candidates.none()) {
-			logger.info("No more @${composeUIViewControllerAnnotationName.name()} found!")
+			logger.info("No more @${COMPOSABLE_ANNOTATION_NAME.name()} found!")
 			return emptyList()
 		}
 
@@ -52,7 +50,7 @@ internal class Processor(
 			node.containingFile?.let { file ->
 				val packageName = file.packageName.asString()
 				for (composable in file.declarations.filterIsInstance<KSFunctionDeclaration>().filter {
-					it.annotations.any { annotation -> annotation.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+					it.annotations.any { annotation -> annotation.shortName.asString() == COMPOSABLE_ANNOTATION_NAME.name() }
 				}) {
 					val parameters: List<KSValueParameter> = composable.parameters
 					val stateParameter = getStateParameter(parameters, composable).firstOrNull()
@@ -76,7 +74,7 @@ internal class Processor(
 					val frameworkBaseNames = if (swiftExportEnabled) {
 						getFrameworkBaseNames(composable, makeParameters, parameters, modulesMetadata, stateParameter)
 					} else {
-						listOf(trimFrameworkBaseNames(composable, modulesMetadata, packageName))
+						listOf(trimFrameworkBaseNames(modulesMetadata, packageName))
 					}
 					val opaqueConfiguration = getOpaqueConfigurationFromAnnotation(composable.annotations)
 
@@ -144,7 +142,7 @@ internal class Processor(
 	private fun getStateParameter(parameters: List<KSValueParameter>, composable: KSFunctionDeclaration): List<KSValueParameter> {
 		val stateParameters = parameters.filter {
 			it.annotations.any { annotation ->
-				annotation.shortName.getShortName() == composeUIViewControllerStateAnnotationName.name()
+				annotation.shortName.getShortName() == COMPOSABLE_STATE_ANNOTATION_NAME.name()
 			}
 		}
 		when {
@@ -197,7 +195,9 @@ internal class Processor(
 	private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
 		val file = if (System.getProperty("user.dir").endsWith("Pods")) {
 			File("../../build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
-		} else File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
+		} else {
+			File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
+		}
 		val moduleMetadata = try {
 			Json.decodeFromString<List<ModuleMetadata>>(file.readText())
 		} catch (e: Exception) {
@@ -224,9 +224,9 @@ internal class Processor(
 			.toMap()
 	}
 
-	private fun trimFrameworkBaseNames(composable: KSFunctionDeclaration, moduleMetadata: List<ModuleMetadata>, packageName: String): String {
+	private fun trimFrameworkBaseNames(moduleMetadata: List<ModuleMetadata>, packageName: String): String {
 		val framework = moduleMetadata.firstOrNull { it.packageNames.any { p -> p.startsWith(packageName) } }?.frameworkBaseName ?: ""
-		framework.ifEmpty { return getFrameworkBaseNameFromAnnotation(composable.annotations) ?: throw EmptyFrameworkBaseNameException() }
+		if (framework.isEmpty()) throw EmptyFrameworkBaseNameException()
 		return framework
 	}
 
@@ -236,31 +236,14 @@ internal class Processor(
 		parameters: List<KSValueParameter>,
 		modulesMetadata: List<ModuleMetadata>,
 		stateParameter: KSValueParameter? = null
-	): List<String> {
-		return extractFrameworkBaseNames(composable, modulesMetadata, makeParameters, parameters, stateParameter)
-			.filter { it.isNotBlank() }
-			.ifEmpty { listOfNotNull(getFrameworkBaseNameFromAnnotation(composable.annotations)) }
-			.ifEmpty { throw EmptyFrameworkBaseNameException() }
-	}
-
-	private fun getFrameworkBaseNameFromAnnotation(annotations: Sequence<KSAnnotation>): String? {
-		val annotation = annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
-		if (annotation != null) {
-			val argument = annotation.arguments.firstOrNull { it.name?.asString() == frameworkBaseNameAnnotationParameter }
-			if (argument != null) {
-				val value = argument.value
-				if (value is String && value.isNotEmpty()) {
-					return value
-				}
-			}
-		}
-		return null
-	}
+	): List<String> = extractFrameworkBaseNames(composable, modulesMetadata, makeParameters, parameters, stateParameter)
+		.filter { it.isNotBlank() }
+		.ifEmpty { throw EmptyFrameworkBaseNameException() }
 
 	private fun getOpaqueConfigurationFromAnnotation(annotations: Sequence<KSAnnotation>): Boolean {
-		val annotation = annotations.firstOrNull { it.shortName.asString() == composeUIViewControllerAnnotationName.name() }
+		val annotation = annotations.firstOrNull { it.shortName.asString() == COMPOSABLE_ANNOTATION_NAME.name() }
 		if (annotation != null) {
-			val argument = annotation.arguments.firstOrNull { it.name?.asString() == composeUIViewControllerOpaqueConfiguration }
+			val argument = annotation.arguments.firstOrNull { it.name?.asString() == COMPOSABLE_ANNOTATION_OPAQUE_PARAMETER }
 			if (argument != null) {
 				val value = argument.value
 				if (value is Boolean) {
@@ -449,7 +432,7 @@ internal class Processor(
 	private fun createConsolidatedSwiftFileWithTypeAlias(info: List<TypeAliasInfo>): String {
 		val warning = """
             // This file is auto-generated by KSP. Do not edit manually.
-            // It contains typealias for external dependencies used in @${composeUIViewControllerAnnotationName.name()} composables.
+            // It contains typealias for external dependencies used in @${COMPOSABLE_ANNOTATION_NAME.name()} composables.
             // If you get errors about missing types, consider using the 'flattenPackage' property in KMP swiftExport settings.
         """.trimIndent()
 		val importStatement = "import ExportedKotlinPackages"

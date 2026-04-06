@@ -16,3 +16,8 @@ ktlint_standard_parameter-list-wrapping = disabled
 ktlint_standard_argument-list-wrapping = disabled
 ktlint_standard_wrapping = disabled
 ktlint_standard_indent = disabled
+ktlint_standard_comment-wrapping = disabled
+ktlint_standard_value-argument-comment = disabled
+
+[**/build/**]
+ktlint = disabled

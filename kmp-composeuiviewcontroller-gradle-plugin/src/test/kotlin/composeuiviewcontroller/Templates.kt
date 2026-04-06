@@ -1,8 +1,8 @@
 package composeuiviewcontroller
 
+import java.io.File
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import java.io.File
 
 object Templates {
 	const val DEFAULT_ROOT_NAME: String = "testProject"

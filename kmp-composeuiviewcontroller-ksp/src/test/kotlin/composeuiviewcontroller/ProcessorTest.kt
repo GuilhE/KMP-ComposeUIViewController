@@ -20,7 +20,6 @@ import composeuiviewcontroller.Templates.ModuleConfigs
 import composeuiviewcontroller.Templates.TestFileUtils
 import composeuiviewcontroller.Templates.TestFileUtils.findGeneratedSwiftFile
 import composeuiviewcontroller.TestUtils.klibSourceFiles
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -28,6 +27,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
 @OptIn(ExperimentalCompilerApi::class)
 class ProcessorTest {
@@ -36,18 +36,16 @@ class ProcessorTest {
 	private lateinit var tempArgs: File
 	private var usesKsp2: Boolean = false
 
-	private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation {
-		return KotlinCompilation().apply {
-			useKsp2()
-			symbolProcessorProviders += ProcessorProvider()
-			sources = sourceFiles.asList()
-			workingDir = tempFolder
-			inheritClassPath = true
-			verbose = false
-			usesKsp2 = precursorTools.contains("ksp2")
-			if (!usesKsp2) {
-				languageVersion = "1.9"
-			}
+	private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation = KotlinCompilation().apply {
+		useKsp2()
+		symbolProcessorProviders += ProcessorProvider()
+		sources = sourceFiles.asList()
+		workingDir = tempFolder
+		inheritClassPath = true
+		verbose = false
+		usesKsp2 = precursorTools.contains("ksp2")
+		if (!usesKsp2) {
+			languageVersion = "1.9"
 		}
 	}
 
@@ -78,9 +76,9 @@ class ProcessorTest {
 	}
 
 	@Test
-	fun `When frameworkBaseName is provided via ModulesJson it overrides @ComposeUIViewController frameworkBaseName value`() {
+	fun `When frameworkBaseName is provided via ModulesJson it is used in generated Swift file`() {
 		tempArgs.writeText(ModuleConfigs.singleModule())
-		val code = CodeTemplates.screenWithFrameworkOverride(annotationFramework = "MyFramework")
+		val code = CodeTemplates.screenWithFrameworkOverride()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
 		val result = compilation.compile()
@@ -91,23 +89,18 @@ class ProcessorTest {
 	}
 
 	@Test
-	fun `Empty frameworkBaseName in ModulesJson falls back to frameworkBaseName in @ComposeUIViewController`() {
+	fun `Empty frameworkBaseName in ModulesJson entry throws EmptyFrameworkBaseNameException`() {
 		tempArgs.writeText(ModuleConfigs.singleModule(framework = ""))
-		val code = CodeTemplates.basicScreenWithState(framework = "ComposablesFramework")
+		val code = CodeTemplates.basicScreenWithState()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
 		val result = compilation.compile()
-		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-
-		val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
-		assertTrue(generatedSwiftFiles.isNotEmpty())
-
-		val generatedSwiftFile = generatedSwiftFiles.first().readText()
-		assertEquals(ExpectedOutputs.swiftRepresentableWithState(), generatedSwiftFile)
+		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+		assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
 	}
 
 	@Test
-	fun `Empty frameworkBaseName in ModulesJson and @ComposeUIViewController throws EmptyFrameworkBaseNameException`() {
+	fun `Empty ModulesJson throws EmptyFrameworkBaseNameException`() {
 		val code = CodeTemplates.screenWithEmptyFramework()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -118,6 +111,7 @@ class ProcessorTest {
 
 	@Test
 	fun `When opaque is set to false it generates UIViewController with opaque configuration disabled`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.screenWithOpaqueDisabled()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -134,6 +128,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Not using @ComposeUIViewControllerState will generate files without state`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.screenWithoutState()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -157,7 +152,7 @@ class ProcessorTest {
 			ExpectedOutputs.swiftRepresentableWithoutState(
 				params = listOf(
 					"data" to "SomeClass",
-					"value" to "Int32",  // Direct parameter uses native type
+					"value" to "Int32", // Direct parameter uses native type
 					"callBack" to "() -> Void"
 				)
 			),
@@ -167,6 +162,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Basic screen without params respects SwiftFormat Template`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.basicScreenWithoutStateAndParams()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -182,6 +178,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Only 1 @ComposeUIViewControllerState is allowed`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.screenWithMultipleStateAnnotations()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -191,6 +188,7 @@ class ProcessorTest {
 
 	@Test
 	fun `@Composable functions are not allowed as parameter`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.screenWithComposableParameter()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -201,6 +199,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Composable functions properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate respective UIViewController and UIViewControllerRepresentable files`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.multipleScreensWithDifferentStates()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -226,6 +225,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Composable functions from different files are parsed once only once`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val data = CodeTemplates.viewStateFile(packageName = DATA_PACKAGE)
 		val codeA = CodeTemplates.screenWithCrossPackageImport(functionName = "ScreenA")
 		val codeB = CodeTemplates.screenWithCrossPackageImport(functionName = "ScreenB")
@@ -251,6 +251,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Composable functions in the same file are parsed once only once`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.multipleScreensInSameFile()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -272,6 +273,7 @@ class ProcessorTest {
 		val testCases = listOf("List", "MutableList", "Set", "Map", "MutableMap")
 
 		testCases.forEach { collectionType ->
+			tempArgs.writeText(ModuleConfigs.singleModule())
 			val code = screenWithParameterType(collectionType)
 			val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 			val result = compilation.compile()
@@ -279,6 +281,7 @@ class ProcessorTest {
 		}
 
 		val codeWithReturnType = screenWithParameterType("List")
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val compilationReturn = prepareCompilation(kotlin("Screen.kt", codeWithReturnType), *klibSourceFiles().toTypedArray())
 		val resultReturn = compilationReturn.compile()
 		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, resultReturn.exitCode)
@@ -286,6 +289,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Processor handles generic types in parameters`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.screenWithGenericData()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -301,6 +305,7 @@ class ProcessorTest {
 
 	@Test
 	fun `Processor handles complex nested generics correctly`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.screenWithComplexGenerics()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
 
@@ -526,7 +531,7 @@ class ProcessorTest {
 		val swiftContent = generatedSwiftFiles.first().readText()
 		assertContains(swiftContent, "let intVal: KotlinInt?")
 		assertContains(swiftContent, "let boolVal: KotlinBoolean?")
-		assertContains(swiftContent, "let stringVal: String?")  // Exception: String doesn't need wrapper
+		assertContains(swiftContent, "let stringVal: String?") // Exception: String doesn't need wrapper
 		assertContains(swiftContent, "let longVal: KotlinLong?")
 	}
 
@@ -545,7 +550,7 @@ class ProcessorTest {
 		val swiftContent = generatedSwiftFiles.first().readText()
 		assertContains(swiftContent, "let onInt: (KotlinInt) -> Void")
 		assertContains(swiftContent, "let onBool: (KotlinBoolean) -> Void")
-		assertContains(swiftContent, "let onString: (String) -> Void")  // Exception: String
+		assertContains(swiftContent, "let onString: (String) -> Void") // Exception: String
 		assertContains(swiftContent, "let onMultiple: (KotlinInt, KotlinBoolean, String) -> Void")
 	}
 

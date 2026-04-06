@@ -3,12 +3,12 @@
 
 package composeuiviewcontroller
 
-import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerAnnotationName
-import com.github.guilhe.kmp.composeuiviewcontroller.ksp.composeUIViewControllerStateAnnotationName
+import com.github.guilhe.kmp.composeuiviewcontroller.ksp.COMPOSABLE_ANNOTATION_NAME
+import com.github.guilhe.kmp.composeuiviewcontroller.ksp.COMPOSABLE_STATE_ANNOTATION_NAME
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.kspSourcesDir
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
 object Templates {
 
@@ -19,8 +19,8 @@ object Templates {
 	const val FRAMEWORK_2 = "ComposablesFramework2"
 	const val FRAMEWORK_3 = "ComposablesFramework3"
 	val COMMON_IMPORTS = """
-        import $composeUIViewControllerAnnotationName
-        import $composeUIViewControllerStateAnnotationName
+        import $COMPOSABLE_ANNOTATION_NAME
+        import $COMPOSABLE_STATE_ANNOTATION_NAME
         import androidx.compose.runtime.Composable
     """.trimIndent()
 
@@ -61,10 +61,9 @@ object Templates {
 
 		fun simpleComposableWithoutState(
 			functionName: String = "Screen",
-			framework: String = DEFAULT_FRAMEWORK,
 			params: String
 		) = """
-            @ComposeUIViewController("$framework")
+            @ComposeUIViewController
             @Composable
             fun $functionName($params) { }
         """.trimIndent()
@@ -72,19 +71,17 @@ object Templates {
 		fun simpleComposableWithState(
 			functionName: String = "Screen",
 			stateType: String = "ViewState",
-			framework: String = DEFAULT_FRAMEWORK,
 			additionalParams: String = ""
 		) = """
-            @ComposeUIViewController("$framework")
+            @ComposeUIViewController
             @Composable
             fun $functionName(@ComposeUIViewControllerState state: $stateType${if (additionalParams.isNotEmpty()) ", $additionalParams" else ""}) { }
         """.trimIndent()
 
 		fun simpleComposableWithoutParams(
 			functionName: String = "Screen",
-			framework: String = DEFAULT_FRAMEWORK,
 		) = """
-            @ComposeUIViewController("$framework")
+            @ComposeUIViewController
             @Composable
             fun $functionName() { }
         """.trimIndent()
@@ -110,7 +107,6 @@ object Templates {
         """.trimIndent()
 
 		fun basicScreenWithState(
-			framework: String = DEFAULT_FRAMEWORK,
 			packageName: String = TEST_PACKAGE
 		) = """
             package $packageName
@@ -118,11 +114,10 @@ object Templates {
             
             ${DataClasses.viewState}
             
-            ${Composables.simpleComposableWithState(framework = framework)}
+            ${Composables.simpleComposableWithState()}
         """.trimIndent()
 
 		fun screenWithOpaqueDisabled(
-			framework: String = DEFAULT_FRAMEWORK,
 			packageName: String = TEST_PACKAGE
 		) = """
             package $packageName
@@ -130,23 +125,21 @@ object Templates {
             
             ${DataClasses.viewState}
             
-            @ComposeUIViewController("$framework", opaque = false)
+            @ComposeUIViewController(opaque = false)
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
 		fun basicScreenWithoutStateAndParams(
-			framework: String = DEFAULT_FRAMEWORK,
 			packageName: String = TEST_PACKAGE
 		) = """
             package $packageName
             $COMMON_IMPORTS
             
-            ${Composables.simpleComposableWithoutParams(framework = framework)}
+            ${Composables.simpleComposableWithoutParams()}
         """.trimIndent()
 
 		fun screenWithoutState(
-			framework: String = DEFAULT_FRAMEWORK,
 			packageName: String = TEST_PACKAGE
 		) = """
             package $packageName
@@ -156,7 +149,6 @@ object Templates {
             
             ${
 			Composables.simpleComposableWithoutState(
-				framework = framework,
 				params = "data: SomeClass, value: Int, callBack: () -> Unit"
 			)
 		}
@@ -165,7 +157,7 @@ object Templates {
 		fun screenWithoutAnnotations(packageName: String = TEST_PACKAGE) = """
             package $packageName
             
-            import $composeUIViewControllerStateAnnotationName
+            import $COMPOSABLE_STATE_ANNOTATION_NAME
             import androidx.compose.runtime.Composable
             
             ${DataClasses.viewState}
@@ -175,7 +167,7 @@ object Templates {
             ${Composables.composableWithStateAnnotationOnly("ScreenB")}
         """.trimIndent()
 
-		fun multipleScreensInSameFile(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
+		fun multipleScreensInSameFile(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             import androidx.compose.ui.window.ComposeUIViewController
@@ -184,41 +176,40 @@ object Templates {
             
             ${DataClasses.viewState}
             
-            ${Composables.simpleComposableWithState("ScreenA", framework = framework)}
+            ${Composables.simpleComposableWithState("ScreenA")}
             
-            ${Composables.simpleComposableWithState("ScreenB", framework = framework, additionalParams = "callBackA: () -> Unit")}
+            ${Composables.simpleComposableWithState("ScreenB", additionalParams = "callBackA: () -> Unit")}
             
             ${
 			Composables.simpleComposableWithState(
 				"ScreenC",
-				framework = framework,
 				additionalParams = "callBackA: () -> Unit, callBackB: () -> Unit"
 			)
 		}
         """.trimIndent()
 
-		fun multipleScreensWithDifferentStates(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
+		fun multipleScreensWithDifferentStates(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
             ${DataClasses.viewAState}
             ${DataClasses.viewBState}
             
-            ${Composables.simpleComposableWithState("ScreenA", "ViewAState", framework)}
+            ${Composables.simpleComposableWithState("ScreenA", "ViewAState")}
             
             private fun dummy() {}
             
-            ${Composables.simpleComposableWithState("ScreenB", "ViewBState", framework)}
+            ${Composables.simpleComposableWithState("ScreenB", "ViewBState")}
         """.trimIndent()
 
-		fun screenWithKotlinTypes(framework: String = DEFAULT_FRAMEWORK, packageName: String = TEST_PACKAGE) = """
+		fun screenWithKotlinTypes(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             import $packageName.ViewState                       
             
             ${DataClasses.viewState}
             
-            @ComposeUIViewController("$framework")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                     @ComposeUIViewControllerState state: ViewState,
@@ -246,13 +237,12 @@ object Templates {
 			functionName: String = "ScreenA",
 			packageName: String = TEST_PACKAGE,
 			dataPackage: String = DATA_PACKAGE,
-			framework: String = DEFAULT_FRAMEWORK
 		) = """
             package $packageName
             $COMMON_IMPORTS
             import $dataPackage.*
             
-            ${Composables.simpleComposableWithState(functionName, "ViewState", framework)}
+            ${Composables.simpleComposableWithState(functionName, "ViewState")}
         """.trimIndent()
 
 		fun screenWithMultipleStateAnnotations(packageName: String = TEST_PACKAGE) = """
@@ -261,7 +251,7 @@ object Templates {
             
             ${DataClasses.viewState}
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState, @ComposeUIViewControllerState state2: ViewState) { }
         """.trimIndent()
@@ -272,7 +262,7 @@ object Templates {
             
             ${DataClasses.viewState}
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 @ComposeUIViewControllerState state: ViewState,
@@ -283,8 +273,8 @@ object Templates {
 
 		fun screenWithEmptyFramework(packageName: String = TEST_PACKAGE) = """
             package $packageName
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
+            import $COMPOSABLE_ANNOTATION_NAME
+            import $COMPOSABLE_STATE_ANNOTATION_NAME
             
             ${DataClasses.viewState}
             
@@ -293,21 +283,21 @@ object Templates {
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
-		fun screenWithFrameworkOverride(packageName: String = TEST_PACKAGE, annotationFramework: String = "MyFramework") = """
+		fun screenWithFrameworkOverride(packageName: String = TEST_PACKAGE) = """
             package $packageName
             $COMMON_IMPORTS
             
             ${DataClasses.viewState}
             
-            @ComposeUIViewController("$annotationFramework")
+            @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState) { }
         """.trimIndent()
 
 		fun screenWithExternalData(packageName: String = TEST_PACKAGE) = """
             package $packageName
-            import $composeUIViewControllerAnnotationName
-            import $composeUIViewControllerStateAnnotationName
+            import $COMPOSABLE_ANNOTATION_NAME
+            import $COMPOSABLE_STATE_ANNOTATION_NAME
             import androidx.compose.runtime.Composable
             import $DATA_PACKAGE.Data
             
@@ -322,29 +312,29 @@ object Templates {
             
             ${DataClasses.viewState}
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(@ComposeUIViewControllerState state: ViewState, callback: ($parameterType) -> Unit) { }
         """.trimIndent()
 
 		fun screenWithGenericData(packageName: String = TEST_PACKAGE) = """
             package $packageName
-            import $composeUIViewControllerAnnotationName
+            import $COMPOSABLE_ANNOTATION_NAME
             import androidx.compose.runtime.Composable
             
             ${DataClasses.genericData}
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(data: GenericData<Int>) { }
         """.trimIndent()
 
 		fun screenWithComplexGenerics(packageName: String = TEST_PACKAGE) = """
             package $packageName
-            import $composeUIViewControllerAnnotationName
+            import $COMPOSABLE_ANNOTATION_NAME
             import androidx.compose.runtime.Composable
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(callback: (Map<String, List<Map<String, Int>>>) -> List<Map<String, String>>) { }
         """.trimIndent()
@@ -378,7 +368,7 @@ object Templates {
             package $packageName
             $COMMON_IMPORTS
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 byteVal: Byte,
@@ -396,7 +386,7 @@ object Templates {
             package $packageName
             $COMMON_IMPORTS
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 intVal: Int?,
@@ -410,7 +400,7 @@ object Templates {
             package $packageName
             $COMMON_IMPORTS
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 onInt: (Int) -> Unit,
@@ -424,7 +414,7 @@ object Templates {
             package $packageName
             $COMMON_IMPORTS
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 intList: List<Int>,
@@ -442,7 +432,7 @@ object Templates {
             
             ${DataClasses.genericData}
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 directInt: Int,
@@ -458,7 +448,7 @@ object Templates {
             package $packageName
             $COMMON_IMPORTS
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 nullableList: List<Int>?,
@@ -471,7 +461,7 @@ object Templates {
             package $packageName
             $COMMON_IMPORTS
             
-            @ComposeUIViewController("$DEFAULT_FRAMEWORK")
+            @ComposeUIViewController
             @Composable
             fun Screen(
                 charVal: Char,
@@ -828,34 +818,26 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
 	}
 
 	object TestFileUtils {
-		fun findGeneratedKotlinFile(compilation: KotlinCompilation, fileName: String): List<File> {
-			return compilation.kspSourcesDir
-				.walkTopDown()
-				.filter { it.name == fileName }
-				.toList()
-		}
+		fun findGeneratedKotlinFile(compilation: KotlinCompilation, fileName: String): List<File> = compilation.kspSourcesDir
+			.walkTopDown()
+			.filter { it.name == fileName }
+			.toList()
 
-		fun findGeneratedSwiftFile(compilation: KotlinCompilation, fileName: String): List<File> {
-			return compilation.kspSourcesDir
-				.walkTopDown()
-				.filter { it.name == fileName }
-				.toList()
-		}
+		fun findGeneratedSwiftFile(compilation: KotlinCompilation, fileName: String): List<File> = compilation.kspSourcesDir
+			.walkTopDown()
+			.filter { it.name == fileName }
+			.toList()
 
-		fun countGeneratedFiles(compilation: KotlinCompilation, vararg fileNames: String): Int {
-			return compilation.kspSourcesDir
-				.walkTopDown()
-				.filter { it.name in fileNames }
-				.toList()
-				.size
-		}
+		fun countGeneratedFiles(compilation: KotlinCompilation, vararg fileNames: String): Int = compilation.kspSourcesDir
+			.walkTopDown()
+			.filter { it.name in fileNames }
+			.toList()
+			.size
 
-		fun hasNoGeneratedFiles(compilation: KotlinCompilation): Boolean {
-			return compilation.kspSourcesDir
-				.walkTopDown()
-				.filter { it.extension == "kt" || it.extension == "swift" }
-				.toList()
-				.isEmpty()
-		}
+		fun hasNoGeneratedFiles(compilation: KotlinCompilation): Boolean = compilation.kspSourcesDir
+			.walkTopDown()
+			.filter { it.extension == "kt" || it.extension == "swift" }
+			.toList()
+			.isEmpty()
 	}
 }

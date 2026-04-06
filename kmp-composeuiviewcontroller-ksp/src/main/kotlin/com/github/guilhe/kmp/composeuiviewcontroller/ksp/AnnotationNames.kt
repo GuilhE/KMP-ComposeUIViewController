@@ -2,9 +2,8 @@
 
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
-private const val packageName = "com.github.guilhe.kmp.composeuiviewcontroller"
+private const val PACKAGE_NAME = "com.github.guilhe.kmp.composeuiviewcontroller"
 
-internal const val composeUIViewControllerAnnotationName = "$packageName.ComposeUIViewController"
-internal const val composeUIViewControllerStateAnnotationName = "$packageName.ComposeUIViewControllerState"
-internal const val frameworkBaseNameAnnotationParameter = "frameworkBaseName"
-internal const val composeUIViewControllerOpaqueConfiguration = "opaque"
+internal const val COMPOSABLE_ANNOTATION_NAME = "$PACKAGE_NAME.ComposeUIViewController"
+internal const val COMPOSABLE_STATE_ANNOTATION_NAME = "$PACKAGE_NAME.ComposeUIViewControllerState"
+internal const val COMPOSABLE_ANNOTATION_OPAQUE_PARAMETER = "opaque"
