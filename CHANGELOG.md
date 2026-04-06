@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.20-1.10.3-1]
+
+- Removes `frameworkBaseName`
+
+---
+
 ## [2.3.20-1.10.3]
 
 - CMP 1.10.3
