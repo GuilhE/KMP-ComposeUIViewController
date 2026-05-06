@@ -1,7 +1,7 @@
 [versions]
-kotlin = "2.3.20"
-kotlinxSerialization = "1.10.0"
-ksp = "2.3.6"
+kotlin = "2.4.0-Beta2"
+kotlinxSerialization = "1.11.0"
+ksp = "2.3.7"
 
 dokka = "2.2.0"
 gradlePublish = "2.1.0"

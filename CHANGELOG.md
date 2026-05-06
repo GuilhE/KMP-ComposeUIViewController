@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.4.0-Beta2-1.11.0-rc01]
+
+- Kotlin 2.4.0-Beta2
+- KSP 2.3.7
+- CMP 1.11.0-rc01
+- Serialization 1.11.0
+
+---
+
 ## [2.3.20-1.10.3-1]
 
 - Removes `frameworkBaseName`

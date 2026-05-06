@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.0-Beta2-1.11.0-rc01]
+
+- Compatible with 2.4.0-Beta2-1.11.0-rc01
+
+---
+
 ## [2.3.20-1.10.3-1]
 
 - Compatible with 2.3.20-1.10.3-1
