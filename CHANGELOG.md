@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0-RC-1.11.0]
+
+- Kotlin 2.4.0-RC
+- CMP 1.11.0
+
+---
+
 ## [2.4.0-Beta2-1.11.0-rc01]
 
 - Kotlin 2.4.0-Beta2
