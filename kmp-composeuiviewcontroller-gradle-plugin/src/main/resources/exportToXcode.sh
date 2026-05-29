@@ -124,6 +124,27 @@ smart_sync_files() {
     fi
   done < <(find "$files_source" -type f -name '*.swift' -print0)
 
+  local source_count
+  source_count=$(wc -l < "$source_files_map" | tr -d ' ')
+  echo "  > KSP output: $source_count Swift file(s) found"
+
+  # Safety check: if KSP produced no Swift files, preserve the destination to avoid
+  # removing Representables due to a Gradle UP-TO-DATE cache hit or a failed KSP run
+  # that cleared its outputs before generating new ones (e.g. a mid-build failure).
+  if [ ! -s "$source_files_map" ]; then
+    local dest_count
+    dest_count=$(find "$files_destination" -type f -name '*.swift' 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$dest_count" -gt 0 ]; then
+      echo "  > WARNING: No Swift files found in KSP output ($files_source)."
+      echo "  > Preserving existing $dest_count file(s) in destination to avoid data loss."
+      echo "  > Possible causes: UP-TO-DATE cache hit, interrupted KSP run, or all @ComposeUIViewController annotations removed."
+      echo "  > If you intended to remove all Representables, run: ./gradlew clean"
+    else
+      echo "  > Summary: 0 unchanged, 0 copied, 0 removed"
+    fi
+    return 0
+  fi
+
   # Second pass: sync files
   while IFS='|' read -r filename source_file; do
     local dest_file="$files_destination/$filename"
@@ -188,12 +209,6 @@ rebuild_file_references() {
     group_name = ARGV[2]
     force_rebuild = ARGV[3] == "true"
 
-    files_to_add = Dir.glob("#{group_name}/*.swift").sort
-    if files_to_add.empty?
-      puts "  > No Swift files found. Skipping references"
-      exit
-    end
-
     begin
       xcodeproj = Xcodeproj::Project.open(xcodeproj_path)
     rescue => e
@@ -208,6 +223,19 @@ rebuild_file_references() {
     unless target
       puts "  > ERROR: Target \"#{iosApp_target_name}\" not found"
       exit 1
+    end
+
+    files_to_add = Dir.glob("#{group_name}/*.swift").sort
+    if files_to_add.empty?
+      existing_group = xcodeproj[group_name]
+      if existing_group && !existing_group.files.empty?
+        stale_count = existing_group.files.count
+        puts "  > No Swift files found on disk but xcodeproj has #{stale_count} stale reference(s)."
+        puts "  > Skipping to preserve references. If Representables are missing, run: ./gradlew clean"
+      else
+        puts "  > No Swift files found. Skipping references"
+      end
+      exit
     end
 
     unless force_rebuild

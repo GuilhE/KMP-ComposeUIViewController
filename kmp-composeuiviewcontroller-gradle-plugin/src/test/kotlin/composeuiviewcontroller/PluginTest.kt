@@ -25,6 +25,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewCont
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_VALIDATE_REPRESENTABLES
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -630,6 +631,197 @@ class PluginTest {
 				"This proves KspExtension.arg('$KSP_ARG_METADATA_HASH', …) was called, " +
 				"which busts KSP's internal incremental cache when metadata changes."
 		)
+	}
+
+	@Test
+	fun `validateRepresentables task is registered`() {
+		assertNotNull(project.tasks.findByName(TASK_VALIDATE_REPRESENTABLES))
+	}
+
+	@Test
+	fun `validateRepresentables fails when KSP output has no Swift files`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		File(projectDir, "build/generated/ksp").mkdirs()
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES), expectFailure = true)
+		assertTrue(result.output.contains("[FAIL]"))
+		assertTrue(result.output.contains("No Swift files in KSP output"))
+	}
+
+	@Test
+	fun `validateRepresentables fails when KSP has files but destination is empty`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		File(projectDir, "build/generated/ksp/iosSimulatorArm64Main/kotlin").apply { mkdirs() }
+			.also { File(it, "FooRepresentable.swift").writeText("// generated") }
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES), expectFailure = true)
+		assertTrue(result.output.contains("[FAIL]"))
+		assertTrue(result.output.contains("destination is empty"))
+	}
+
+	@Test
+	fun `validateRepresentables fails when file is in KSP output but missing from destination`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		val kspDir = File(projectDir, "build/generated/ksp/iosSimulatorArm64Main/kotlin").also { it.mkdirs() }
+		File(kspDir, "FooRepresentable.swift").writeText("// generated")
+		val destDir = File(projectDir, "iosApp/Representables").also { it.mkdirs() }
+		File(destDir, "BarRepresentable.swift").writeText("// other")
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES), expectFailure = true)
+		assertTrue(result.output.contains("[FAIL]"))
+		assertTrue(result.output.contains("FooRepresentable.swift"))
+	}
+
+	@Test
+	fun `validateRepresentables fails when Representable is not referenced in xcodeproj`() {
+		val fileName = "FooRepresentable.swift"
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		val kspDir = File(projectDir, "build/generated/ksp/iosSimulatorArm64Main/kotlin").also { it.mkdirs() }
+		File(kspDir, fileName).writeText("// generated")
+		val destDir = File(projectDir, "iosApp/Representables").also { it.mkdirs() }
+		File(destDir, fileName).writeText("// generated")
+		val xcodeDir = File(projectDir, "iosApp/iosApp.xcodeproj").also { it.mkdirs() }
+		File(xcodeDir, "project.pbxproj").writeText("/* no swift references here */")
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES), expectFailure = true)
+		assertTrue(result.output.contains("[FAIL]"))
+		assertTrue(result.output.contains("Not referenced in xcodeproj"))
+		assertTrue(result.output.contains(fileName))
+	}
+
+	@Test
+	fun `validateRepresentables warns but passes when destination has stale files`() {
+		val fileName = "FooRepresentable.swift"
+		val staleFileName = "StaleRepresentable.swift"
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		val kspDir = File(projectDir, "build/generated/ksp/iosSimulatorArm64Main/kotlin").also { it.mkdirs() }
+		File(kspDir, fileName).writeText("// generated")
+		val destDir = File(projectDir, "iosApp/Representables").also { it.mkdirs() }
+		File(destDir, fileName).writeText("// generated")
+		File(destDir, staleFileName).writeText("// stale")
+		val xcodeDir = File(projectDir, "iosApp/iosApp.xcodeproj").also { it.mkdirs() }
+		File(xcodeDir, "project.pbxproj").writeText("AABB /* $fileName */ = {isa = PBXFileReference;};")
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+		assertTrue(result.output.contains("[WARN]"))
+		assertTrue(result.output.contains(staleFileName))
+	}
+
+	@Test
+	fun `validateRepresentables passes when all checks succeed`() {
+		val fileName = "FooRepresentable.swift"
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		val kspDir4 = File(projectDir, "build/generated/ksp/iosSimulatorArm64Main/kotlin").also { it.mkdirs() }
+		File(kspDir4, fileName).writeText("// generated")
+		val destDir4 = File(projectDir, "iosApp/Representables").also { it.mkdirs() }
+		File(destDir4, fileName).writeText("// generated")
+		val xcodeDir4 = File(projectDir, "iosApp/iosApp.xcodeproj").also { it.mkdirs() }
+		File(xcodeDir4, "project.pbxproj").writeText("AABB /* $fileName */ = {isa = PBXFileReference;};")
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+		assertTrue(result.output.contains("[OK] KSP output"))
+		assertTrue(result.output.contains("[OK] Destination"))
+		assertTrue(result.output.contains("[OK] KSP output and destination are in sync"))
+		assertTrue(result.output.contains("[OK] All 1 Representable(s) referenced in xcodeproj"))
+		assertTrue(result.output.contains("Validation passed"))
 	}
 
 	private companion object {

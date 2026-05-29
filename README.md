@@ -8,7 +8,7 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 | [Version](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | [Kotlin](https://github.com/JetBrains/kotlin/releases) | [KSP](https://github.com/Google/KSP/releases) | [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/releases) | Xcode  |
 |--------------------------------------------------------------------------------------------------|:------------------------------------------------------:|:---------------------------------------------:|:------------------------------------------------------------------------------------:|:------:|
-| 2.4.0-RC2-1.11.0                                                                                 |                       2.4.0-RC2                        |                     2.3.8                     |                                        1.11.0                                        | 26.5.0 |
+| 2.4.0-RC2-1.11.0-1                                                                                 |                       2.4.0-RC2                        |                     2.3.8                     |                                        1.11.0                                        | 26.5.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
@@ -217,6 +217,7 @@ When building the KMP module, you should see output similar to this:
 ```bash
 > Task :shared:copyFilesToXcode
   > Starting smart sync process
+  > KSP output: 3 Swift file(s) found
   > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
   > New file: GradientScreenMixedUIViewControllerRepresentable.swift
   > New file: GradientScreenComposeUIViewControllerRepresentable.swift
@@ -229,6 +230,26 @@ When building the KMP module, you should see output similar to this:
   > Summary: 3 added, 0 removed, 0 unchanged
   > Done
 ```
+
+#### Troubleshooting
+
+If Representables are not found in Xcode, run the diagnostic task to inspect the full pipeline without triggering a build:
+
+```bash
+./gradlew validateRepresentables
+```
+
+It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for:
+1. KSP output — Swift files in `build/generated/ksp/`
+2. Destination — Swift files in `iosApp/Representables/`
+3. Sync — KSP output and destination match
+4. xcodeproj — all Representables are referenced in `project.pbxproj`
+
+If validation fails, the most common fix is:
+```bash
+./gradlew clean
+```
+Then rebuild from Xcode.
 
 ## LICENSE
 

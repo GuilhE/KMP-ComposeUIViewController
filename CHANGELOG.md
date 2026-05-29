@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.4.0-RC2-1.11.0-1]
+
+- Fixes `modules.json` stale entries: module metadata is now replaced (not accumulated) on each
+  configuration phase, preventing the KSP processor from picking up outdated `frameworkBaseName`
+  or `packageNames` entries when module structure changes between builds
+- Fixes `copyFilesToXcode` data loss: when no Swift files are found in the KSP output directory,
+  existing Representables in the destination are now preserved instead of deleted — this guards
+  against a Gradle UP-TO-DATE cache hit, or a KSP run that cleared its aggregating outputs before
+  writing new ones (e.g. a mid-build failure triggered by a non-composable Kotlin change)
+- Adds KSP output count log (`KSP output: N Swift file(s) found`) to make build diagnostics easier
+- Adds `validateRepresentables` Gradle task to diagnose the full Representables pipeline without
+  doing a build: checks KSP output, destination sync, and xcodeproj references, reporting
+  `[OK]`, `[WARN]`, or `[FAIL]` for each step
+- Fixes `rebuild_file_references` silent skip: when no Swift files are found on disk but the
+  xcodeproj already has references, the script now warns about potential stale references and
+  suggests `./gradlew clean` instead of silently exiting
+
+---
+
 ## [2.4.0-RC2-1.11.0]
 
 - Kotlin 2.4.0-RC2
