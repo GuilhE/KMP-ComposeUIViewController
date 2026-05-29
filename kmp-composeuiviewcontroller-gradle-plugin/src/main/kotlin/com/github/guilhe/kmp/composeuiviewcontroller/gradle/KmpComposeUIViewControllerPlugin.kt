@@ -27,6 +27,26 @@ public class PluginConfigurationException(message: String, cause: Throwable? = n
 
 /**
  * Heavy lifts Gradle configurations when using [KMP-ComposeUIViewController](https://github.com/GuilhE/KMP-ComposeUIViewController) library.
+ *
+ * Exposes the following tasks under the `composeuiviewcontroller` group:
+ * - `copyFilesToXcode` — syncs KSP-generated Swift Representables to `iosApp/Representables/` and
+ *   updates the Xcode project references. Triggered automatically after `embedAndSignAppleFrameworkForXcode`,
+ *   `embedSwiftExportForXcode`, or `syncFramework` when [ComposeUiViewControllerParameters.autoExport] is `true`.
+ * - `formatSwiftFiles` — formats generated `.swift` files with `swiftformat` default rules (if available).
+ * - `validateRepresentables` — inspects the full Representables pipeline without triggering a build.
+ *   Useful for diagnosing why Xcode cannot find generated `UIViewControllerRepresentable` files.
+ *   Run it with `./gradlew validateRepresentables`. Reports `OK`, `WARN`, or `FAIL` for each check:
+ *
+ *   | Check       | What it verifies                                       | Fails when                             |
+ *   |-------------|--------------------------------------------------------|----------------------------------------|
+ *   | KSP output  | `.swift` files exist in `build/generated/ksp/`         | KSP never ran or failed mid-generation |
+ *   | Destination | `.swift` files exist in `iosApp/Representables/`       | `copyFilesToXcode` did not run         |
+ *   | Sync        | KSP output and destination contain the same files      | Files are stale or missing             |
+ *   | xcodeproj   | All Representables are referenced in `project.pbxproj` | `rebuild_file_references` failed       |
+ *
+ *   `WARN` entries (stale destination files, xcodeproj not found) do not fail the task.
+ *   `FAIL` entries throw a [GradleException] listing all errors. The most common fix is `./gradlew clean`.
+ *   The xcodeproj check is skipped when [ComposeUiViewControllerParameters.autoExport] is `false`.
  */
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
@@ -53,6 +73,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 				configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = this, tempFolder = tempFolder)
 				configureTaskToFinalizeByCopyFilesToXcode(this)
 			}
+			configureTaskToRegisterValidateRepresentables(project = project, extensionParameters = extension)
 
 			val packageResolver = PackageResolver(this, logger)
 			project.afterEvaluate {
@@ -224,6 +245,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			)
 		}
 
+		moduleMetadata.removeIf { it.name == name }
 		val changed = moduleMetadata.addAll(newMetadata)
 		if (changed || !file.exists()) {
 			file.writeText(Json.encodeToString(moduleMetadata))
@@ -381,13 +403,89 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		}
 	}
 
+	private fun Project.configureTaskToRegisterValidateRepresentables(
+		project: Project,
+		extensionParameters: ComposeUiViewControllerParameters
+	) {
+		tasks.register(TASK_VALIDATE_REPRESENTABLES) { task ->
+			task.group = "composeuiviewcontroller"
+			task.description = "Validates that Representables are correctly generated, synced to Xcode destination, and referenced in xcodeproj"
+			task.outputs.upToDateWhen { false }
+			task.doLast {
+				val errors = mutableListOf<String>()
+				val warnings = mutableListOf<String>()
+
+				val kspDir = project.layout.buildDirectory.dir("generated/ksp").get().asFile
+				val kspFiles = if (kspDir.exists()) {
+					kspDir.walkTopDown().filter { it.isFile && it.extension == "swift" }.toList()
+				} else {
+					emptyList()
+				}
+
+				if (kspFiles.isEmpty()) {
+					errors += "No Swift files in KSP output (${kspDir.relativeTo(project.rootDir)}). Run a build first or ./gradlew clean."
+				} else {
+					logger.lifecycle("\t> [OK] KSP output: ${kspFiles.size} Swift file(s)")
+				}
+
+				val destDir = File(project.rootDir, "${extensionParameters.iosAppFolderName}/${extensionParameters.exportFolderName}")
+				val destFiles = if (destDir.exists()) {
+					destDir.listFiles { f -> f.isFile && f.extension == "swift" }?.toList() ?: emptyList()
+				} else {
+					emptyList()
+				}
+
+				if (kspFiles.isNotEmpty() && destFiles.isEmpty()) {
+					errors += "KSP has ${kspFiles.size} file(s) but destination is empty (${destDir.relativeTo(project.rootDir)}). Run copyFilesToXcode."
+				} else if (destFiles.isNotEmpty()) {
+					logger.lifecycle("\t> [OK] Destination: ${destFiles.size} Swift file(s)")
+				}
+
+				if (kspFiles.isNotEmpty() && destFiles.isNotEmpty()) {
+					val kspNames = kspFiles.map { it.name }.toSet()
+					val destNames = destFiles.map { it.name }.toSet()
+					(kspNames - destNames).forEach { errors += "In KSP output but missing from destination: $it" }
+					(destNames - kspNames).forEach { warnings += "In destination but not in KSP output (stale): $it" }
+					if ((kspNames - destNames).isEmpty()) logger.lifecycle("\t> [OK] KSP output and destination are in sync")
+				}
+
+				if (extensionParameters.autoExport) {
+					val pbxprojFile = File(
+						project.rootDir,
+						"${extensionParameters.iosAppFolderName}/${extensionParameters.iosAppName}.xcodeproj/project.pbxproj"
+					)
+					if (pbxprojFile.exists()) {
+						val pbxContent = pbxprojFile.readText()
+						val kspNames = kspFiles.map { it.name }.toSet()
+						val expectedFiles = destFiles.filter { it.name in kspNames }
+						val unreferenced = expectedFiles.filter { f -> !pbxContent.contains(f.name) }
+						if (unreferenced.isNotEmpty()) {
+							unreferenced.forEach { errors += "Not referenced in xcodeproj: ${it.name}" }
+						} else if (expectedFiles.isNotEmpty()) {
+							logger.lifecycle("\t> [OK] All ${expectedFiles.size} Representable(s) referenced in xcodeproj")
+						}
+					} else {
+						warnings += "xcodeproj not found at ${pbxprojFile.relativeTo(project.rootDir)} — skipping reference check"
+					}
+				}
+
+				warnings.forEach { logger.warn("\t> [WARN] $it") }
+				if (errors.isNotEmpty()) {
+					errors.forEach { logger.error("\t> [FAIL] $it") }
+					throw GradleException("Representables validation failed with ${errors.size} error(s). See above for details.")
+				}
+				logger.lifecycle("\t> Validation passed")
+			}
+		}
+	}
+
 	private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
 
 	private fun ComposeUiViewControllerParameters.toList() =
 		listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
 	internal companion object {
-		private const val VERSION_LIBRARY = "2.4.0-RC2-1.11.0"
+		private const val VERSION_LIBRARY = "2.4.0-RC2-1.11.0-1"
 		private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
 		internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
 		internal const val PLUGIN_KSP = "com.google.devtools.ksp"
@@ -400,6 +498,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		internal const val TASK_CLEAN_TEMP_FILES_FOLDER = "cleanTempFilesFolder"
 		internal const val TASK_COPY_FILES_TO_XCODE = "copyFilesToXcode"
 		internal const val TASK_FORMAT_SWIFT_FILES = "formatSwiftFiles"
+		internal const val TASK_VALIDATE_REPRESENTABLES = "validateRepresentables"
 		internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
 		internal const val TASK_EMBED_SWIFT_EXPORT_FOR_XCODE = "embedSwiftExportForXcode"
 		internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
