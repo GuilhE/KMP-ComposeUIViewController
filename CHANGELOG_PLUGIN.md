@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.0-RC2-1.11.0]
+
+- Compatible with 2.4.0-RC2-1.11.0
+
+---
+
 ## [2.4.0-RC-1.11.0]
 
 - Compatible with 2.4.0-RC-1.11.0

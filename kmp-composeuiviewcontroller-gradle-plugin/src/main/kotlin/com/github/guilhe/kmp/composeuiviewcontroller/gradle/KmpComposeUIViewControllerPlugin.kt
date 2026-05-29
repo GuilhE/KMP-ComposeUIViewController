@@ -387,7 +387,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
 	internal companion object {
-		private const val VERSION_LIBRARY = "2.4.0-RC-1.11.0"
+		private const val VERSION_LIBRARY = "2.4.0-RC2-1.11.0"
 		private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
 		internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
 		internal const val PLUGIN_KSP = "com.google.devtools.ksp"
