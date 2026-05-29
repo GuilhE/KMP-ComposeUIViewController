@@ -198,6 +198,55 @@ struct SomeView: View {
 > [!IMPORTANT]
 > Avoid deleting `iosApp/Representables` without using Xcode.
 
+### Build output
+
+When building the KMP module, you should see output similar to this:
+```bash
+> Task :shared:copyFilesToXcode
+  > Using xcodeproj gem version 1.27.0 (minimum: 1.27.0)
+  > Starting smart sync process
+  > KSP output: 4 Swift file(s) found
+  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedAUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedBUIViewControllerRepresentable.swift
+  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Summary: 0 unchanged, 4 copied, 0 removed
+  > Detected changes. Rebuilding Xcode references
+  > Created new group "Representables"
+  > Adding: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Adding: GradientScreenMixedAUIViewControllerRepresentable.swift
+  > Adding: GradientScreenMixedBUIViewControllerRepresentable.swift
+  > Adding: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > Summary: 4 added, 0 removed, 0 unchanged
+  > Xcodeproj saved successfully
+  > Done
+```
+
+ #### Troubleshooting
+
+Sometimes the files are correctly generated and copied, but Android Studio doesn't recognize them. Select the `iosApp` project folder,
+right-click, and choose **"Reload from Disk"**. Once the files become visible, the build should succeed.
+
+---
+
+If Representables are not found in Xcode, run the diagnostic task to inspect the full pipeline without triggering a build:
+
+```bash
+ ./gradlew validateRepresentables
+```
+
+It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for:
+ 1. KSP output — Swift files in `build/generated/ksp/`
+ 2. Destination — Swift files in `iosApp/Representables/`
+ 3. Sync — KSP output and destination match
+ 4. xcodeproj — all Representables are referenced in `project.pbxproj`
+
+ If validation fails, the most common fix is:
+```bash
+ ./gradlew clean --no-build-cache
+```
+Then rebuild it again.
+
 ## Sample
 For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
 
@@ -210,46 +259,6 @@ You'll find different use cases:
 You can also find other working samples in:  
 
 <a href="https://github.com/GuilhE/Expressus" target="_blank"><img alt="Expressus" src="https://raw.githubusercontent.com/GuilhE/Expressus/main/media/icon.png" height="100"/></a> <a href="https://github.com/GuilhE/WhosNext" target="_blank"><img alt="WhosNext" src="https://raw.githubusercontent.com/GuilhE/WhosNext/main/media/icon.png" height="100"/></a>
-
-#### Build output
-
-When building the KMP module, you should see output similar to this:
-```bash
-> Task :shared:copyFilesToXcode
-  > Starting smart sync process
-  > KSP output: 3 Swift file(s) found
-  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
-  > New file: GradientScreenMixedUIViewControllerRepresentable.swift
-  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
-  > Summary: 0 unchanged, 3 copied, 0 removed
-  > Detected changes. Rebuilding Xcode references
-  > Created new group "Representables"
-  > Adding: GradientScreenComposeUIViewControllerRepresentable.swift
-  > Adding: GradientScreenMixedUIViewControllerRepresentable.swift
-  > Adding: GradientScreenSwiftUIViewControllerRepresentable.swift
-  > Summary: 3 added, 0 removed, 0 unchanged
-  > Done
-```
-
-#### Troubleshooting
-
-If Representables are not found in Xcode, run the diagnostic task to inspect the full pipeline without triggering a build:
-
-```bash
-./gradlew validateRepresentables
-```
-
-It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for:
-1. KSP output — Swift files in `build/generated/ksp/`
-2. Destination — Swift files in `iosApp/Representables/`
-3. Sync — KSP output and destination match
-4. xcodeproj — all Representables are referenced in `project.pbxproj`
-
-If validation fails, the most common fix is:
-```bash
-./gradlew clean
-```
-Then rebuild from Xcode.
 
 ## LICENSE
 
