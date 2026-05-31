@@ -119,7 +119,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		val cleanupTaskProvider = tasks.register(TASK_CLEAN_TEMP_FILES_FOLDER) { task ->
 			task.group = "composeuiviewcontroller"
 			task.description = "Cleans up temporary files created by the plugin"
-			task.inputs.dir(tempFolder).optional()
 			task.outputs.upToDateWhen { !tempFolder.exists() }
 			task.doLast {
 				if (tempFolder.exists()) {
