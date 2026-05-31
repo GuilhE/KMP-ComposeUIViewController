@@ -10,6 +10,9 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
  * @property exportFolderName Name of the destination folder inside iOS project ([iosAppFolderName]) where the generated files will be copied to when
  * [autoExport] is `true`
  * @property autoExport Enables auto export generated files to Xcode project. If set to false, you will find the generated files under `/build/generated/ksp/`. Warning: avoid deleting [iosAppFolderName]/[exportFolderName] without first using Xcode to `Remove references`
+ * @property experimentalSpmExport When `true`, replaces the xcodeproj-based export with a local SPM package at `[iosAppFolderName]/[exportFolderName]/`.
+ * Requires Swift Export to be configured (`swiftExport { moduleName = "..." }`). The developer adds the generated package to Xcode once via
+ * *File > Add Package Dependencies > Add Local*. Subsequent builds update the Swift sources automatically — no xcodeproj gem required.
  */
 public open class ComposeUiViewControllerParameters {
 	/**
@@ -52,4 +55,11 @@ public open class ComposeUiViewControllerParameters {
 	 *  Auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`. Warning: avoid deleting `[iosAppFolderName]/[exportFolderName]` without first using Xcode to `Remove references`.
 	 */
 	public var autoExport: Boolean = true
+
+	/**
+	 * Experimental. When `true`, a local SPM package is created at `[iosAppFolderName]/[exportFolderName]/` instead of manipulating xcodeproj via
+	 * the xcodeproj gem. Requires Swift Export (`swiftExport { moduleName = "..." }`) to be configured in the KMP module.
+	 * Add the generated package to Xcode once via *File > Add Package Dependencies > Add Local* — subsequent builds keep the Swift sources in sync automatically.
+	 */
+	public var experimentalSpmExport: Boolean = false
 }

@@ -7,14 +7,12 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.SwiftExportUtils.getSwiftExportConfigForProject
 import com.google.devtools.ksp.gradle.KspExtension
-import java.io.BufferedReader
 import java.io.File
 import kotlinx.serialization.json.Json
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.PluginInstantiationException
-import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
@@ -32,6 +30,11 @@ public class PluginConfigurationException(message: String, cause: Throwable? = n
  * - `copyFilesToXcode` — syncs KSP-generated Swift Representables to `iosApp/Representables/` and
  *   updates the Xcode project references. Triggered automatically after `embedAndSignAppleFrameworkForXcode`,
  *   `embedSwiftExportForXcode`, or `syncFramework` when [ComposeUiViewControllerParameters.autoExport] is `true`.
+ *   Not registered when [ComposeUiViewControllerParameters.experimentalSpmExport] is `true`.
+ * - `exportToSpm` — experimental. Creates and maintains a local SPM package at `iosApp/Representables/`
+ *   (folder names driven by [ComposeUiViewControllerParameters.iosAppFolderName] and [ComposeUiViewControllerParameters.exportFolderName]).
+ *   Triggered automatically after `embedSwiftExportForXcode` when [ComposeUiViewControllerParameters.experimentalSpmExport] is `true`.
+ *   Requires Swift Export to be configured.
  * - `formatSwiftFiles` — formats generated `.swift` files with `swiftformat` default rules (if available).
  * - `validateRepresentables` — inspects the full Representables pipeline without triggering a build.
  *   Useful for diagnosing why Xcode cannot find generated `UIViewControllerRepresentable` files.
@@ -68,11 +71,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			setupTargets()
 
 			val extension = extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)
-			with(extension) {
-				configureTaskToRegisterSwiftFormat(project = project)
-				configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = this, tempFolder = tempFolder)
-				configureTaskToFinalizeByCopyFilesToXcode(this)
-			}
+			configureTaskToRegisterSwiftFormat(project = project)
 			configureTaskToRegisterValidateRepresentables(project = project, extensionParameters = extension)
 
 			val packageResolver = PackageResolver(this, logger)
@@ -81,12 +80,32 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 					validateExtensionParameters(extension)
 					val packageNames = packageResolver.resolvePackages()
 					val (frameworkNames, swiftExport, flattenPackage) = retrieveFrameworkBaseNamesFromIosTargets(packageNames)
+
+					if (extension.experimentalSpmExport && !swiftExport) {
+						throw PluginConfigurationException(
+							"experimentalSpmExport requires Swift Export to be configured. " +
+								"Add swiftExport { moduleName = \"...\" } to the KMP module."
+						)
+					}
+
 					writeModuleMetadataToDisk(
 						swiftExportEnabled = swiftExport,
 						flattenPackageConfigured = flattenPackage,
 						args = buildFrameworkPackages(packageNames, frameworkNames)
 					)
 					configureKspTasksForCacheInvalidation()
+
+					if (extension.experimentalSpmExport) {
+						configureTaskToRegisterExportToSpm(
+							project = project,
+							extensionParameters = extension,
+							tempFolder = tempFolder,
+							spmModuleName = frameworkNames.first()
+						)
+					} else {
+						configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = extension, tempFolder = tempFolder)
+					}
+					configureTaskToFinalizeByCopyFilesToXcode(extension)
 				} catch (e: PluginConfigurationException) {
 					throw e
 				} catch (e: Exception) {
@@ -290,199 +309,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		}
 	}
 
-	private fun Project.configureTaskToRegisterSwiftFormat(project: Project) {
-		tasks.register(TASK_FORMAT_SWIFT_FILES, Exec::class.java) { task ->
-			task.group = "composeuiviewcontroller"
-			task.description = "Formats generated Swift files using swiftformat"
-			task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
-			task.doFirst { logger.info("\t> Formatting Swift files for module: ${project.name}") }
-
-			val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_FORMAT_SCRIPT")
-			val script = inputStream?.use { stream ->
-				stream.bufferedReader().use(BufferedReader::readText)
-			}
-				?: throw PluginConfigurationException("Unable to read resource file: $FILE_NAME_FORMAT_SCRIPT. Ensure the plugin is correctly packaged.")
-
-			val modifiedScript = script.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
-			val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_FORMAT_SCRIPT_TEMP")
-				.also {
-					it.parentFile?.mkdirs()
-					it.createNewFile()
-				}
-
-			if (tempFile.exists()) {
-				tempFile.writeText(modifiedScript)
-				tempFile.setExecutable(true)
-				task.workingDir = project.rootDir
-
-				try {
-					task.commandLine("bash", "-c", tempFile.absolutePath)
-					task.doLast {
-						if (tempFile.exists()) {
-							tempFile.delete()
-						}
-					}
-				} catch (e: Exception) {
-					throw PluginConfigurationException(
-						"Failed to configure script execution for task '$TASK_FORMAT_SWIFT_FILES'. Script path: ${tempFile.absolutePath}",
-						e
-					)
-				}
-			} else {
-				throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_FORMAT_SCRIPT_TEMP at ${tempFile.absolutePath}")
-			}
-		}
-	}
-
-	private fun Project.configureTaskToRegisterCopyFilesToXcode(
-		project: Project,
-		extensionParameters: ComposeUiViewControllerParameters,
-		tempFolder: File
-	) {
-		tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
-			task.group = "composeuiviewcontroller"
-			task.description = "Copies generated files to Xcode project"
-			task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
-			task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toList()}") }
-
-			val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
-			val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_COPY_SCRIPT")
-			val script = inputStream?.use { stream ->
-				stream.bufferedReader().use(BufferedReader::readText)
-			} ?: throw PluginConfigurationException("Unable to read resource file: $FILE_NAME_COPY_SCRIPT. Ensure the plugin is correctly packaged.")
-
-			val modifiedScript = script
-				.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
-				.replace("$PARAM_FOLDER=\"iosApp\"", "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\"")
-				.replace("$PARAM_APP_NAME=\"iosApp\"", "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\"")
-				.replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
-				.replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
-
-			val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_COPY_SCRIPT_TEMP}")
-				.also { it.createNewFile() }
-
-			if (tempFile.exists()) {
-				tempFile.writeText(modifiedScript)
-				tempFile.setExecutable(true)
-				task.workingDir = project.rootDir
-
-				try {
-					task.commandLine("bash", "-c", tempFile.absolutePath)
-					if (!keepScriptFile) {
-						task.doLast {
-							if (tempFolder.exists()) {
-								tempFolder.deleteRecursively()
-							}
-						}
-					}
-				} catch (e: Exception) {
-					throw PluginConfigurationException(
-						"Failed to configure script execution for task '$TASK_COPY_FILES_TO_XCODE'. Script path: ${tempFile.absolutePath}",
-						e
-					)
-				}
-			} else {
-				throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_COPY_SCRIPT_TEMP at ${tempFile.absolutePath}")
-			}
-		}
-	}
-
-	private fun Project.configureTaskToFinalizeByCopyFilesToXcode(extensionParameters: ComposeUiViewControllerParameters) {
-		tasks.matching {
-			it.name == TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE ||
-				it.name == TASK_EMBED_SWIFT_EXPORT_FOR_XCODE ||
-				it.name == TASK_SYNC_FRAMEWORK
-		}.configureEach { task ->
-			if (extensionParameters.autoExport) {
-				logger.info("\n> $LOG_TAG:\n\t> Task '${task.name}' will be finalized by '$TASK_FORMAT_SWIFT_FILES' -> '$TASK_COPY_FILES_TO_XCODE'")
-				task.finalizedBy(TASK_FORMAT_SWIFT_FILES)
-			}
-		}
-		tasks.named(TASK_FORMAT_SWIFT_FILES).configure {
-			it.finalizedBy(TASK_COPY_FILES_TO_XCODE)
-		}
-	}
-
-	private fun Project.configureTaskToRegisterValidateRepresentables(
-		project: Project,
-		extensionParameters: ComposeUiViewControllerParameters
-	) {
-		tasks.register(TASK_VALIDATE_REPRESENTABLES) { task ->
-			task.group = "composeuiviewcontroller"
-			task.description = "Validates that Representables are correctly generated, synced to Xcode destination, and referenced in xcodeproj"
-			task.outputs.upToDateWhen { false }
-			task.doLast {
-				val errors = mutableListOf<String>()
-				val warnings = mutableListOf<String>()
-
-				val kspDir = project.layout.buildDirectory.dir("generated/ksp").get().asFile
-				val kspFiles = if (kspDir.exists()) {
-					kspDir.walkTopDown().filter { it.isFile && it.extension == "swift" }.toList()
-				} else {
-					emptyList()
-				}
-
-				if (kspFiles.isEmpty()) {
-					errors += "No Swift files in KSP output (${kspDir.relativeTo(project.rootDir)}). Run a build first or ./gradlew clean."
-				} else {
-					logger.lifecycle("\t> [OK] KSP output: ${kspFiles.size} Swift file(s)")
-				}
-
-				val destDir = File(project.rootDir, "${extensionParameters.iosAppFolderName}/${extensionParameters.exportFolderName}")
-				val destFiles = if (destDir.exists()) {
-					destDir.listFiles { f -> f.isFile && f.extension == "swift" }?.toList() ?: emptyList()
-				} else {
-					emptyList()
-				}
-
-				if (kspFiles.isNotEmpty() && destFiles.isEmpty()) {
-					errors += "KSP has ${kspFiles.size} file(s) but destination is empty (${destDir.relativeTo(project.rootDir)}). Run copyFilesToXcode."
-				} else if (destFiles.isNotEmpty()) {
-					logger.lifecycle("\t> [OK] Destination: ${destFiles.size} Swift file(s)")
-				}
-
-				if (kspFiles.isNotEmpty() && destFiles.isNotEmpty()) {
-					val kspNames = kspFiles.map { it.name }.toSet()
-					val destNames = destFiles.map { it.name }.toSet()
-					(kspNames - destNames).forEach { errors += "In KSP output but missing from destination: $it" }
-					(destNames - kspNames).forEach { warnings += "In destination but not in KSP output (stale): $it" }
-					if ((kspNames - destNames).isEmpty()) logger.lifecycle("\t> [OK] KSP output and destination are in sync")
-				}
-
-				if (extensionParameters.autoExport) {
-					val pbxprojFile = File(
-						project.rootDir,
-						"${extensionParameters.iosAppFolderName}/${extensionParameters.iosAppName}.xcodeproj/project.pbxproj"
-					)
-					if (pbxprojFile.exists()) {
-						val pbxContent = pbxprojFile.readText()
-						val kspNames = kspFiles.map { it.name }.toSet()
-						val expectedFiles = destFiles.filter { it.name in kspNames }
-						val unreferenced = expectedFiles.filter { f -> !pbxContent.contains(f.name) }
-						if (unreferenced.isNotEmpty()) {
-							unreferenced.forEach { errors += "Not referenced in xcodeproj: ${it.name}" }
-						} else if (expectedFiles.isNotEmpty()) {
-							logger.lifecycle("\t> [OK] All ${expectedFiles.size} Representable(s) referenced in xcodeproj")
-						}
-					} else {
-						warnings += "xcodeproj not found at ${pbxprojFile.relativeTo(project.rootDir)} — skipping reference check"
-					}
-				}
-
-				warnings.forEach { logger.warn("\t> [WARN] $it") }
-				if (errors.isNotEmpty()) {
-					errors.forEach { logger.error("\t> [FAIL] $it") }
-					throw GradleException("Representables validation failed with ${errors.size} error(s). See above for details.")
-				}
-				logger.lifecycle("\t> Validation passed")
-			}
-		}
-	}
-
 	private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
-
-	private fun ComposeUiViewControllerParameters.toList() =
-		listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
 	internal companion object {
 		private const val VERSION_LIBRARY = "2.4.0-RC2-1.11.0-1"
@@ -497,21 +324,25 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		private const val EXTENSION_PLUGIN = "ComposeUiViewController"
 		internal const val TASK_CLEAN_TEMP_FILES_FOLDER = "cleanTempFilesFolder"
 		internal const val TASK_COPY_FILES_TO_XCODE = "copyFilesToXcode"
+		internal const val TASK_EXPORT_TO_SPM = "exportToSpm"
 		internal const val TASK_FORMAT_SWIFT_FILES = "formatSwiftFiles"
 		internal const val TASK_VALIDATE_REPRESENTABLES = "validateRepresentables"
 		internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
 		internal const val TASK_EMBED_SWIFT_EXPORT_FOR_XCODE = "embedSwiftExportForXcode"
 		internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
-		private const val FILE_NAME_COPY_SCRIPT = "exportToXcode.sh"
-		private const val FILE_NAME_FORMAT_SCRIPT = "sformat.sh"
+		internal const val FILE_NAME_COPY_SCRIPT = "exportToXcode.sh"
+		internal const val FILE_NAME_FORMAT_SCRIPT = "sformat.sh"
+		internal const val FILE_NAME_SPM_SCRIPT = "exportToSpm.sh"
 		internal const val FILE_NAME_FORMAT_SCRIPT_TEMP = "temp_format.sh"
 		internal const val FILE_NAME_COPY_SCRIPT_TEMP = "temp.sh"
+		internal const val FILE_NAME_SPM_SCRIPT_TEMP = "temp_spm.sh"
 		internal const val PARAM_KEEP_FILE = "keepScriptFile"
 		internal const val PARAM_KMP_MODULE = "kmp_module"
 		internal const val PARAM_FOLDER = "iosApp_project_folder"
 		internal const val PARAM_APP_NAME = "iosApp_name"
 		internal const val PARAM_TARGET = "iosApp_target_name"
 		internal const val PARAM_GROUP = "group_name"
+		internal const val PARAM_SPM_MODULE = "spm_module_name"
 		internal const val KSP_ARG_METADATA_HASH = "composeuiviewcontroller.metadataHash"
 		internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
 		internal const val ERROR_MISSING_PACKAGE = "Could not determine project's package"

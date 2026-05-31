@@ -41,7 +41,7 @@ private let dateFormatter: DateFormatter = {
     return formatter
 }()
 
-private func dateFromMilliseconds(_ milliseconds: Int64) -> Date {sgit
+private func dateFromMilliseconds(_ milliseconds: Int64) -> Date {
     let timeInterval = TimeInterval(milliseconds) / 1000.0
     return Date(timeIntervalSince1970: timeInterval)
 }
