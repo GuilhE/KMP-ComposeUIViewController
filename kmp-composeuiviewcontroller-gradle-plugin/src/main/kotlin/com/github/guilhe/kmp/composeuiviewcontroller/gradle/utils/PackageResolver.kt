@@ -1,7 +1,8 @@
 @file:Suppress("SpellCheckingInspection")
 
-package com.github.guilhe.kmp.composeuiviewcontroller.gradle
+package com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils
 
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PluginConfigurationException
 import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger

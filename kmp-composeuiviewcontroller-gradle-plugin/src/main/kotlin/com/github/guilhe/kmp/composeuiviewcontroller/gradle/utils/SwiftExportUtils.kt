@@ -1,6 +1,6 @@
 @file:Suppress("SpellCheckingInspection")
 
-package com.github.guilhe.kmp.composeuiviewcontroller.gradle
+package com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils
 
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension

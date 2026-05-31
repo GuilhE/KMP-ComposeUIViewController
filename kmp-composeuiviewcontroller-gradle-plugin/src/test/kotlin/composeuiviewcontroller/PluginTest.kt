@@ -25,7 +25,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PLUGIN_KMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PLUGIN_KSP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_COPY_FILES_TO_XCODE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_SWIFT_EXPORT_FOR_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_FORMAT_SWIFT_FILES
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_SYNC_FRAMEWORK
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_VALIDATE_REPRESENTABLES
 import java.io.File
@@ -193,13 +193,30 @@ class PluginTest {
 	}
 
 	@Test
-	fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or embedSwiftExportForXcode or syncFramework with copyFilesToXcode task`() {
-		val embedObjCTask = project.tasks.register(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE) {}
-		val embedSwiftTask = project.tasks.register(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE) {}
-		val syncTask = project.tasks.register(TASK_SYNC_FRAMEWORK) {}
-		assertEquals(1, embedObjCTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
-		assertEquals(1, embedSwiftTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
-		assertEquals(1, syncTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
+	fun `embed and sync tasks finalize via formatSwiftFiles chain`() {
+		with(project) {
+			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
+				iosSimulatorArm64().binaries.framework { baseName = "TestFramework" }
+			}
+
+			val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+			File(folder, "File.kt").writeText("package com.test\nclass Test()")
+
+			(this as DefaultProject).evaluate()
+
+			// KMP registers these tasks for iOS framework targets during evaluation
+			listOf(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE, TASK_SYNC_FRAMEWORK).forEach { name ->
+				val task = tasks.findByName(name) ?: return@forEach
+				val finalizers = task.finalizedBy.getDependencies(task)
+				assertEquals(1, finalizers.size)
+				assertEquals(TASK_FORMAT_SWIFT_FILES, finalizers.first().name)
+			}
+
+			val formatTask = tasks.getByName(TASK_FORMAT_SWIFT_FILES)
+			val formatFinalizers = formatTask.finalizedBy.getDependencies(formatTask)
+			assertEquals(1, formatFinalizers.size)
+			assertEquals(TASK_COPY_FILES_TO_XCODE, formatFinalizers.first().name)
+		}
 	}
 
 	@Test

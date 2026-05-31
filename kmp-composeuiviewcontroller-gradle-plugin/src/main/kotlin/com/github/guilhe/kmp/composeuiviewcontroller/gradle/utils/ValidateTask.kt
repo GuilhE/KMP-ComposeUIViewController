@@ -1,14 +1,16 @@
 @file:Suppress("SpellCheckingInspection", "LoggingSimilarMessage")
 
-package com.github.guilhe.kmp.composeuiviewcontroller.gradle
+package com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils
 
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PluginParameters
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_VALIDATE_REPRESENTABLES
 import java.io.File
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 
 internal fun Project.configureTaskToRegisterValidateRepresentables(
     project: Project,
-    extensionParameters: ComposeUiViewControllerParameters
+    extensionParameters: PluginParameters
 ) {
     tasks.register(TASK_VALIDATE_REPRESENTABLES) { task ->
         task.group = "composeuiviewcontroller"

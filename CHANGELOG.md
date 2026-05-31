@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.4.0-RC2-1.11.0-2]
+
+
 ## [2.4.0-RC2-1.11.0-1]
 
 - Fixes `modules.json` stale entries: module metadata is now replaced (not accumulated) on each

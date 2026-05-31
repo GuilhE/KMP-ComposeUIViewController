@@ -16,7 +16,7 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
  * @property iosDeploymentTarget Minimum iOS version for the generated SPM package (e.g. `"16"`). Only used when [experimentalSpmExport] is `true`.
  * @property swiftToolsVersion Swift tools version declared in the generated `Package.swift` (e.g. `"5.9"`, `"6.0"`). Only used when [experimentalSpmExport] is `true`.
  */
-public open class ComposeUiViewControllerParameters {
+public open class PluginParameters {
 	/**
 	 * Name of the folder containing the iosApp in the root's project tree
 	 */

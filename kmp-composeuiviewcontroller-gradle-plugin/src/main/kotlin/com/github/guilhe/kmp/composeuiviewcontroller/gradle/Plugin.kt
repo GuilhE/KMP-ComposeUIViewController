@@ -5,7 +5,14 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.SwiftExportUtils.getSwiftExportConfigForProject
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.PackageResolver
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getSwiftExportConfigForProject
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToFinalizeByCopyFilesToXcode
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterCopyFilesToXcode
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterExportToSpm
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterSetupSpmPackage
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterSwiftFormat
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterValidateRepresentables
 import com.google.devtools.ksp.gradle.KspExtension
 import java.io.File
 import kotlinx.serialization.json.Json
@@ -29,11 +36,11 @@ public class PluginConfigurationException(message: String, cause: Throwable? = n
  * Exposes the following tasks under the `composeuiviewcontroller` group:
  * - `copyFilesToXcode` — syncs KSP-generated Swift Representables to `iosApp/Representables/` and
  *   updates the Xcode project references. Triggered automatically after `embedAndSignAppleFrameworkForXcode`,
- *   `embedSwiftExportForXcode`, or `syncFramework` when [ComposeUiViewControllerParameters.autoExport] is `true`.
- *   Not registered when [ComposeUiViewControllerParameters.experimentalSpmExport] is `true`.
+ *   `embedSwiftExportForXcode`, or `syncFramework` when [PluginParameters.autoExport] is `true`.
+ *   Not registered when [PluginParameters.experimentalSpmExport] is `true`.
  * - `exportToSpm` — experimental. Creates and maintains a local SPM package at `iosApp/Representables/`
- *   (folder names driven by [ComposeUiViewControllerParameters.iosAppFolderName] and [ComposeUiViewControllerParameters.exportFolderName]).
- *   Triggered automatically after `embedSwiftExportForXcode` when [ComposeUiViewControllerParameters.experimentalSpmExport] is `true`.
+ *   (folder names driven by [PluginParameters.iosAppFolderName] and [PluginParameters.exportFolderName]).
+ *   Triggered automatically after `embedSwiftExportForXcode` when [PluginParameters.experimentalSpmExport] is `true`.
  *   Requires Swift Export to be configured.
  * - `formatSwiftFiles` — formats generated `.swift` files with `swiftformat` default rules (if available).
  * - `validateRepresentables` — inspects the full Representables pipeline without triggering a build.
@@ -49,7 +56,7 @@ public class PluginConfigurationException(message: String, cause: Throwable? = n
  *
  *   `WARN` entries (stale destination files, xcodeproj not found) do not fail the task.
  *   `FAIL` entries throw a [GradleException] listing all errors. The most common fix is `./gradlew clean`.
- *   The xcodeproj check is skipped when [ComposeUiViewControllerParameters.autoExport] is `false`.
+ *   The xcodeproj check is skipped when [PluginParameters.autoExport] is `false`.
  */
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
@@ -70,7 +77,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
 			setupTargets()
 
-			val extension = extensions.create(EXTENSION_PLUGIN, ComposeUiViewControllerParameters::class.java)
+			val extension = extensions.create(EXTENSION_PLUGIN, PluginParameters::class.java)
 			configureTaskToRegisterSwiftFormat(project = project)
 			configureTaskToRegisterValidateRepresentables(project = project, extensionParameters = extension)
 
@@ -148,7 +155,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
 	// Resets Package.swift to stub on clean so Xcode can open the project without resolution errors
 	// even before the next build regenerates the full package.
-	private fun Project.configureCleanSpmStub(extensionParameters: ComposeUiViewControllerParameters) {
+	private fun Project.configureCleanSpmStub(extensionParameters: PluginParameters) {
 		tasks.named(TASK_CLEAN_TEMP_FILES_FOLDER).configure { task ->
 			task.doLast {
 				val packageSwiftFile = rootDir.resolve(
@@ -162,7 +169,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 		}
 	}
 
-	private fun Project.validateExtensionParameters(parameters: ComposeUiViewControllerParameters) {
+	private fun Project.validateExtensionParameters(parameters: PluginParameters) {
 		require(parameters.iosAppFolderName.isNotBlank()) {
 			"iosAppFolderName cannot be blank. Current value: '${parameters.iosAppFolderName}'"
 		}
