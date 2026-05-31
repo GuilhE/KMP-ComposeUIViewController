@@ -1,6 +1,5 @@
 package com.sample.models
 
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import kotlinx.collections.immutable.ImmutableList

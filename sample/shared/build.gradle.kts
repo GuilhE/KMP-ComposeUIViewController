@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSwiftExportDsl::class)
+
 import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
 
 plugins {
@@ -7,15 +9,14 @@ plugins {
     id("io.github.guilhe.kmp.plugin-composeuiviewcontroller")
 }
 
-ComposeUiViewController {
+ ComposeUiViewController {
     iosAppName = "Gradient"
     targetName = "Gradient"
-}
+ }
 
 kotlin {
     iosArm64()
     iosSimulatorArm64()
-    @OptIn(ExperimentalSwiftExportDsl::class)
     swiftExport {
         moduleName = "Composables"
         flattenPackage = "com.sample.shared"

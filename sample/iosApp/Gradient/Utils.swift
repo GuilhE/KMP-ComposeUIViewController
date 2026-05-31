@@ -41,12 +41,12 @@ private let dateFormatter: DateFormatter = {
     return formatter
 }()
 
-private func dateFromMilliseconds(_ milliseconds: Int64) -> Date {
+private func dateFromMilliseconds(_ milliseconds: Int64) -> Date {sgit
     let timeInterval = TimeInterval(milliseconds) / 1000.0
     return Date(timeIntervalSince1970: timeInterval)
 }
 
-func printMilis(_ milis: KotlinLong? = nil, _ label: String = "") {
+func printMilis(_ milis: Int64? = nil, _ label: String = "") {
     let mi = milis == nil ? Int64(Date().timeIntervalSince1970 * 1000) : Int64(truncating: milis! as NSNumber)
     print("Shuffled at \(dateFormatter.string(from: dateFromMilliseconds(mi))) \(label)", terminator: "\n")
 }

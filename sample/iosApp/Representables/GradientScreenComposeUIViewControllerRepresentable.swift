@@ -4,7 +4,7 @@ import SwiftUI
 
 public struct GradientScreenComposeRepresentable: UIViewControllerRepresentable {
     public func makeUIViewController(context _: Context) -> UIViewController {
-        GradientScreenComposeUIViewController().make()
+        GradientScreenComposeUIViewController.shared.make()
     }
 
     public func updateUIViewController(_: UIViewController, context _: Context) {

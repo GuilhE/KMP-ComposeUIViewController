@@ -6,7 +6,7 @@ public struct GradientScreenSwiftRepresentable: UIViewControllerRepresentable {
     let controller: UIViewController
 
     public func makeUIViewController(context _: Context) -> UIViewController {
-        GradientScreenSwiftUIViewController().make(controller: controller)
+        GradientScreenSwiftUIViewController.shared.make(controller: controller)
     }
 
     public func updateUIViewController(_: UIViewController, context _: Context) {
