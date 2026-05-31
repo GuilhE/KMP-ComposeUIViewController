@@ -5,27 +5,29 @@ package composeuiviewcontroller
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_FRAMEWORK_CONFIG
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_KMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.ERROR_MISSING_PACKAGE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_COPY_SCRIPT_TEMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_FRAMEWORK
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.INFO_MODULE_NAME_BY_SWIFT_EXPORT
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.KSP_ARG_METADATA_HASH
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_ANNOTATIONS_NAME
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_GROUP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.LIB_KSP_NAME
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_APP_NAME
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_FOLDER
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_GROUP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_KEEP_FILE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_KMP_MODULE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_TARGET
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PLUGIN_KSP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_VALIDATE_REPRESENTABLES
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.ERROR_MISSING_FRAMEWORK_CONFIG
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.ERROR_MISSING_KMP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.ERROR_MISSING_PACKAGE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_COPY_SCRIPT_TEMP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.INFO_MODULE_NAME_BY_FRAMEWORK
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.INFO_MODULE_NAME_BY_SWIFT_EXPORT
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KSP_ARG_METADATA_HASH
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.LIB_ANNOTATIONS_NAME
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.LIB_GROUP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.LIB_KSP_NAME
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_APP_NAME
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_FOLDER
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_GROUP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_KEEP_FILE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_KMP_MODULE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_TARGET
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PLUGIN_KMP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PLUGIN_KSP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_COPY_FILES_TO_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_SWIFT_EXPORT_FOR_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_SYNC_FRAMEWORK
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_VALIDATE_REPRESENTABLES
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -192,14 +194,12 @@ class PluginTest {
 
 	@Test
 	fun `Method finalizeFrameworksTasks correctly finalizes embedAndSignAppleFrameworkForXcode or embedSwiftExportForXcode or syncFramework with copyFilesToXcode task`() {
-		with(KmpComposeUIViewControllerPlugin.Companion) {
-			val embedObjCTask = project.tasks.register(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE) {}
-			val embedSwiftTask = project.tasks.register(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE) {}
-			val syncTask = project.tasks.register(TASK_SYNC_FRAMEWORK) {}
-			assertEquals(1, embedObjCTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
-			assertEquals(1, embedSwiftTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
-			assertEquals(1, syncTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
-		}
+		val embedObjCTask = project.tasks.register(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE) {}
+		val embedSwiftTask = project.tasks.register(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE) {}
+		val syncTask = project.tasks.register(TASK_SYNC_FRAMEWORK) {}
+		assertEquals(1, embedObjCTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
+		assertEquals(1, embedSwiftTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
+		assertEquals(1, syncTask.get().finalizedBy.getDependencies(project.tasks.getByName(TASK_COPY_FILES_TO_XCODE)).size)
 	}
 
 	@Test

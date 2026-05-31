@@ -3,7 +3,10 @@ import Composables
 import SwiftUI
 
 public struct GradientScreenSwiftRepresentable: UIViewControllerRepresentable {
-    let controller: UIViewController
+    public let controller: UIViewController
+    public init(controller: UIViewController) {
+        self.controller = controller
+    }
 
     public func makeUIViewController(context _: Context) -> UIViewController {
         GradientScreenSwiftUIViewController.shared.make(controller: controller)

@@ -4,8 +4,12 @@ import Models
 import SwiftUI
 
 public struct GradientScreenMixedARepresentable: UIViewControllerRepresentable {
-    @Binding var state: ScreenState
-    let randomize: (Int64) -> Void
+    @Binding public var state: ScreenState
+    public let randomize: (Int64) -> Void
+    public init(state: Binding<ScreenState>, randomize: @escaping (Int64) -> Void) {
+        _state = state
+        self.randomize = randomize
+    }
 
     public func makeUIViewController(context _: Context) -> UIViewController {
         GradientScreenMixedAUIViewController.shared.make(randomize: randomize)

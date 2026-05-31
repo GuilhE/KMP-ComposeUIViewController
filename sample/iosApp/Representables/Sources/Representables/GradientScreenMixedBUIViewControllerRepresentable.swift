@@ -4,8 +4,12 @@ import Models
 import SwiftUI
 
 public struct GradientScreenMixedBRepresentable: UIViewControllerRepresentable {
-    @Binding var state: ScreenState
-    let controller: UIViewController
+    @Binding public var state: ScreenState
+    public let controller: UIViewController
+    public init(state: Binding<ScreenState>, controller: UIViewController) {
+        _state = state
+        self.controller = controller
+    }
 
     public func makeUIViewController(context _: Context) -> UIViewController {
         GradientScreenMixedBUIViewController.shared.make(controller: controller)
