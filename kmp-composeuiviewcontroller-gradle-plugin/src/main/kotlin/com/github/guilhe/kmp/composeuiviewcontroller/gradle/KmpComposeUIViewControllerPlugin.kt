@@ -102,6 +102,12 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 							tempFolder = tempFolder,
 							spmModuleName = frameworkNames.first()
 						)
+						configureTaskToRegisterSetupSpmPackage(
+						project = project,
+						extensionParameters = extension,
+						spmModuleName = frameworkNames.first()
+					)
+						configureCleanSpmStub(extension)
 					} else {
 						configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = extension, tempFolder = tempFolder)
 					}
@@ -136,6 +142,22 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			if (result.failure != null && tempFolder.exists()) {
 				val deleted = tempFolder.deleteRecursively()
 				logger.info("\n> $LOG_TAG:\n\t> Build failed - Temp folder deleted: $deleted")
+			}
+		}
+	}
+
+	// Resets Package.swift to stub on clean so Xcode can open the project without resolution errors
+	// even before the next build regenerates the full package.
+	private fun Project.configureCleanSpmStub(extensionParameters: ComposeUiViewControllerParameters) {
+		tasks.named(TASK_CLEAN_TEMP_FILES_FOLDER).configure { task ->
+			task.doLast {
+				val packageSwiftFile = rootDir.resolve(
+					"${extensionParameters.iosAppFolderName}/${extensionParameters.exportFolderName}/Package.swift"
+				)
+				if (packageSwiftFile.exists()) {
+					packageSwiftFile.writeText(stubPackageSwift(extensionParameters.exportFolderName))
+					logger.info("\n> $LOG_TAG:\n\t> Package.swift reset to stub")
+				}
 			}
 		}
 	}
@@ -309,49 +331,4 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 	}
 
 	private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
-
-	internal companion object {
-		private const val VERSION_LIBRARY = "2.4.0-RC2-1.11.0-1"
-		private const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
-		internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
-		internal const val PLUGIN_KSP = "com.google.devtools.ksp"
-		internal const val LIB_GROUP = "com.github.guilhe.kmp"
-		internal const val LIB_KSP_NAME = "kmp-composeuiviewcontroller-ksp"
-		private const val LIB_KSP = "$LIB_GROUP:$LIB_KSP_NAME:$VERSION_LIBRARY"
-		internal const val LIB_ANNOTATIONS_NAME = "kmp-composeuiviewcontroller-annotations"
-		private const val LIB_ANNOTATION = "$LIB_GROUP:$LIB_ANNOTATIONS_NAME:$VERSION_LIBRARY"
-		private const val EXTENSION_PLUGIN = "ComposeUiViewController"
-		internal const val TASK_CLEAN_TEMP_FILES_FOLDER = "cleanTempFilesFolder"
-		internal const val TASK_COPY_FILES_TO_XCODE = "copyFilesToXcode"
-		internal const val TASK_EXPORT_TO_SPM = "exportToSpm"
-		internal const val TASK_FORMAT_SWIFT_FILES = "formatSwiftFiles"
-		internal const val TASK_VALIDATE_REPRESENTABLES = "validateRepresentables"
-		internal const val TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE = "embedAndSignAppleFrameworkForXcode"
-		internal const val TASK_EMBED_SWIFT_EXPORT_FOR_XCODE = "embedSwiftExportForXcode"
-		internal const val TASK_SYNC_FRAMEWORK = "syncFramework"
-		internal const val FILE_NAME_COPY_SCRIPT = "exportToXcode.sh"
-		internal const val FILE_NAME_FORMAT_SCRIPT = "sformat.sh"
-		internal const val FILE_NAME_SPM_SCRIPT = "exportToSpm.sh"
-		internal const val FILE_NAME_FORMAT_SCRIPT_TEMP = "temp_format.sh"
-		internal const val FILE_NAME_COPY_SCRIPT_TEMP = "temp.sh"
-		internal const val FILE_NAME_SPM_SCRIPT_TEMP = "temp_spm.sh"
-		internal const val PARAM_KEEP_FILE = "keepScriptFile"
-		internal const val PARAM_KMP_MODULE = "kmp_module"
-		internal const val PARAM_FOLDER = "iosApp_project_folder"
-		internal const val PARAM_APP_NAME = "iosApp_name"
-		internal const val PARAM_TARGET = "iosApp_target_name"
-		internal const val PARAM_GROUP = "group_name"
-		internal const val PARAM_SPM_MODULE = "spm_module_name"
-		internal const val KSP_ARG_METADATA_HASH = "composeuiviewcontroller.metadataHash"
-		internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
-		internal const val ERROR_MISSING_PACKAGE = "Could not determine project's package"
-		internal const val ERROR_MISSING_FRAMEWORK_CONFIG = "No framework configuration found."
-		internal const val ERROR_MISSING_FRAMEWORK_CONFIG_FULL =
-			"$ERROR_MISSING_FRAMEWORK_CONFIG Please configure in the exporting module either:\n" +
-				"\t1. iOS framework baseName, or\n" +
-				"\t2. SwiftExport with moduleName"
-		internal const val INFO_MODULE_NAME_BY_FRAMEWORK =
-			"SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName:"
-		internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName:"
-	}
 }

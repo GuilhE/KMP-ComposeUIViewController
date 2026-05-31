@@ -2,7 +2,6 @@
 
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_VALIDATE_REPRESENTABLES
 import java.io.File
 import org.gradle.api.GradleException
 import org.gradle.api.Project

@@ -111,7 +111,7 @@ internal object SwiftExportUtils {
 			.replaceFirstChar { it.lowercaseChar() }
 		if (kebabToCamel == configProjectName) return true
 
-		if (configProjectName.replace("-", "").lowercase() == targetProjectName.replace("-", "").lowercase()) return true
+		if (configProjectName.replace("-", "").equals(targetProjectName.replace("-", ""), ignoreCase = true)) return true
 
 		return false
 	}

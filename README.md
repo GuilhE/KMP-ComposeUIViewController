@@ -81,7 +81,7 @@ Don't forget to import the plugin in each module. Check the swift export [sample
 > 1. Delete the `Derived Data` using Xcode or DevCleaner app;
 > 2. Run `./gradlew clean --no-build-cache`.
 
-## Experimental: SPM export
+### Experimental: SPM export
 
 Instead of relying on the `xcodeproj` gem to manage Xcode project references, the SPM export mode generates a local Swift Package at
 `{iosAppFolderName}/{exportFolderName}/` (e.g. `iosApp/Representables/`). This keeps the iOS side clean: no gem dependency, no Ruby toolchain,
@@ -102,15 +102,13 @@ kotlin {
 }
 
 ComposeUiViewController {
-    exportFolderName = "Representables"
+    iosAppName = "Gradient"
+    targetName = "Gradient"
     experimentalSpmExport = true
 }
 ```
 
-> [!NOTE]
-> `iosAppName` and `targetName` are not used when `experimentalSpmExport = true` and can be omitted.
-
-### One-time Xcode setup
+#### One-time Xcode setup
 
 After the first build, add the generated local package to your Xcode project once:
 
@@ -121,39 +119,9 @@ After the first build, add the generated local package to your Xcode project onc
 
 From that point on, every subsequent build updates the Swift sources automatically — no further Xcode changes are needed.
 
-### How it works
-
-Each build (triggered via `embedSwiftExportForXcode`) runs the `exportToSpm` Gradle task, which:
-
-1. Reads the KSP-generated `UIViewControllerRepresentable` Swift files from `build/generated/ksp/`.
-2. Copies them into `{iosAppFolderName}/{exportFolderName}/Sources/`.
-3. Regenerates `Package.swift`, declaring a local dependency on the KMP Swift Export SPM package at
-   `../../{module}/build/SPMPackage/{arch}/{config}/`.
-
 > [!NOTE]
 > `Package.swift` is regenerated when switching between simulator/device or Debug/Release configurations. When that happens, Xcode will
 > prompt you to re-resolve packages — this is expected behaviour.
-
-### Build output
-
-When building the KMP module with SPM export enabled, you should see output similar to this:
-
-```bash
-> Task :shared:exportToSpm
-  > Starting SPM export process
-  > KSP output: 4 Swift file(s) found
-  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
-  > New file: GradientScreenMixedAUIViewControllerRepresentable.swift
-  > New file: GradientScreenMixedBUIViewControllerRepresentable.swift
-  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
-  > Summary: 0 unchanged, 4 copied, 0 removed
-  > Package.swift generated
-  > Done
-```
-
-> [!NOTE]
-> This feature is **experimental**. When `experimentalSpmExport = true`, the `copyFilesToXcode` task is replaced by `exportToSpm`.
-> Full automation (adding the local package reference to `xcodeproj` automatically) is planned via a future `setupSpmPackage` task.
 
 ## Code generation
 
@@ -293,6 +261,21 @@ When building the KMP module, you should see output similar to this:
   > Adding: GradientScreenSwiftUIViewControllerRepresentable.swift
   > Summary: 4 added, 0 removed, 0 unchanged
   > Xcodeproj saved successfully
+  > Done
+```
+
+When building the KMP module with SPM export enabled, you should see output similar to this:
+
+```bash
+> Task :shared:exportToSpm
+  > Starting SPM export process
+  > KSP output: 4 Swift file(s) found
+  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedAUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedBUIViewControllerRepresentable.swift
+  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Summary: 0 unchanged, 4 copied, 0 removed
+  > Package.swift generated
   > Done
 ```
 

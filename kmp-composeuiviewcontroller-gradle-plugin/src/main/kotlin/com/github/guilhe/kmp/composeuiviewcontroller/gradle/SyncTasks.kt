@@ -3,25 +3,6 @@
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_COPY_SCRIPT
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_COPY_SCRIPT_TEMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_FORMAT_SCRIPT
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_FORMAT_SCRIPT_TEMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SPM_SCRIPT
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.FILE_NAME_SPM_SCRIPT_TEMP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_APP_NAME
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_FOLDER
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_GROUP
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_KEEP_FILE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_KMP_MODULE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_SPM_MODULE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.PARAM_TARGET
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_COPY_FILES_TO_XCODE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_EMBED_SWIFT_EXPORT_FOR_XCODE
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_EXPORT_TO_SPM
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_FORMAT_SWIFT_FILES
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.KmpComposeUIViewControllerPlugin.Companion.TASK_SYNC_FRAMEWORK
 import java.io.BufferedReader
 import java.io.File
 import org.gradle.api.Project
@@ -186,12 +167,65 @@ internal fun Project.configureTaskToFinalizeByCopyFilesToXcode(extensionParamete
     }
     tasks.matching { it.name in triggerTasks }.configureEach { task ->
         if (extensionParameters.autoExport) {
-            logger.info("\n> KmpComposeUIViewControllerPlugin:\n\t> Task '${task.name}' will be finalized by '$TASK_FORMAT_SWIFT_FILES' -> '$exportTask'")
+            logger.info("\n> " +
+				"KmpComposeUIViewControllerPlugin:\n\t> Task '${task.name}' will be finalized by '$TASK_FORMAT_SWIFT_FILES' -> '$exportTask'")
             task.finalizedBy(TASK_FORMAT_SWIFT_FILES)
         }
     }
     tasks.named(TASK_FORMAT_SWIFT_FILES).configure {
         it.finalizedBy(exportTask)
+    }
+}
+
+internal fun Project.configureTaskToRegisterSetupSpmPackage(
+    project: Project,
+    extensionParameters: ComposeUiViewControllerParameters,
+    spmModuleName: String
+) {
+    tasks.register(TASK_SETUP_SPM_PACKAGE, Exec::class.java) { task ->
+        task.group = "composeuiviewcontroller"
+        task.description = "One-time setup: creates the local SPM package stub and adds it to the Xcode project. Re-run after ./gradlew clean."
+        task.outputs.upToDateWhen { false }
+        task.doFirst { logger.info("\t> Setting up SPM package for module: ${project.name}") }
+
+        val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_SETUP_SPM_SCRIPT")
+        val script = inputStream?.use { stream ->
+            stream.bufferedReader().use(BufferedReader::readText)
+        } ?: throw PluginConfigurationException("Unable to read resource file: $FILE_NAME_SETUP_SPM_SCRIPT. Ensure the plugin is correctly packaged.")
+
+        val modifiedScript = script
+            .replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
+            .replace("$PARAM_FOLDER=\"iosApp\"", "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\"")
+            .replace("$PARAM_APP_NAME=\"iosApp\"", "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\"")
+            .replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
+            .replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
+            .replace("$PARAM_SPM_MODULE=\"Composables\"", "$PARAM_SPM_MODULE=\"$spmModuleName\"")
+
+        val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_SETUP_SPM_SCRIPT_TEMP")
+            .also {
+                it.parentFile?.mkdirs()
+                it.createNewFile()
+            }
+
+        if (tempFile.exists()) {
+            tempFile.writeText(modifiedScript)
+            tempFile.setExecutable(true)
+            task.workingDir = project.rootDir
+
+            try {
+                task.commandLine("bash", "-c", tempFile.absolutePath)
+                task.doLast {
+                    if (tempFile.exists()) tempFile.delete()
+                }
+            } catch (e: Exception) {
+                throw PluginConfigurationException(
+                    "Failed to configure script execution for task '$TASK_SETUP_SPM_PACKAGE'. Script path: ${tempFile.absolutePath}",
+                    e
+                )
+            }
+        } else {
+            throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_SETUP_SPM_SCRIPT_TEMP at ${tempFile.absolutePath}")
+        }
     }
 }
 
