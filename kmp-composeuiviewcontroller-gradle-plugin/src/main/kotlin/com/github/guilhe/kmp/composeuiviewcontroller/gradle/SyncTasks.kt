@@ -204,6 +204,7 @@ internal fun Project.configureTaskToRegisterSetupSpmPackage(
             .replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
             .replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
             .replace("$PARAM_SPM_MODULE=\"Composables\"", "$PARAM_SPM_MODULE=\"$spmModuleName\"")
+            .replace("$PARAM_SWIFT_TOOLS_VERSION=\"6.2\"", "$PARAM_SWIFT_TOOLS_VERSION=\"${extensionParameters.swiftToolsVersion}\"")
 
         val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_SETUP_SPM_SCRIPT_TEMP")
             .also {
