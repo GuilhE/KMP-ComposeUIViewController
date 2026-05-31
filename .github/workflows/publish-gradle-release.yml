@@ -5,6 +5,8 @@ on:
     tags:
       - 'plugin-release-*'
 
+  workflow_dispatch:
+  
 jobs:
   publish-to-gradle-portal:
     runs-on: macos-latest

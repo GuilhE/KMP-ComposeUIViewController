@@ -1,5 +1,156 @@
 # Changelog
 
+## [2.4.0-RC2-1.11.0-1]
+
+- Compatible with 2.4.0-RC2-1.11.0-1
+
+---
+
+## [2.4.0-RC2-1.11.0]
+
+- Compatible with 2.4.0-RC2-1.11.0
+
+---
+
+## [2.4.0-RC-1.11.0]
+
+- Compatible with 2.4.0-RC-1.11.0
+
+---
+
+## [2.4.0-Beta2-1.11.0-rc01]
+
+- Compatible with 2.4.0-Beta2-1.11.0-rc01
+
+---
+
+## [2.3.20-1.10.3-1]
+
+- Compatible with 2.3.20-1.10.3-1
+
+---
+
+## [2.3.20-1.10.3]
+
+- Compatible with 2.3.20-1.10.3
+
+---
+
+## [2.4.0-Beta1-1.11.0-beta01-1]
+
+- Compatible with 2.4.0-Beta1-1.11.0-beta01-1
+
+---
+
+## [2.4.0-Beta1-1.11.0-beta01]
+
+- Compatible with 2.4.0-Beta1-1.11.0-beta01
+
+---
+
+## [2.3.20-1.11.0-alpha04]
+
+- Compatible with 2.3.20-1.11.0-alpha04
+
+---
+
+## [2.3.20-1.10.1]
+
+- Compatible with 2.3.20-1.10.1
+
+---
+
+## [2.3.20-RC2-1.10.1]
+
+- Compatible with 2.3.20-RC2-1.10.1
+
+---
+
+## [2.3.20-RC-1.10.1]
+
+- Compatible with 2.3.20-RC-1.10.1
+
+---
+
+## [2.3.20-Beta2-1.10.1]
+
+- Compatible with 2.3.20-Beta2-1.10.1
+
+---
+
+## [2.3.20-Beta2-1.10.0-1]
+
+- Compatible with 2.3.20-Beta2-1.10.0-1
+
+---
+
+## [2.3.20-Beta2-1.10.0]
+
+- Compatible with 2.3.20-Beta2-1.10.0
+- Plugin now throws when no iOS export configuration is found, instead of defaulting to module name
+
+---
+
+## [2.3.20-Beta1-1.10.0]
+
+- Compatible with 2.3.20-Beta1-1.10.0
+
+---
+
+## [2.3.20-Beta1-1.10.0-rc02]
+
+- Compatible with 2.3.20-Beta1-1.10.0-rc02
+
+---
+
+## [2.3.0-1.10.0-rc02-6]
+
+- Compatible with 2.3.0-1.10.0-rc02-6
+
+---
+
+## [2.3.0-1.10.0-rc02-5]
+
+- Compatible with 2.3.0-1.10.0-rc02-5
+
+---
+
+## [2.3.0-1.10.0-rc02-4]
+
+- Compatible with 2.3.0-1.10.0-rc02-4
+
+---
+
+## [2.3.0-1.10.0-rc02-3]
+
+- Compatible with 2.3.0-1.10.0-rc02-3
+
+---
+
+## [2.3.0-1.10.0-rc02-2]
+
+- Compatible with 2.3.0-1.10.0-rc02-2
+
+---
+
+## [2.3.0-1.10.0-rc02-1]
+
+- Compatible with 2.3.0-1.10.0-rc02-1
+
+---
+
+## [2.3.0-1.10.0-rc02]
+
+- Compatible with 2.3.0-1.10.0-rc02
+
+---
+
+## [2.3.0-RC3-1.10.0-rc02-4]
+
+- Compatible with 2.3.0-RC3-1.10.0-rc02-4
+
+---
+
 ## [2.3.0-RC3-1.10.0-rc02-3]
 
 - Compatible with 2.3.0-RC3-1.10.0-rc02-3

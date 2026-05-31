@@ -5,6 +5,8 @@ on:
     tags:
       - 'library-release-*'
 
+  workflow_dispatch:
+        
 jobs:
   publish-to-maven:
     runs-on: macos-latest
