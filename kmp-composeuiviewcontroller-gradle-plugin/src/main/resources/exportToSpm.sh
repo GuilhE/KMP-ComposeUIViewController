@@ -3,16 +3,22 @@
 # DEFAULT VALUES
 kmp_module="shared"
 iosApp_project_folder="iosApp"
+iosApp_name="iosApp"
+iosApp_target_name="iosApp"
 group_name="Representables"
 spm_module_name="Composables"
+ios_deployment_target="26"
+swift_tools_version="6.2"
 #####################
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../../" && pwd )"
+IOS_APP_DIR="$PROJECT_ROOT/$iosApp_project_folder"
 
 files_source="$kmp_module/build/generated/ksp/"
 spm_package_dir="$iosApp_project_folder/$group_name"
 sources_dir="$spm_package_dir/Sources/$group_name"
+xcodeproj_path="$iosApp_name.xcodeproj"
 
 determine_kotlin_arch() {
   if [[ "${PLATFORM_NAME:-iphonesimulator}" == "iphoneos" ]]; then
@@ -32,17 +38,138 @@ KMP_PACKAGE_ABS="$PROJECT_ROOT/$kmp_module/build/SPMPackage/$KOTLIN_ARCH/$BUILD_
 KMP_PACKAGE_SYMLINK="$PROJECT_ROOT/$kmp_module/build/SPMPackage/$spm_module_name"
 KMP_PACKAGE_RELPATH="../../$kmp_module/build/SPMPackage/$spm_module_name"
 
+install_gem() {
+  local gem_name="$1"
+  local version_constraint="$2"
+  local install_output
+  install_output=$(gem install "$gem_name" -v "$version_constraint" 2>&1)
+  if [ $? -ne 0 ]; then
+    if echo "$install_output" | grep -q "FilePermissionError\|don't have write permissions"; then
+      echo "  > Permission denied. Installing to user directory..."
+      install_output=$(gem install "$gem_name" -v "$version_constraint" --user-install 2>&1)
+      if [ $? -eq 0 ]; then
+        local user_gem_bin
+        user_gem_bin="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin"
+        if [ -d "$user_gem_bin" ] && [[ ":$PATH:" != *":$user_gem_bin:"* ]]; then
+          export PATH="$user_gem_bin:$PATH"
+        fi
+      else
+        echo "  > ERROR: Failed to install gem even with --user-install"
+        echo "$install_output"
+        exit 1
+      fi
+    else
+      echo "  > ERROR: Failed to install gem"
+      echo "$install_output"
+      exit 1
+    fi
+  fi
+}
+
+check_for_xcodeproj() {
+  local min_version="1.27.0"
+  local current_version
+  current_version=$(gem list xcodeproj --local 2>/dev/null | grep "^xcodeproj " | sed 's/.*(\([0-9.]*\).*/\1/')
+  if [ -z "$current_version" ]; then
+    echo "  > Installing xcodeproj gem (minimum version: $min_version)..."
+    install_gem "xcodeproj" ">= $min_version"
+  else
+    if [ "$(printf '%s\n' "$min_version" "$current_version" | sort -V | head -n1)" != "$min_version" ]; then
+      echo "  > Updating xcodeproj gem to >= $min_version..."
+      install_gem "xcodeproj" ">= $min_version"
+    fi
+  fi
+  if ! gem spec xcodeproj > /dev/null 2>&1; then
+    echo "  > ERROR: Failed to verify xcodeproj gem"
+    exit 1
+  fi
+}
+
+# Adds the local SPM package reference to the Xcode project if not already present.
+# Uses a fast grep check to avoid invoking the xcodeproj gem on every build.
+add_to_xcodeproj_if_needed() {
+  local project_pbxproj="$IOS_APP_DIR/$xcodeproj_path/project.pbxproj"
+  if [ ! -f "$project_pbxproj" ]; then
+    echo "  > xcodeproj not found at $xcodeproj_path — skipping Xcode project setup"
+    return 0
+  fi
+
+  if grep -q "XCLocalSwiftPackageReference" "$project_pbxproj" 2>/dev/null && \
+     grep -q "\"$group_name\"" "$project_pbxproj" 2>/dev/null; then
+    return 0
+  fi
+
+  echo "  > Adding \"$group_name\" local package to Xcode project..."
+  check_for_xcodeproj
+
+  ruby_script='
+    require "xcodeproj"
+
+    xcodeproj_path  = ARGV[0]
+    target_name     = ARGV[1]
+    relative_path   = ARGV[2]
+    product_name    = ARGV[3]
+
+    begin
+      project = Xcodeproj::Project.open(xcodeproj_path)
+    rescue => e
+      puts "  > ERROR: Failed to open Xcode project: #{e.message}"
+      exit 1
+    end
+
+    target = project.targets.find { |t| t.name == target_name }
+    unless target
+      puts "  > ERROR: Target \"#{target_name}\" not found in project"
+      exit 1
+    end
+
+    existing_refs = project.root_object.package_references.to_a rescue []
+    already_added = existing_refs.any? do |ref|
+      ref.isa == "XCLocalSwiftPackageReference" &&
+        ref.respond_to?(:relative_path) &&
+        ref.relative_path == relative_path
+    end
+
+    if already_added
+      puts "  > Package \"#{product_name}\" already added to project. Skipping"
+      exit 0
+    end
+
+    pkg_ref = project.new(Xcodeproj::Project::Object::XCLocalSwiftPackageReference)
+    pkg_ref.relative_path = relative_path
+    project.root_object.package_references << pkg_ref
+
+    pkg_dep = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
+    pkg_dep.package = pkg_ref
+    pkg_dep.product_name = product_name
+    target.package_product_dependencies << pkg_dep
+
+    begin
+      project.save
+      puts "  > Added \"#{product_name}\" local package to target \"#{target_name}\""
+    rescue => e
+      puts "  > ERROR: Failed to save Xcode project: #{e.message}"
+      exit 1
+    end
+  '
+  (cd "$IOS_APP_DIR" && ruby -e "$ruby_script" "$xcodeproj_path" "$iosApp_target_name" "$group_name" "$group_name")
+}
+
+
 # Generates a full Package.swift with a dependency on the KMP Swift Export package.
 # The path points to the named symlink so the Package.swift is stable across arch/config changes.
 generate_package_swift() {
   cat << SWIFT_EOF
-// swift-tools-version: 5.9
+// swift-tools-version: $swift_tools_version
 // Auto-generated by KMP-ComposeUIViewController — do not edit manually.
 
 import PackageDescription
 
 let package = Package(
     name: "$group_name",
+    platforms: [
+        .iOS(.v$ios_deployment_target)
+    ],
     products: [
         .library(name: "$group_name", targets: ["$group_name"])
     ],
@@ -63,8 +190,8 @@ SWIFT_EOF
 }
 
 # Generates a stub Package.swift with no external dependency.
-# Used before the first build when the KMP Swift Export package hasn't been generated yet.
-# Replaced automatically after the first successful Xcode build.
+# Used before the first build when the KMP Swift Export package hasn't been generated yet,
+# or after ./gradlew clean. Replaced automatically on the next successful Xcode build.
 generate_package_swift_stub() {
   cat << SWIFT_EOF
 // swift-tools-version: 5.9
@@ -95,7 +222,7 @@ setup_spm_package() {
   local new_content
 
   if [ -d "$KMP_PACKAGE_ABS" ]; then
-    # Create/update symlink: build/SPMPackage/{spmModuleName} → ../{arch}/{config}
+    # Create/update symlink: build/SPMPackage/{spmModuleName} → {arch}/{config}
     # This makes the SPM identity match the module name regardless of arch or config.
     mkdir -p "$(dirname "$KMP_PACKAGE_SYMLINK")"
     ln -sfn "$KOTLIN_ARCH/$BUILD_CONFIG" "$KMP_PACKAGE_SYMLINK"
@@ -220,6 +347,7 @@ smart_sync_files() {
 
 echo "  > Arch: $KOTLIN_ARCH, Config: $BUILD_CONFIG"
 setup_spm_package
+add_to_xcodeproj_if_needed
 echo "  > Starting smart sync process"
 smart_sync_files "$files_source" "$sources_dir"
 echo "  > Done"

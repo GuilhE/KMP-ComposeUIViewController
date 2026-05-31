@@ -103,10 +103,10 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 							spmModuleName = frameworkNames.first()
 						)
 						configureTaskToRegisterSetupSpmPackage(
-						project = project,
-						extensionParameters = extension,
-						spmModuleName = frameworkNames.first()
-					)
+							project = project,
+							extensionParameters = extension,
+							spmModuleName = frameworkNames.first()
+						)
 						configureCleanSpmStub(extension)
 					} else {
 						configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = extension, tempFolder = tempFolder)

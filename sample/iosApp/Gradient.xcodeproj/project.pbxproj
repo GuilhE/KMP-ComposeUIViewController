@@ -124,7 +124,7 @@
 			);
 			name = Gradient;
 			packageProductDependencies = (
-				049DC2F7D9C83B9169FE3E75 /* Representables */,
+				8AED7D970366CEC4A2EDFF98 /* Representables */,
 			);
 			productName = iosApp;
 			productReference = 7555FF7B242A565900829871 /* Gradient.app */;
@@ -156,7 +156,7 @@
 			);
 			mainGroup = 7555FF72242A565900829871;
 			packageReferences = (
-				888C257C6C139807AC87B242 /* XCLocalSwiftPackageReference "Representables" */,
+				C2E918F2739699EE4A331D79 /* XCLocalSwiftPackageReference "Representables" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -328,6 +328,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -411,16 +412,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		888C257C6C139807AC87B242 /* XCLocalSwiftPackageReference "Representables" */ = {
+		C2E918F2739699EE4A331D79 /* XCLocalSwiftPackageReference "Representables" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Representables;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		049DC2F7D9C83B9169FE3E75 /* Representables */ = {
+		8AED7D970366CEC4A2EDFF98 /* Representables */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 888C257C6C139807AC87B242 /* XCLocalSwiftPackageReference "Representables" */;
+			package = C2E918F2739699EE4A331D79 /* XCLocalSwiftPackageReference "Representables" */;
 			productName = Representables;
 		};
 /* End XCSwiftPackageProductDependency section */

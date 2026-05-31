@@ -13,6 +13,8 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
  * @property experimentalSpmExport When `true`, replaces the xcodeproj-based export with a local SPM package at `[iosAppFolderName]/[exportFolderName]/`.
  * Requires Swift Export to be configured (`swiftExport { moduleName = "..." }`). The developer adds the generated package to Xcode once via
  * *File > Add Package Dependencies > Add Local*. Subsequent builds update the Swift sources automatically — no xcodeproj gem required.
+ * @property iosDeploymentTarget Minimum iOS version for the generated SPM package (e.g. `"16"`). Only used when [experimentalSpmExport] is `true`.
+ * @property swiftToolsVersion Swift tools version declared in the generated `Package.swift` (e.g. `"5.9"`, `"6.0"`). Only used when [experimentalSpmExport] is `true`.
  */
 public open class ComposeUiViewControllerParameters {
 	/**
@@ -62,4 +64,22 @@ public open class ComposeUiViewControllerParameters {
 	 * Add the generated package to Xcode once via *File > Add Package Dependencies > Add Local* — subsequent builds keep the Swift sources in sync automatically.
 	 */
 	public var experimentalSpmExport: Boolean = false
+
+	/**
+	 * Minimum iOS deployment target for the generated SPM package. Only used when [experimentalSpmExport] is `true`.
+	 */
+	public var iosDeploymentTarget: String = "26"
+		set(value) {
+			require(value.isNotBlank()) { "iosDeploymentTarget cannot be blank" }
+			field = value
+		}
+
+	/**
+	 * Swift tools version declared in the generated `Package.swift`. Only used when [experimentalSpmExport] is `true`.
+	 */
+	public var swiftToolsVersion: String = "6.2"
+		set(value) {
+			require(value.isNotBlank()) { "swiftToolsVersion cannot be blank" }
+			field = value
+		}
 }
