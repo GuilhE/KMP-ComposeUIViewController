@@ -91,6 +91,13 @@ SWIFT_EOF
 create_spm_package_stub() {
   mkdir -p "$sources_dir"
 
+  # SPM requires at least one source file per target — add a placeholder until the first build
+  # populates Sources/ with the real KSP-generated files.
+  local placeholder="$sources_dir/Placeholder.swift"
+  if [ ! -f "$placeholder" ]; then
+    printf '// Auto-generated placeholder — will be replaced on the first Xcode build.\n' > "$placeholder"
+  fi
+
   local package_swift="$spm_package_dir/Package.swift"
   local new_content
   new_content=$(generate_stub_package_swift)

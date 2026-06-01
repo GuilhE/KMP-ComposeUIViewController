@@ -255,6 +255,12 @@ setup_spm_package() {
     echo "  > Build once in Xcode to activate the full Swift Export dependency"
     rm -f "$KMP_INTERFACES_SYMLINK"
     rm -f "$KMP_OTHER_INCLUDES_SYMLINK"
+    # SPM requires at least one source file per target — add a placeholder until the first
+    # build populates Sources/ with the real KSP-generated files.
+    local placeholder="$sources_dir/Placeholder.swift"
+    if [ ! -f "$placeholder" ]; then
+      printf '// Auto-generated placeholder — will be replaced on the first Xcode build.\n' > "$placeholder"
+    fi
     new_content=$(generate_package_swift_stub)
   fi
 
