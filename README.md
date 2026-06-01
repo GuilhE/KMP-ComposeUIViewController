@@ -129,8 +129,7 @@ swiftExport {
     export(projects.otherModule) { ... }
 }
 ```
-Don't forget to import the plugin in each module.  
-Check the [sample-swift-export](sample-swift-export).
+Don't forget to import the plugin in each module. Check the [sample-swift-export](sample-swift-export).
 
 > [!IMPORTANT]
 > When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - it's recommended to follow this 
@@ -358,7 +357,9 @@ struct SomeView: View {
 > Avoid deleting `iosApp/Representables` without using Xcode.
 
 ## Sample
-For working samples check [sample-swift-export](sample-swift-export) or [sample-objc-export](sample-objc-export). Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
+For working samples check [sample-objc-export](sample-objc-export), [sample-swift-export](sample-swift-export) or [sample-swift-export-spm](sample-swift-export-spm). 
+Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `Gradient` in run 
+configurations.
 
 You'll find different use cases:
 - `GradientScreenCompose`: A screen rendered entirely in Compose (UI+state) and embedded in iOS;
