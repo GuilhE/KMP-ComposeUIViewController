@@ -226,7 +226,7 @@ internal fun indentParameters(code: String, parameters: String): String {
 		return removeAdjacentEmptyLines(code.lines()).joinToString("\n").trimIndent()
 	}
 	val linesBeforeLetParameters = code.substringBefore(parameters).lines()
-	val indentation = linesBeforeLetParameters.lastOrNull()?.takeWhile { it.isWhitespace() } ?: ""
+	val indentation = linesBeforeLetParameters.lastOrNull { it.isNotEmpty() }?.takeWhile { it.isWhitespace() } ?: ""
 	val indentedLetParameters = parameters.lines().joinToString("\n") { "$indentation$it" }.lines()
 	val codeLines = code.lines().toMutableList()
 	codeLines.subList(linesBeforeLetParameters.size - 1, linesBeforeLetParameters.size - 1 + indentedLetParameters.size).clear()
