@@ -161,10 +161,11 @@ Run this task once after enabling `experimentalSpmExport`. It creates the local 
 ```bash
 ./gradlew :shared:createRepresentablesPackage
 ```
-> [!NOTE]
-> This task is idempotent: safe to re-run after `./gradlew clean`.
-
 After running it, you should see a Swift Package Dependency in your project. The package is empty at this point, but it's ready to be populated with the generated `UIViewControllerRepresentable` files on every build.
+
+> [!NOTE]
+> 1. This task is idempotent: safe to re-run after `./gradlew clean`.
+> 2. The **first build** after setup will fail — this is expected. Xcode resolves SPM packages before build phases run, so on the first build the package is still the stub. The **second build** will succeed and every subsequent build will work normally.
 
 #### Fresh install
 
