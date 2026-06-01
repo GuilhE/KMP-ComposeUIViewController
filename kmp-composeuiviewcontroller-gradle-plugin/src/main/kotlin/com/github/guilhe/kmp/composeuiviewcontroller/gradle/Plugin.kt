@@ -9,8 +9,9 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.PackageResolve
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getSwiftExportConfigForProject
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToFinalizeByCopyFilesToXcode
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterCopyFilesToXcode
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterCreateRepresentablesPackage
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterDeleteRepresentablesPackage
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterExportToSpm
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterSetupRepresentablesSpmPackage
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterSwiftFormat
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterValidateRepresentables
 import com.google.devtools.ksp.gradle.KspExtension
@@ -103,10 +104,14 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 					configureKspTasksForCacheInvalidation()
 
 					if (extension.experimentalSpmExport) {
-						configureTaskToRegisterSetupRepresentablesSpmPackage(
+						configureTaskToRegisterCreateRepresentablesPackage(
 							project = project,
 							extensionParameters = extension,
 							spmModuleName = frameworkNames.first()
+						)
+						configureTaskToRegisterDeleteRepresentablesPackage(
+							project = project,
+							extensionParameters = extension
 						)
 						configureTaskToRegisterExportToSpm(
 							project = project,

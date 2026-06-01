@@ -5,6 +5,8 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_COPY_SCRIPT
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_COPY_SCRIPT_TEMP
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_DELETE_SPM_SCRIPT
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_DELETE_SPM_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_FORMAT_SCRIPT
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_FORMAT_SCRIPT_TEMP
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.FILE_NAME_SETUP_SPM_SCRIPT
@@ -24,6 +26,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_TARGET
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PluginConfigurationException
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PluginParameters
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_COPY_FILES_TO_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_DELETE_SPM_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_SWIFT_EXPORT_FOR_XCODE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EXPORT_TO_SPM
@@ -135,7 +138,7 @@ internal fun Project.configureTaskToRegisterCopyFilesToXcode(
 	}
 }
 
-internal fun Project.configureTaskToRegisterSetupRepresentablesSpmPackage(
+internal fun Project.configureTaskToRegisterCreateRepresentablesPackage(
 	project: Project,
 	extensionParameters: PluginParameters,
 	spmModuleName: String
@@ -188,6 +191,59 @@ internal fun Project.configureTaskToRegisterSetupRepresentablesSpmPackage(
 			}
 		} else {
 			throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_SETUP_SPM_SCRIPT_TEMP at ${tempFile.absolutePath}")
+		}
+	}
+}
+
+internal fun Project.configureTaskToRegisterDeleteRepresentablesPackage(
+	project: Project,
+	extensionParameters: PluginParameters
+) {
+	tasks.register(TASK_DELETE_SPM_PACKAGE, Exec::class.java) { task ->
+		task.group = "composeuiviewcontroller"
+		task.description =
+			"Removes the local SPM package and its Xcode project reference. Run setupRepresentablesSpmPackage to set up again."
+		task.outputs.upToDateWhen { false }
+		task.doFirst { logger.info("\t> Deleting Representables SPM package for module: ${project.name}") }
+
+		val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_DELETE_SPM_SCRIPT")
+		val script = inputStream?.use { stream ->
+			stream.bufferedReader().use(BufferedReader::readText)
+		} ?: throw PluginConfigurationException(
+			"Unable to read resource file: $FILE_NAME_DELETE_SPM_SCRIPT. Ensure the plugin is correctly packaged."
+		)
+
+		val modifiedScript = script
+			.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
+			.replace("$PARAM_FOLDER=\"iosApp\"", "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\"")
+			.replace("$PARAM_APP_NAME=\"iosApp\"", "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\"")
+			.replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
+			.replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
+
+		val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_DELETE_SPM_SCRIPT_TEMP")
+			.also {
+				it.parentFile?.mkdirs()
+				it.createNewFile()
+			}
+
+		if (tempFile.exists()) {
+			tempFile.writeText(modifiedScript)
+			tempFile.setExecutable(true)
+			task.workingDir = project.rootDir
+
+			try {
+				task.commandLine("bash", "-c", tempFile.absolutePath)
+				task.doLast {
+					if (tempFile.exists()) tempFile.delete()
+				}
+			} catch (e: Exception) {
+				throw PluginConfigurationException(
+					"Failed to configure script execution for task '$TASK_DELETE_SPM_PACKAGE'. Script path: ${tempFile.absolutePath}",
+					e
+				)
+			}
+		} else {
+			throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_DELETE_SPM_SCRIPT_TEMP at ${tempFile.absolutePath}")
 		}
 	}
 }

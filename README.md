@@ -159,12 +159,22 @@ ComposeUiViewController {
 Run this task once after enabling `experimentalSpmExport`. It creates the local Swift Package stub and automatically adds the package reference to your Xcode project — no manual Xcode changes needed:
 
 ```bash
-./gradlew :shared:setupRepresentablesSpmPackage
+./gradlew :shared:createRepresentablesPackage
 ```
 > [!NOTE]
 > This task is idempotent: safe to re-run after `./gradlew clean`.
 
 After running it, you should see a Swift Package Dependency in your project. The package is empty at this point, but it's ready to be populated with the generated `UIViewControllerRepresentable` files on every build.
+
+#### Fresh install
+
+To fully remove the generated SPM package and its Xcode project reference (e.g. to reset and start over), run:
+
+```bash
+./gradlew :shared:deleteRepresentablesPackage
+```
+
+This will remove the Package containing the Representables. Afterward, run `createRepresentablesPackage` to set it up again.
 
 <details><summary>How it works</summary>
 
@@ -176,7 +186,7 @@ On every Xcode build, the plugin hooks into `embedSwiftExportForXcode` and runs 
 2. Updates `{exportFolderName}/Package.swift` using `unsafeFlags` to point to the pre-compiled Swift module interfaces instead of depending on the KMP source package. This avoids Xcode recompiling the KMP module with a mismatched deployment target.
 3. Syncs the KSP-generated `.swift` files into `{exportFolderName}/Sources/{exportFolderName}/`.
 
-After `./gradlew clean`, the `Package.swift` is automatically reset to a stub (no external dependencies) so Xcode can still open the project without resolution errors. Re-run `setupRepresentablesSpmPackage` to restore the full setup.
+After `./gradlew clean`, the `Package.swift` is automatically reset to a stub (no external dependencies) so Xcode can still open the project without resolution errors. Re-run `createRepresentablesPackage` to restore the full setup.
 
 </details>
 
