@@ -122,14 +122,15 @@ When building the KMP module, you should see output similar to this:
   
 To enable Swift Export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).
 
-When using dependencies from [other modules](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/7a7385f8f7f92c422d5f9d68b122ce652df98e18/sample/shared/build.gradle.kts#L23):
+When using dependencies from other modules:
 ```kotlin
 swiftExport {
     moduleName = "Shared"
     export(projects.otherModule) { ... }
 }
 ```
-Don't forget to import the plugin in each module. Check the swift export [sample](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/7a7385f8f7f92c422d5f9d68b122ce652df98e18/sample/shared-models/build.gradle.kts#L5).
+Don't forget to import the plugin in each module.  
+Check the [sample-swift-export](sample-swift-export).
 
 > [!IMPORTANT]
 > When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - it's recommended to follow this 
@@ -357,7 +358,7 @@ struct SomeView: View {
 > Avoid deleting `iosApp/Representables` without using Xcode.
 
 ## Sample
-For a working [sample](sample-swift-export) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
+For working samples check [sample-swift-export](sample-swift-export) or [sample-objc-export](sample-objc-export). Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
 
 You'll find different use cases:
 - `GradientScreenCompose`: A screen rendered entirely in Compose (UI+state) and embedded in iOS;
