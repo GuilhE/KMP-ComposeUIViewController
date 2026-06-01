@@ -30,10 +30,8 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EXPORT_TO_SPM
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_FORMAT_SWIFT_FILES
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_SETUP_SPM_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_SYNC_FRAMEWORK
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_VALIDATE_REPRESENTABLES
 import java.io.BufferedReader
 import java.io.File
-import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.tasks.Exec
 
@@ -137,7 +135,7 @@ internal fun Project.configureTaskToRegisterCopyFilesToXcode(
 	}
 }
 
-internal fun Project.configureTaskToRegisterSetupSpmPackage(
+internal fun Project.configureTaskToRegisterSetupRepresentablesSpmPackage(
 	project: Project,
 	extensionParameters: PluginParameters,
 	spmModuleName: String

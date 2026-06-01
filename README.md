@@ -80,7 +80,7 @@ If Representables are not found in Xcode, run the diagnostic task to inspect the
 
 It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for:
 1. KSP output — Swift files in `build/generated/ksp/`
-2. Destination — Swift files in `iosApp/Representables/`
+2. Destination — Swift files in `{iosAppFolderName}/{exportFolderName}/`
 3. Sync — KSP output and destination match
 4. xcodeproj — all Representables are referenced in `project.pbxproj`
 
@@ -159,7 +159,7 @@ ComposeUiViewController {
 Run this task once after enabling `experimentalSpmExport`. It creates the local Swift Package stub and automatically adds the package reference to your Xcode project — no manual Xcode changes needed:
 
 ```bash
-./gradlew :shared:setupSpmPackage
+./gradlew :shared:setupRepresentablesSpmPackage
 ```
 > [!NOTE]
 > This task is idempotent: safe to re-run after `./gradlew clean`.
@@ -176,7 +176,7 @@ On every Xcode build, the plugin hooks into `embedSwiftExportForXcode` and runs 
 2. Updates `{exportFolderName}/Package.swift` using `unsafeFlags` to point to the pre-compiled Swift module interfaces instead of depending on the KMP source package. This avoids Xcode recompiling the KMP module with a mismatched deployment target.
 3. Syncs the KSP-generated `.swift` files into `{exportFolderName}/Sources/{exportFolderName}/`.
 
-After `./gradlew clean`, the `Package.swift` is automatically reset to a stub (no external dependencies) so Xcode can still open the project without resolution errors. Re-run `setupSpmPackage` to restore the full setup.
+After `./gradlew clean`, the `Package.swift` is automatically reset to a stub (no external dependencies) so Xcode can still open the project without resolution errors. Re-run `setupRepresentablesSpmPackage` to restore the full setup.
 
 </details>
 

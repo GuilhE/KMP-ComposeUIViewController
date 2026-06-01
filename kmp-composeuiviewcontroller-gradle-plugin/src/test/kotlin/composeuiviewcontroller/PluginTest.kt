@@ -622,7 +622,7 @@ class PluginTest {
 	}
 
 	@Test
-	fun `exportToSpm and setupSpmPackage tasks are registered and copyFilesToXcode is not in SPM mode`() {
+	fun `exportToSpm and setupRepresentablesSpmPackage tasks are registered and copyFilesToXcode is not in SPM mode`() {
 		with(project) {
 			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
 				val swiftExport = extensions.getByType(SwiftExportExtension::class.java)

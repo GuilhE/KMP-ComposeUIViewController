@@ -10,7 +10,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUti
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToFinalizeByCopyFilesToXcode
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterCopyFilesToXcode
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterExportToSpm
-import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterSetupSpmPackage
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterSetupRepresentablesSpmPackage
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterSwiftFormat
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterValidateRepresentables
 import com.google.devtools.ksp.gradle.KspExtension
@@ -103,7 +103,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 					configureKspTasksForCacheInvalidation()
 
 					if (extension.experimentalSpmExport) {
-						configureTaskToRegisterSetupSpmPackage(
+						configureTaskToRegisterSetupRepresentablesSpmPackage(
 							project = project,
 							extensionParameters = extension,
 							spmModuleName = frameworkNames.first()
