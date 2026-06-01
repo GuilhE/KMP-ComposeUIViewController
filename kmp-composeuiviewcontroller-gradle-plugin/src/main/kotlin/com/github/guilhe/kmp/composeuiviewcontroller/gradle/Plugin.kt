@@ -103,15 +103,15 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 					configureKspTasksForCacheInvalidation()
 
 					if (extension.experimentalSpmExport) {
+						configureTaskToRegisterSetupSpmPackage(
+							project = project,
+							extensionParameters = extension,
+							spmModuleName = frameworkNames.first()
+						)
 						configureTaskToRegisterExportToSpm(
 							project = project,
 							extensionParameters = extension,
 							tempFolder = tempFolder,
-							spmModuleName = frameworkNames.first()
-						)
-						configureTaskToRegisterSetupSpmPackage(
-							project = project,
-							extensionParameters = extension,
 							spmModuleName = frameworkNames.first()
 						)
 						configureCleanSpmStub(extension)
