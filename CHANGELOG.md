@@ -2,6 +2,36 @@
 
 ## [2.4.0-RC2-1.11.0-2]
 
+### Experimental SPM export mode
+
+#### Plugin
+
+Adds `experimentalSpmExport = true` to `PluginParameters` as an alternative to the `xcodeproj`-gem-based export. 
+When enabled (requires Swift Export to be configured), the plugin generates a local Swift Package at `{iosAppFolderName}/{exportFolderName}/` instead of manipulating `project.pbxproj` on every build:
+
+- New `PluginParameters` properties: `experimentalSpmExport`, `iosDeploymentTarget`, `swiftToolsVersion`
+- `exportToSpm` task — hooks into `embedSwiftExportForXcode` and syncs KSP-generated Swift files to `Sources/{exportFolderName}/`; generates `Package.swift` using `unsafeFlags` to reference pre-compiled Swift module interfaces (avoids Xcode recompiling the KMP source package with a mismatched deployment target)
+- `createRepresentablesPackage` task — one-time setup that creates the stub `Package.swift` with a placeholder source file and automatically adds the `XCLocalSwiftPackageReference` to the Xcode project via xcodeproj gem (idempotent — safe to re-run after `./gradlew clean`)
+- `deleteRepresentablesPackage` task — reverses the setup: removes the SPM package directory, build symlinks, and the Xcode project reference
+- Stable symlinks (`build/SPMBuild/SwiftInterfaces` and `build/SPMPackage/OtherIncludes`) so `Package.swift` does not change when switching between simulator/device or Debug/Release
+- `Package.swift` is automatically reset to a stub after `./gradlew clean` so Xcode can open the project without SPM resolution errors
+- `validateRepresentables` in SPM mode checks `Package.swift` existence and `Sources/{exportFolderName}/` instead of the xcodeproj reference check
+
+#### KSP Processor
+
+Generated Swift `UIViewControllerRepresentable` structs now expose a fully public API required for cross-module access when using the SPM export mode:
+
+- Stored properties changed from `let` to `public let`
+- State binding changed from `@Binding var` to `@Binding public var`
+- Explicit `public init(...)` generated for all structs — Swift's synthesised memberwise initialiser is `internal` by default, which makes it inaccessible from other modules; the generated init uses `Binding<T>` for the state parameter and `@escaping` for closure parameters
+- Protocol conformance methods changed from `func` to `public func`
+- Fixes `indentParameters` to use `lastOrNull { it.isNotEmpty() }` instead of `lastOrNull()`: the previous implementation returned zero indentation when a multi-line string (e.g. `letParameters`) was immediately followed by another multi-line string, causing the second block to be written at column 0
+
+#### Bug fixes
+
+- Fixes `cleanTempFilesFolder` task failing with `--no-build-cache` under Gradle 9.5: removed `task.inputs.dir(tempFolder).optional()` which was causing a validation error when the temp folder does not exist yet
+
+---
 
 ## [2.4.0-RC2-1.11.0-1]
 
