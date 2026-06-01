@@ -637,6 +637,7 @@ import SwiftUI
 
 public struct ${functionName}Representable: UIViewControllerRepresentable {
     $letProps
+
     $publicInit
 
     public func makeUIViewController(context _: Context) -> UIViewController {
@@ -685,6 +686,7 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
 
             public struct ${functionName}Representable: UIViewControllerRepresentable {
                 public let data: Data
+				
                 public init(data: Data) {
                 self.data = data
                 }
@@ -712,6 +714,7 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
 
             public struct ${functionName}Representable: UIViewControllerRepresentable {
                 public let data: Data
+				
                 public init(data: Data) {
                 self.data = data
                 }
@@ -754,6 +757,7 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                 public let callBackN: (KotlinFloat) -> Void
                 public let callBackO: (KotlinDouble) -> Void
                 public let callBackP: (KotlinBoolean) -> Void
+				
                 public init(state: Binding<ViewState>, callBackA: @escaping () -> Void, callBackB: @escaping (Array<Dictionary<String, Array<KotlinInt>>>) -> Array<String>, callBackS: @escaping (Set<KotlinInt>) -> Void, callBackC: @escaping (NSMutableArray) -> Void, callBackD: @escaping (Dictionary<String, String>) -> Void, callBackE: @escaping (NSMutableDictionary) -> Void, callBackF: @escaping (KotlinByte) -> Void, callBackG: @escaping (KotlinUByte) -> Void, callBackH: @escaping (KotlinShort) -> Void, callBackI: @escaping (KotlinUShort) -> Void, callBackJ: @escaping (KotlinInt) -> Void, callBackK: @escaping (KotlinUInt) -> Void, callBackL: @escaping (KotlinLong) -> Void, callBackM: @escaping (KotlinULong) -> Void, callBackN: @escaping (KotlinFloat) -> Void, callBackO: @escaping (KotlinDouble) -> Void, callBackP: @escaping (KotlinBoolean) -> Void) {
                 self._state = state
                 self.callBackA = callBackA
@@ -813,6 +817,7 @@ public struct ${functionName}Representable: UIViewControllerRepresentable {
                 public let callBackN: (Float) -> Void
                 public let callBackO: (Double) -> Void
                 public let callBackP: (Bool) -> Void
+				
                 public init(state: Binding<ViewState>, callBackA: @escaping () -> Void, callBackB: @escaping (Array<Dictionary<String, Array<Int32>>>) -> Array<String>, callBackS: @escaping (Set<Int32>) -> Void, callBackC: @escaping (Array<String>) -> Void, callBackD: @escaping (Dictionary<String, String>) -> Void, callBackE: @escaping (Dictionary<String, String>) -> Void, callBackF: @escaping (Int8) -> Void, callBackG: @escaping (UInt8) -> Void, callBackH: @escaping (Int16) -> Void, callBackI: @escaping (UInt16) -> Void, callBackJ: @escaping (Int32) -> Void, callBackK: @escaping (UInt32) -> Void, callBackL: @escaping (Int64) -> Void, callBackM: @escaping (UInt64) -> Void, callBackN: @escaping (Float) -> Void, callBackO: @escaping (Double) -> Void, callBackP: @escaping (Bool) -> Void) {
                 self._state = state
                 self.callBackA = callBackA

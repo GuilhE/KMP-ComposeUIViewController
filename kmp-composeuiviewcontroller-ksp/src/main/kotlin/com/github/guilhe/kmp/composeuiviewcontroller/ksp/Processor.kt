@@ -371,7 +371,7 @@ internal class Processor(
             $frameworks
 
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
-                ${if (letParameters.isNotEmpty()) "$letParameters\n" else ""}$publicInit
+                ${if (letParameters.isNotEmpty()) "$letParameters\n\n" else ""}$publicInit
 
                 public func makeUIViewController(context _: Context) -> UIViewController {
                     ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.make($makeParametersParsed)
@@ -432,7 +432,7 @@ internal class Processor(
 
             public struct ${composable.name()}Representable: UIViewControllerRepresentable {
                 @Binding public var $stateParameterName: $finalStateType
-                ${if (letParameters.isNotEmpty()) "$letParameters\n" else ""}$publicInit
+                ${if (letParameters.isNotEmpty()) "$letParameters\n\n" else ""}$publicInit
 
                 public func makeUIViewController(context _: Context) -> UIViewController {
                     ${composable.name()}UIViewController${if (swiftExportEnabled) ".shared" else "()"}.make($makeParametersParsed)
