@@ -50,16 +50,17 @@ ComposeUiViewController {
 ```
 
 With this setup, all necessary configurations are automatically applied. You only need to adjust the `ComposeUiViewController` block to match your
-project settings (e.g. `iosAppName` and `targetName`). If you wish to change the default values, you can configure its parameters:
+project settings (e.g. `iosAppName` and `targetName`). If you wish to change the default values, check the available parameters.
 
-<details><summary>Parameters available</summary>
+<details><summary>Parameters available</summary>§
 
 - `iosAppFolderName` name of the folder containing the iosApp in the root's project tree;
 - `iosAppName` name of the iOS project (`name.xcodeproj`);
 - `targetName` name of the iOS project's target;
 - `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the `UIViewControllerRepresentable` files will be copied to when `autoExport` is `true`;
 - `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
-- `experimentalSpmExport` *(experimental)* when `true`, generates a local Swift Package instead of manipulating `xcodeproj`. Requires Swift Export to be configured. See [Experimental: SPM export](#experimental-spm-export);
+
+- `experimentalSpmExport` when `true`, generates a local Swift Package instead of manipulating `xcodeproj`. Requires Swift Export to be configured. See [Experimental: SPM export](#experimental-spm-export);
 - `iosDeploymentTarget` minimum iOS version for the generated `Package.swift`;
 - `swiftToolsVersion` Swift tools version for the generated `Package.swift`.
 
@@ -94,7 +95,7 @@ Then rebuild it again.
 
 <details><summary>Build output (sample)</summary>
 
-When building the KMP module, you should see output similar to this:
+When building the project, you should see output similar to this:
 ```bash
 > Task :shared:copyFilesToXcode
   > Using xcodeproj gem version 1.27.0 (minimum: 1.27.0)
@@ -129,7 +130,7 @@ swiftExport {
     export(projects.otherModule) { ... }
 }
 ```
-Don't forget to import the plugin in each module. Check the [sample-swift-export](sample-swift-export).
+Don't forget to import the plugin in [each module](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/00b24949caea0bba1fab7cf2807f0005dd570544/sample-swift-export/shared-models/build.gradle.kts#L5). Check the [sample-swift-export](sample-swift-export).
 
 > [!IMPORTANT]
 > When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - it's recommended to follow this 
@@ -142,11 +143,6 @@ The SPM export mode generates a local Swift Package with the generated `UIViewCo
 `ComposeUiViewController` block:
 
 ```kotlin
-plugins {
-    id("org.jetbrains.kotlin.multiplatform")
-    id("io.github.guilhe.kmp.plugin-composeuiviewcontroller") version "$LASTEST_VERSION"
-}
-
 ComposeUiViewController {
     iosAppName = "Gradient"
     targetName = "Gradient"
@@ -214,6 +210,8 @@ Then rebuild it again.
 </details>
 
 <details><summary>Build output (sample)</summary>
+
+When building the project, you should see output similar to this:
 
 ```bash
 > Task :shared:exportToSpm
