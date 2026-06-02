@@ -119,7 +119,7 @@ When building the project, you should see output similar to this:
 
 </details>
 
-## Swift Export
+### Swift Export
   
 To enable Swift Export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).
 
@@ -138,7 +138,7 @@ Don't forget to import the plugin in [each module](https://github.com/GuilhE/KMP
 > 1. Delete the `Derived Data` using Xcode or DevCleaner app;
 > 2. Run `./gradlew clean --no-build-cache`.
 
-### Experimental: SPM export
+### Swift Export with SPM export - experimental
 The SPM export mode generates a local Swift Package with the generated `UIViewControllerRepresentable` files. Enable it in the 
 `ComposeUiViewController` block:
 
