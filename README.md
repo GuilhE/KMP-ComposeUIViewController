@@ -138,9 +138,9 @@ Don't forget to import the plugin in [each module](https://github.com/GuilhE/KMP
 > 1. Delete the `Derived Data` using Xcode or DevCleaner app;
 > 2. Run `./gradlew clean --no-build-cache`.
 
-### Swift Export with SPM export - experimental
-The SPM export mode generates a local Swift Package with the generated `UIViewControllerRepresentable` files. Enable it in the 
-`ComposeUiViewController` block:
+### SPM support - experimental
+With Swift Export enabled, the SPM export mode generates a local Swift Package with the generated `UIViewControllerRepresentable` files. Enable it in 
+the `ComposeUiViewController` block:
 
 ```kotlin
 ComposeUiViewController {
