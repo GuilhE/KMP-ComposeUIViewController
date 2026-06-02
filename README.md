@@ -352,7 +352,7 @@ struct SomeView: View {
 }
 ```
 > [!IMPORTANT]
-> Avoid deleting `iosApp/Representables` without using Xcode.
+> When not using SPM export mode, always delete `iosApp/Representables` through Xcode.
 
 ## Sample
 For working samples check [sample-objc-export](sample-objc-export), [sample-swift-export](sample-swift-export) or [sample-swift-export-spm](sample-swift-export-spm). 
