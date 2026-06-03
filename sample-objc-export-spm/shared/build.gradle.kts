@@ -8,6 +8,7 @@ plugins {
 ComposeUiViewController {
 	iosAppName = "Gradient"
 	targetName = "Gradient"
+	experimentalSpmExport = true
 }
 
 kotlin {

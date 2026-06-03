@@ -16,10 +16,6 @@
 		5C43A0332FCC951200882795 /* GradientScreenMixedB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02D2FCC951200882795 /* GradientScreenMixedB.swift */; };
 		5C43A0342FCC951200882795 /* GradientScreenSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02E2FCC951200882795 /* GradientScreenSwift.swift */; };
 		5C43A0352FCC951200882795 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02F2FCC951200882795 /* Utils.swift */; };
-		7F22EA02573E4B35FBB643EA /* GradientScreenMixedAUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E86FFA7A1E171AF388FBE89 /* GradientScreenMixedAUIViewControllerRepresentable.swift */; };
-		BF71EDEDFAFDBB33413CB132 /* GradientScreenMixedBUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF16FA559AEF9D94906BF14 /* GradientScreenMixedBUIViewControllerRepresentable.swift */; };
-		EB9F377FDA942069B36C0061 /* GradientScreenSwiftUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018FA576DD1F8AAAB143F4BF /* GradientScreenSwiftUIViewControllerRepresentable.swift */; };
-		FF1736B9491DBE4C5C2BB502 /* GradientScreenComposeUIViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3B7C101ECCFFF04FD00147 /* GradientScreenComposeUIViewControllerRepresentable.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -36,11 +32,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		018FA576DD1F8AAAB143F4BF /* GradientScreenSwiftUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenSwiftUIViewControllerRepresentable.swift; path = Representables/GradientScreenSwiftUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* GradientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientApp.swift; sourceTree = "<group>"; };
-		3EF16FA559AEF9D94906BF14 /* GradientScreenMixedBUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenMixedBUIViewControllerRepresentable.swift; path = Representables/GradientScreenMixedBUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		5C43A02A2FCC951200882795 /* ButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonView.swift; sourceTree = "<group>"; };
 		5C43A02B2FCC951200882795 /* GradientScreenCompose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenCompose.swift; sourceTree = "<group>"; };
 		5C43A02C2FCC951200882795 /* GradientScreenMixedA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientScreenMixedA.swift; sourceTree = "<group>"; };
@@ -49,8 +43,6 @@
 		5C43A02F2FCC951200882795 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Gradient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gradient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		9E86FFA7A1E171AF388FBE89 /* GradientScreenMixedAUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenMixedAUIViewControllerRepresentable.swift; path = Representables/GradientScreenMixedAUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
-		DC3B7C101ECCFFF04FD00147 /* GradientScreenComposeUIViewControllerRepresentable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GradientScreenComposeUIViewControllerRepresentable.swift; path = Representables/GradientScreenComposeUIViewControllerRepresentable.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,7 +70,6 @@
 				7555FF7D242A565900829871 /* Gradient */,
 				7555FF7C242A565900829871 /* Products */,
 				7555FFB0242A642200829871 /* Frameworks */,
-				CEA0B6247A7DA3898EAF9B40 /* Representables */,
 			);
 			sourceTree = "<group>";
 		};
@@ -114,17 +105,6 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		CEA0B6247A7DA3898EAF9B40 /* Representables */ = {
-			isa = PBXGroup;
-			children = (
-				DC3B7C101ECCFFF04FD00147 /* GradientScreenComposeUIViewControllerRepresentable.swift */,
-				9E86FFA7A1E171AF388FBE89 /* GradientScreenMixedAUIViewControllerRepresentable.swift */,
-				3EF16FA559AEF9D94906BF14 /* GradientScreenMixedBUIViewControllerRepresentable.swift */,
-				018FA576DD1F8AAAB143F4BF /* GradientScreenSwiftUIViewControllerRepresentable.swift */,
-			);
-			name = Representables;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -143,6 +123,9 @@
 			dependencies = (
 			);
 			name = Gradient;
+			packageProductDependencies = (
+				3D16BA58EA2786A5210A2ACA /* Representables */,
+			);
 			productName = iosApp;
 			productReference = 7555FF7B242A565900829871 /* Gradient.app */;
 			productType = "com.apple.product-type.application";
@@ -172,6 +155,9 @@
 				Base,
 			);
 			mainGroup = 7555FF72242A565900829871;
+			packageReferences = (
+				D5925F068EE939A6B1DD4502 /* XCLocalSwiftPackageReference "Representables" */,
+			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -227,10 +213,6 @@
 				5C43A0332FCC951200882795 /* GradientScreenMixedB.swift in Sources */,
 				5C43A0342FCC951200882795 /* GradientScreenSwift.swift in Sources */,
 				5C43A0352FCC951200882795 /* Utils.swift in Sources */,
-				FF1736B9491DBE4C5C2BB502 /* GradientScreenComposeUIViewControllerRepresentable.swift in Sources */,
-				7F22EA02573E4B35FBB643EA /* GradientScreenMixedAUIViewControllerRepresentable.swift in Sources */,
-				BF71EDEDFAFDBB33413CB132 /* GradientScreenMixedBUIViewControllerRepresentable.swift in Sources */,
-				EB9F377FDA942069B36C0061 /* GradientScreenSwiftUIViewControllerRepresentable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -428,6 +410,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D5925F068EE939A6B1DD4502 /* XCLocalSwiftPackageReference "Representables" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Representables;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3D16BA58EA2786A5210A2ACA /* Representables */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D5925F068EE939A6B1DD4502 /* XCLocalSwiftPackageReference "Representables" */;
+			productName = Representables;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7555FF73242A565900829871 /* Project object */;
 }
