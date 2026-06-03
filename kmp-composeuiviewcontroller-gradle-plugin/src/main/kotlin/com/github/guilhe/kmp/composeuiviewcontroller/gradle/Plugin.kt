@@ -89,13 +89,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 					val packageNames = packageResolver.resolvePackages()
 					val (frameworkNames, swiftExport, flattenPackage) = retrieveFrameworkBaseNamesFromIosTargets(packageNames)
 
-					if (extension.experimentalSpmExport && !swiftExport) {
-						throw PluginConfigurationException(
-							"experimentalSpmExport requires Swift Export to be configured. " +
-								"Add swiftExport { moduleName = \"...\" } to the KMP module."
-						)
-					}
-
 					writeModuleMetadataToDisk(
 						swiftExportEnabled = swiftExport,
 						flattenPackageConfigured = flattenPackage,

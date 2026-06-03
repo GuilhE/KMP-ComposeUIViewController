@@ -91,11 +91,12 @@ SWIFT_EOF
 create_spm_package_stub() {
   mkdir -p "$sources_dir"
 
-  # SPM requires at least one source file per target — add a placeholder until the first build
+  # SPM requires at least one source file per target. The placeholder is kept permanently
+  # alongside the real generated files to avoid Xcode "Build input file cannot be found" errors.
   # populates Sources/ with the real KSP-generated files.
   local placeholder="$sources_dir/Placeholder.swift"
   if [ ! -f "$placeholder" ]; then
-    printf '// Auto-generated placeholder — will be replaced on the first Xcode build.\n' > "$placeholder"
+    printf '// This file is intentionally kept by KMP-ComposeUIViewController.\n// It prevents the SPM "target is empty" error when Sources/ has no generated files yet.\n' > "$placeholder"
   fi
 
   local package_swift="$spm_package_dir/Package.swift"

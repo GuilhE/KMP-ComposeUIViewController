@@ -595,33 +595,6 @@ class PluginTest {
 	// region experimentalSpmExport
 
 	@Test
-	fun `experimentalSpmExport throws when Swift Export is not configured`() {
-		Templates.createCommonMainSource(projectDir, packageName = "com.test")
-		Templates.writeBuildGradle(
-			projectDir,
-			"""
-            plugins {
-                id("$PLUGIN_KMP")
-                id("$PLUGIN_KSP")
-                id("$PLUGIN_ID")
-            }
-            kotlin {
-                iosSimulatorArm64 {
-                    binaries.framework { baseName = "TestFramework" }
-                }
-            }
-            ComposeUiViewController {
-                experimentalSpmExport = true
-            }
-            """
-		)
-		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
-
-		val result = Templates.runGradle(projectDir, expectFailure = true)
-		assertTrue(result.output.contains("experimentalSpmExport requires Swift Export"))
-	}
-
-	@Test
 	fun `exportToSpm and setupRepresentablesSpmPackage tasks are registered and copyFilesToXcode is not in SPM mode`() {
 		with(project) {
 			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {

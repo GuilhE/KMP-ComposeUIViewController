@@ -50,7 +50,8 @@ internal fun Project.configureTaskToRegisterValidateRepresentables(
                 }
 
                 val destFiles = if (sourcesDir.exists()) {
-                    sourcesDir.listFiles { f -> f.isFile && f.extension == "swift" }?.toList() ?: emptyList()
+					// Placeholder.swift is kept permanently to prevent SPM "empty target" errors.
+                    sourcesDir.listFiles { f -> f.isFile && f.extension == "swift" && f.name != "Placeholder.swift" }?.toList() ?: emptyList()
                 } else {
                     emptyList()
                 }

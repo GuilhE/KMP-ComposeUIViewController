@@ -139,8 +139,7 @@ Don't forget to import the plugin in [each module](https://github.com/GuilhE/KMP
 > 2. Run `./gradlew clean --no-build-cache`.
 
 ### SPM support - experimental
-With Swift Export enabled, the SPM export mode generates a local Swift Package with the generated `UIViewControllerRepresentable` files. Enable it in 
-the `ComposeUiViewController` block:
+The SPM export mode works with both **Swift Export** and **ObjC Export** . It generates a local Swift Package with the generated `UIViewControllerRepresentable` files, replacing the `xcodeproj` gem approach. Enable it in the `ComposeUiViewController` block:
 
 ```kotlin
 ComposeUiViewController {
@@ -177,11 +176,20 @@ This will remove the Package containing the Representables. Afterward, run `crea
 
 Instead of relying on the `xcodeproj` gem to manage Xcode project references on every build, the SPM export mode generates a local Swift Package at `{iosAppFolderName}/{exportFolderName}/` (e.g. `iosApp/Representables/`). This keeps the iOS side clean: no gem dependency on CI, no Ruby toolchain required for day-to-day development, and no `.pbxproj` manipulation on every build — just a standard Swift Package that Xcode resolves natively.
 
-On every Xcode build, the plugin hooks into `embedSwiftExportForXcode` and runs the `exportToSpm` task, which:
+On every Xcode build, the plugin hooks into `embedAndSignAppleFrameworkForXcode` or `embedSwiftExportForXcode` and runs the `exportToSpm` task, which adapts automatically to the export mode in use:
 
-1. Creates a stable symlink `build/SPMBuild/SwiftInterfaces → {arch}/{config}/dd-interfaces` — the `Package.swift` path never changes when switching between simulator and device.
-2. Updates `{exportFolderName}/Package.swift` using `unsafeFlags` to point to the pre-compiled Swift module interfaces instead of depending on the KMP source package. This avoids Xcode recompiling the KMP module with a mismatched deployment target.
+**Swift Export** (`swiftExport { moduleName = "..." }`):
+1. Creates a stable symlink `build/SPMBuild/SwiftInterfaces → {arch}/{config}/dd-interfaces`.
+2. Updates `Package.swift` with `unsafeFlags(["-I", "SwiftInterfaces"])` pointing to pre-compiled Swift module interfaces. This avoids Xcode recompiling the KMP source package with a mismatched deployment target.
+
+**ObjC Export** (`binaries.framework { baseName = "..." }`):
+1. Creates a stable symlink `build/xcode-frameworks/current → {config}/{platform}`.
+2. Updates `Package.swift` with `unsafeFlags(["-F", "xcode-frameworks/current"])` pointing to the framework directory. Swift resolves `import {frameworkName}` from there without recompiling the KMP source.
+
+**Both modes:**
 3. Syncs the KSP-generated `.swift` files into `{exportFolderName}/Sources/{exportFolderName}/`.
+
+Using pre-compiled build artifacts (instead of declaring the KMP module as an SPM source dependency) is what keeps `Package.swift` stable across simulator/device switches and eliminates deployment target mismatch errors.
 
 After `./gradlew clean`, the `Package.swift` is automatically reset to a stub (no external dependencies) so Xcode can still open the project without resolution errors. Re-run `createRepresentablesPackage` to restore the full setup.
 
@@ -216,7 +224,7 @@ When building the project, you should see output similar to this:
 ```bash
 > Task :shared:exportToSpm
   > Arch: iosSimulatorArm64, Config: Debug
-  > KMP interfaces linked: SwiftInterfaces → iosSimulatorArm64/Debug/dd-interfaces
+  > Swift Export: interfaces linked → iosSimulatorArm64/Debug/dd-interfaces
   > Package.swift updated
   > Starting smart sync process
   > KSP output: 4 Swift file(s) found
@@ -226,6 +234,13 @@ When building the project, you should see output similar to this:
   > New file: GradientScreenComposeUIViewControllerRepresentable.swift
   > Summary: 0 unchanged, 4 copied, 0 removed
   > Done
+```
+Or, when using ObjC Export:
+```bash
+  > Task :shared:exportToSpm
+  > Arch: iosSimulatorArm64, Config: Debug
+  > ObjC Export: framework linked → Debug/iphonesimulator26.5
+  ...
 ```
 
 </details>

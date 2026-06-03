@@ -43,6 +43,15 @@ KMP_OTHER_INCLUDES_ABS="$PROJECT_ROOT/$kmp_module/build/SPMPackage/$KOTLIN_ARCH/
 KMP_OTHER_INCLUDES_SYMLINK="$PROJECT_ROOT/$kmp_module/build/SPMPackage/OtherIncludes"
 KMP_OTHER_INCLUDES_RELPATH="../../$kmp_module/build/SPMPackage/OtherIncludes"
 
+# ObjC export: embedAndSignAppleFrameworkForXcode writes the framework to
+# build/xcode-frameworks/{CONFIGURATION}/{platform}/ (e.g. Debug/iphonesimulator26.5).
+# A stable symlink avoids changing Package.swift on every build when the platform directory changes.
+XCODE_FRAMEWORKS_BASE="$PROJECT_ROOT/$kmp_module/build/xcode-frameworks/$BUILD_CONFIG"
+OBJC_PLATFORM_DIR=$(ls "$XCODE_FRAMEWORKS_BASE/" 2>/dev/null | grep "^${PLATFORM_NAME:-iphonesimulator}" | head -1)
+KMP_OBJC_FRAMEWORK_PARENT_ABS="$XCODE_FRAMEWORKS_BASE/$OBJC_PLATFORM_DIR"
+KMP_OBJC_FRAMEWORK_SYMLINK="$PROJECT_ROOT/$kmp_module/build/xcode-frameworks/current"
+KMP_OBJC_FRAMEWORK_RELPATH="../../$kmp_module/build/xcode-frameworks/current"
+
 install_gem() {
   local gem_name="$1"
   local version_constraint="$2"
@@ -161,18 +170,25 @@ add_to_xcodeproj_if_needed() {
 }
 
 # Builds the unsafeFlags array for the Representables target.
-# Includes -I for pre-compiled Swift interfaces and -I for each Clang bridge module subdir
-# (KotlinRuntime, KotlinRuntimeSupportBridge, etc.) that .swiftmodule depends on.
+# Swift Export: -I flags pointing to pre-compiled Swift interfaces and Clang bridge modules.
+# ObjC Export: -F flag pointing to the directory that contains the .framework bundle.
+# The right path is chosen automatically based on what exists in the build directory.
 build_unsafe_flags() {
-  local flags='"-I", "'"$KMP_INTERFACES_RELPATH"'"'
-  if [ -d "$KMP_OTHER_INCLUDES_ABS" ]; then
-    while IFS= read -r -d '' subdir; do
-      local name
-      name=$(basename "$subdir")
-      flags="$flags, \"-I\", \"${KMP_OTHER_INCLUDES_RELPATH}/${name}\""
-    done < <(find "$KMP_OTHER_INCLUDES_ABS" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
+  if [ -d "$KMP_INTERFACES_ABS" ]; then
+    # Swift Export path: -I for Swift modules + -I for each Clang bridge subdir
+    local flags='"-I", "'"$KMP_INTERFACES_RELPATH"'"'
+    if [ -d "$KMP_OTHER_INCLUDES_ABS" ]; then
+      while IFS= read -r -d '' subdir; do
+        local name
+        name=$(basename "$subdir")
+        flags="$flags, \"-I\", \"${KMP_OTHER_INCLUDES_RELPATH}/${name}\""
+      done < <(find "$KMP_OTHER_INCLUDES_ABS" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
+    fi
+    echo "$flags"
+  elif [ -n "$OBJC_PLATFORM_DIR" ] && [ -d "$KMP_OBJC_FRAMEWORK_PARENT_ABS" ]; then
+    # ObjC Export path: -F adds the framework parent dir to the framework search path
+    echo '"-F", "'"$KMP_OBJC_FRAMEWORK_RELPATH"'"'
   fi
-  echo "$flags"
 }
 
 # Generates a full Package.swift that uses unsafeFlags to point to the pre-compiled KMP modules.
@@ -240,26 +256,33 @@ setup_spm_package() {
   local new_content
 
   if [ -d "$KMP_INTERFACES_ABS" ]; then
-    # Stable symlink for Swift interfaces: build/SPMBuild/SwiftInterfaces → {arch}/{config}/dd-interfaces
+    # Swift Export: stable symlink for Swift interfaces and Clang bridges
     mkdir -p "$(dirname "$KMP_INTERFACES_SYMLINK")"
     ln -sfn "$KOTLIN_ARCH/$BUILD_CONFIG/dd-interfaces" "$KMP_INTERFACES_SYMLINK"
-    echo "  > KMP interfaces linked: SwiftInterfaces → $KOTLIN_ARCH/$BUILD_CONFIG/dd-interfaces"
-    # Stable symlink for Clang bridges: build/SPMPackage/OtherIncludes → {arch}/{config}/OtherIncludes
+    echo "  > Swift Export: interfaces linked → $KOTLIN_ARCH/$BUILD_CONFIG/dd-interfaces"
     if [ -d "$KMP_OTHER_INCLUDES_ABS" ]; then
       mkdir -p "$(dirname "$KMP_OTHER_INCLUDES_SYMLINK")"
       ln -sfn "$KOTLIN_ARCH/$BUILD_CONFIG/OtherIncludes" "$KMP_OTHER_INCLUDES_SYMLINK"
     fi
     new_content=$(generate_package_swift)
+  elif [ -n "$OBJC_PLATFORM_DIR" ] && [ -d "$KMP_OBJC_FRAMEWORK_PARENT_ABS" ]; then
+    # ObjC Export: stable symlink to the framework parent directory
+    mkdir -p "$(dirname "$KMP_OBJC_FRAMEWORK_SYMLINK")"
+    ln -sfn "$BUILD_CONFIG/$OBJC_PLATFORM_DIR" "$KMP_OBJC_FRAMEWORK_SYMLINK"
+    echo "  > ObjC Export: framework linked → $BUILD_CONFIG/$OBJC_PLATFORM_DIR"
+    new_content=$(generate_package_swift)
   else
-    echo "  > KMP Swift interfaces not found — generating stub Package.swift"
-    echo "  > Build once in Xcode to activate the full Swift Export dependency"
+    echo "  > KMP build output not found — generating stub Package.swift"
+    echo "  > Build once in Xcode to populate the package"
     rm -f "$KMP_INTERFACES_SYMLINK"
     rm -f "$KMP_OTHER_INCLUDES_SYMLINK"
-    # SPM requires at least one source file per target — add a placeholder until the first
-    # build populates Sources/ with the real KSP-generated files.
+    rm -f "$KMP_OBJC_FRAMEWORK_SYMLINK"
+    # SPM requires at least one source file per target. The placeholder is kept permanently
+    # alongside the real generated files — removing it would cause Xcode to error with
+    # "Build input file cannot be found" after having compiled it in a previous build.
     local placeholder="$sources_dir/Placeholder.swift"
     if [ ! -f "$placeholder" ]; then
-      printf '// Auto-generated placeholder — will be replaced on the first Xcode build.\n' > "$placeholder"
+      printf '// This file is intentionally kept by KMP-ComposeUIViewController.\n// It prevents the SPM "target is empty" error when Sources/ has no generated files yet.\n' > "$placeholder"
     fi
     new_content=$(generate_package_swift_stub)
   fi
@@ -362,6 +385,9 @@ smart_sync_files() {
       local filename
       filename=$(basename "$dest_file")
       if ! grep -Fxq "$filename" "$source_files_list"; then
+        # Keep the placeholder permanently — removing it causes Xcode to error with
+        # "Build input file cannot be found" because it was compiled in a previous build.
+        [ "$filename" = "Placeholder.swift" ] && continue
         echo "  > Removed: $filename"
         rm -f "$dest_file"
         files_removed=$((files_removed + 1))

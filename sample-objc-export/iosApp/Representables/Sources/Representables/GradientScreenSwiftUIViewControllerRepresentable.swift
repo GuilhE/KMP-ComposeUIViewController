@@ -4,6 +4,7 @@ import SwiftUI
 
 public struct GradientScreenSwiftRepresentable: UIViewControllerRepresentable {
     public let controller: UIViewController
+
     public init(controller: UIViewController) {
         self.controller = controller
     }

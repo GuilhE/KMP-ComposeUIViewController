@@ -5,6 +5,7 @@ import SwiftUI
 public struct GradientScreenMixedBRepresentable: UIViewControllerRepresentable {
     @Binding public var state: ScreenState
     public let controller: UIViewController
+
     public init(state: Binding<ScreenState>, controller: UIViewController) {
         _state = state
         self.controller = controller
