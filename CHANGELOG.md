@@ -1,6 +1,13 @@
 # Changelog
 
+## [2.4.0-1.11.1]
+
+- Kotlin 2.4.0 🥳
+- Adds Gradle task `buildAllSamples` to test building all samples with a single command (`./gradlew buildAllSamples`)
+
 ## [2.4.0-RC2-1.11.1]
+
+- CMP 1.11.0
 
 ### Experimental SPM export mode
 

@@ -101,7 +101,7 @@ format_swift_files() {
 
   echo "  > Running SwiftFormat..."
 
-  if "$swiftformat_path" "$files_source" --swiftversion 6.0 2>&1 | grep -v "running swiftformat" | grep -v "^\s*$"; then
+  if "$swiftformat_path" "$files_source" --swiftversion 6.0 2>&1 | grep -iv "running swiftformat" | grep -v "^\s*$" | sed 's/^/  > /'; then
     echo "  > SwiftFormat completed successfully"
   else
     echo "  > SwiftFormat encountered some issues, but continuing with build"

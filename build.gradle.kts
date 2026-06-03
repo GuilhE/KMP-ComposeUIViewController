@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
 	group = "com.github.guilhe.kmp"
-	version = "2.4.0-RC2-1.11.1"
+	version = "2.4.0-1.11.1"
 }
 
 dependencies {
@@ -50,5 +50,60 @@ tasks.register("serveDokka") {
 		println("📖 Serving Dokka docs at http://localhost:$port")
 		Thread { process.inputStream.bufferedReader().forEachLine { println(it) } }.start()
 		process.waitFor()
+	}
+}
+
+tasks.register("buildAllSamples") {
+	description = "Builds all samples via xcodebuild (full pipeline: KSP + plugin + framework), streaming output to this console"
+	doLast {
+		val samples = listOf(
+ 			"sample-objc-export",
+ 			"sample-objc-export-spm",
+ 			"sample-swift-export",
+ 			"sample-swift-export-spm"
+		)
+
+		val swiftExportSamples = setOf("sample-swift-export", "sample-swift-export-spm")
+
+		val simulatorUDID: String by lazy {
+			val proc = ProcessBuilder("xcrun", "simctl", "list", "devices", "available", "--json")
+				.redirectErrorStream(true).start()
+			val output = proc.inputStream.bufferedReader().readText()
+			proc.waitFor()
+			Regex(""""udid"\s*:\s*"([A-F0-9-]{36})"""").find(output)?.groupValues?.get(1)
+				?: throw GradleException("No available iOS Simulator found. Install a simulator runtime in Xcode.")
+		}
+
+		for (sample in samples) {
+			println("\n🔨 [$sample] Starting build...")
+
+			val args = mutableListOf(
+				"xcodebuild",
+				"-project", file("$sample/iosApp/Gradient.xcodeproj").absolutePath,
+				"-scheme", "Gradient",
+				"-configuration", "Debug",
+				"ARCHS=arm64",
+				"CODE_SIGNING_ALLOWED=NO",
+				"build"
+			)
+			if (sample in swiftExportSamples) {
+				args.addAll(listOf("-destination", "id=$simulatorUDID"))
+			} else {
+				args.addAll(listOf("-sdk", "iphonesimulator"))
+			}
+
+			val pb = ProcessBuilder(args)
+				.directory(file(sample))
+				.redirectErrorStream(true)
+
+			val process = pb.start()
+			val reader = Thread { process.inputStream.bufferedReader().forEachLine { println("[$sample] $it") } }
+			reader.start()
+			val exitCode = process.waitFor()
+			reader.join()
+
+			if (exitCode != 0) throw GradleException("❌ [$sample] Build failed — stopping.")
+			println("✅ [$sample] Done!")
+		}
 	}
 }
