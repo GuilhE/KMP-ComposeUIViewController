@@ -159,8 +159,7 @@ Run this task once after enabling `experimentalSpmExport`. It creates the local 
 After running it, you should see a Swift Package Dependency in your project. The package is empty at this point, but it's ready to be populated with the generated `UIViewControllerRepresentable` files on every build.
 
 > [!NOTE]
-> 1. This task is idempotent: safe to re-run after `./gradlew clean`.
-> 2. The **first build** after setup will fail — this is expected. Xcode resolves SPM packages before build phases run, so on the first build the package is still the stub. The **second build** will succeed and every subsequent build will work normally.
+> This task is idempotent: safe to re-run after `./gradlew clean`.
 
 #### Fresh install
 
@@ -174,7 +173,9 @@ This will remove the Package containing the Representables. Afterward, run `crea
 
 <details><summary>How it works</summary>
 
-Instead of relying on the `xcodeproj` gem to manage Xcode project references on every build, the SPM export mode generates a local Swift Package at `{iosAppFolderName}/{exportFolderName}/` (e.g. `iosApp/Representables/`). This keeps the iOS side clean: no gem dependency on CI, no Ruby toolchain required for day-to-day development, and no `.pbxproj` manipulation on every build — just a standard Swift Package that Xcode resolves natively.
+The xcodeproj gem approach manipulates `project.pbxproj` on every build (adding/removing file
+references). SPM local packages are resolved by Xcode natively — once the `XCLocalSwiftPackageReference`
+is in the project, Xcode handles everything. The xcodeproj gem is only needed once (during setup).
 
 On every Xcode build, the plugin hooks into `embedAndSignAppleFrameworkForXcode` or `embedSwiftExportForXcode` and runs the `exportToSpm` task, which adapts automatically to the export mode in use:
 
@@ -188,6 +189,11 @@ On every Xcode build, the plugin hooks into `embedAndSignAppleFrameworkForXcode`
 
 **Both modes:**
 3. Syncs the KSP-generated `.swift` files into `{exportFolderName}/Sources/{exportFolderName}/`.
+
+Declaring the KMP module as an SPM source dependency (`.package(path: "...")`) causes Xcode to
+**recompile the KMP source code** with SPM's own toolchain and a low default deployment target
+(iOS 12 for swift-tools-version 5.9). This causes availability errors (`UnsafeCurrentTask` requires
+iOS 13+). Using `unsafeFlags` points the compiler to **pre-compiled artifacts** instead.
 
 Using pre-compiled build artifacts (instead of declaring the KMP module as an SPM source dependency) is what keeps `Package.swift` stable across simulator/device switches and eliminates deployment target mismatch errors.
 

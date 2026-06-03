@@ -124,7 +124,7 @@
 			);
 			name = Gradient;
 			packageProductDependencies = (
-				7A6370AC1F578CF85A82A00C /* Representables */,
+				44DEE1ECD38CF7E971CDC290 /* Representables */,
 			);
 			productName = iosApp;
 			productReference = 7555FF7B242A565900829871 /* Gradient.app */;
@@ -156,7 +156,7 @@
 			);
 			mainGroup = 7555FF72242A565900829871;
 			packageReferences = (
-				B72D47B4FAA50CEA5B662EE2 /* XCLocalSwiftPackageReference "Representables" */,
+				21128CBB459F61A1612A0FFF /* XCLocalSwiftPackageReference "Representables" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -412,16 +412,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		B72D47B4FAA50CEA5B662EE2 /* XCLocalSwiftPackageReference "Representables" */ = {
+		21128CBB459F61A1612A0FFF /* XCLocalSwiftPackageReference "Representables" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Representables;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7A6370AC1F578CF85A82A00C /* Representables */ = {
+		44DEE1ECD38CF7E971CDC290 /* Representables */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B72D47B4FAA50CEA5B662EE2 /* XCLocalSwiftPackageReference "Representables" */;
+			package = 21128CBB459F61A1612A0FFF /* XCLocalSwiftPackageReference "Representables" */;
 			productName = Representables;
 		};
 /* End XCSwiftPackageProductDependency section */

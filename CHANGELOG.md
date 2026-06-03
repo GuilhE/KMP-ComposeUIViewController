@@ -6,16 +6,22 @@
 
 #### Plugin
 
-Adds `experimentalSpmExport = true` to `PluginParameters` as an alternative to the `xcodeproj`-gem-based export. 
-When enabled (requires Swift Export to be configured), the plugin generates a local Swift Package at `{iosAppFolderName}/{exportFolderName}/` instead of manipulating `project.pbxproj` on every build:
+Adds `experimentalSpmExport = true` to `PluginParameters` as an alternative to the `xcodeproj`-gem-based export.
+When enabled, the plugin generates a local Swift Package at `{iosAppFolderName}/{exportFolderName}/` instead of manipulating `project.pbxproj` on every build.
+Works with **both Swift Export and ObjC Export** — no additional configuration required:
 
 - New `PluginParameters` properties: `experimentalSpmExport`, `iosDeploymentTarget`, `swiftToolsVersion`
-- `exportToSpm` task — hooks into `embedSwiftExportForXcode` and syncs KSP-generated Swift files to `Sources/{exportFolderName}/`; generates `Package.swift` using `unsafeFlags` to reference pre-compiled Swift module interfaces (avoids Xcode recompiling the KMP source package with a mismatched deployment target)
+- `exportToSpm` task — hooks into `embedAndSignAppleFrameworkForXcode`, `embedSwiftExportForXcode`, and `syncFramework`; syncs KSP-generated Swift files to `Sources/{exportFolderName}/` and generates `Package.swift` using `unsafeFlags` to reference pre-compiled build artifacts, avoiding Xcode from recompiling the KMP module with a mismatched deployment target:
+  - **Swift Export**: `unsafeFlags(["-I", "build/SPMBuild/SwiftInterfaces"])` — points to pre-compiled `.swiftmodule` interfaces
+  - **ObjC Export**: `unsafeFlags(["-F", "build/xcode-frameworks/current"])` — adds the `.framework` directory to the Swift framework search path
 - `createRepresentablesPackage` task — one-time setup that creates the stub `Package.swift` with a placeholder source file and automatically adds the `XCLocalSwiftPackageReference` to the Xcode project via xcodeproj gem (idempotent — safe to re-run after `./gradlew clean`)
 - `deleteRepresentablesPackage` task — reverses the setup: removes the SPM package directory, build symlinks, and the Xcode project reference
-- Stable symlinks (`build/SPMBuild/SwiftInterfaces` and `build/SPMPackage/OtherIncludes`) so `Package.swift` does not change when switching between simulator/device or Debug/Release
+- Stable symlinks so `Package.swift` does not change when switching between simulator/device or Debug/Release:
+  - Swift Export: `build/SPMBuild/SwiftInterfaces` and `build/SPMPackage/OtherIncludes`
+  - ObjC Export: `build/xcode-frameworks/current`
+- `Placeholder.swift` is kept permanently in `Sources/{exportFolderName}/` to prevent the SPM "target is empty" error; it is excluded from `validateRepresentables` comparisons to avoid false stale warnings
 - `Package.swift` is automatically reset to a stub after `./gradlew clean` so Xcode can open the project without SPM resolution errors
-- `validateRepresentables` in SPM mode checks `Package.swift` existence and `Sources/{exportFolderName}/` instead of the xcodeproj reference check
+- `validateRepresentables` in SPM mode checks `Package.swift` existence and `Sources/{exportFolderName}/` (excluding `Placeholder.swift`) instead of the xcodeproj reference check
 
 #### KSP Processor
 
