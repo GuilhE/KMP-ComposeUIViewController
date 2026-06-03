@@ -8,7 +8,7 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 | [Version](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | [Kotlin](https://github.com/JetBrains/kotlin/releases) | [KSP](https://github.com/Google/KSP/releases) | [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/releases) | Xcode  |
 |--------------------------------------------------------------------------------------------------|:------------------------------------------------------:|:---------------------------------------------:|:------------------------------------------------------------------------------------:|:------:|
-| 2.4.0-RC2-1.11.0-1                                                                               |                       2.4.0-RC2                        |                     2.3.8                     |                                        1.11.0                                        | 26.5.0 |
+| 2.4.0-RC2-1.11.1                                                                                 |                       2.4.0-RC2                        |                     2.3.9                     |                                        1.11.1                                        | 26.5.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
@@ -19,7 +19,7 @@ It can be used for **simple** and **advanced** use cases.
 
 ### Simple
 In simple scenarios, the rendering and state management of the `@Composable` or `UIViewController` are handled entirely within a single platform 
-— either in the shared KMP module or directly in the iOS app. It’s simply a matter of embedding the component in one platform or the other, with 
+— either in the shared KMP module or directly in the iOS app. It's simply a matter of embedding the component in one platform or the other, with 
 no cross-platform coordination required.
 
 ### Advanced
@@ -35,7 +35,7 @@ Kotlin Multiplatform and Compose Multiplatform are built upon the philosophy of 
 
 ## Installation
 
-Configure the `plugins` block with the following. Once added, you can use the `ComposeUiViewController` block to set up the plugin’s configuration.
+Configure the `plugins` block with the following. Once added, you can use the `ComposeUiViewController` block to set up the plugin's configuration.
 
 ```kotlin
 plugins {
@@ -50,9 +50,9 @@ ComposeUiViewController {
 ```
 
 With this setup, all necessary configurations are automatically applied. You only need to adjust the `ComposeUiViewController` block to match your
-project settings (e.g. `iosAppName` and `targetName`). If you wish to change the default values, you can configure its parameters:
+project settings (e.g. `iosAppName` and `targetName`). If you wish to change the default values, check the available parameters.
 
-<details><summary>Parameters available</summary>
+<details><summary>Parameters available</summary>§
 
 - `iosAppFolderName` name of the folder containing the iosApp in the root's project tree;
 - `iosAppName` name of the iOS project (`name.xcodeproj`);
@@ -60,26 +60,196 @@ project settings (e.g. `iosAppName` and `targetName`). If you wish to change the
 - `exportFolderName` name of the destination folder inside iOS project (`iosAppFolderName`) where the `UIViewControllerRepresentable` files will be copied to when `autoExport` is `true`;
 - `autoExport` enables auto export generated files to Xcode project. If set to `false`, you will find the generated files under `/build/generated/ksp/`;
 
-[Default values](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/ComposeUiViewControllerParameters.kt).
+- `experimentalSpmExport` when `true`, generates a local Swift Package instead of manipulating `xcodeproj`. Requires Swift Export to be configured. See [Experimental: SPM export](#experimental-spm-export);
+- `iosDeploymentTarget` minimum iOS version for the generated `Package.swift`;
+- `swiftToolsVersion` Swift tools version for the generated `Package.swift`.
+
+[Default values](kmp-composeuiviewcontroller-gradle-plugin/src/main/kotlin/com/github/guilhe/kmp/composeuiviewcontroller/gradle/PluginParameters.kt).
 
 </details>
 
-## Swift Export
+<details><summary>Troubleshooting</summary>
+
+Sometimes the files are correctly generated and copied, but Android Studio doesn't recognize them. Select the `iosApp` project folder,
+right-click, and choose **"Reload from Disk"**. Once the files become visible, the build should succeed.
+
+If Representables are not found in Xcode, run the diagnostic task to inspect the full pipeline without triggering a build:
+
+```bash
+ ./gradlew validateRepresentables
+```
+
+It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for:
+1. KSP output — Swift files in `build/generated/ksp/`
+2. Destination — Swift files in `{iosAppFolderName}/{exportFolderName}/`
+3. Sync — KSP output and destination match
+4. xcodeproj — all Representables are referenced in `project.pbxproj`
+
+If validation fails, the most common fix is:
+```bash
+ ./gradlew clean --no-build-cache
+```
+Then rebuild it again.
+
+</details>
+
+<details><summary>Build output (sample)</summary>
+
+When building the project, you should see output similar to this:
+```bash
+> Task :shared:copyFilesToXcode
+  > Using xcodeproj gem version 1.27.0 (minimum: 1.27.0)
+  > Starting smart sync process
+  > KSP output: 4 Swift file(s) found
+  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedAUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedBUIViewControllerRepresentable.swift
+  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Summary: 0 unchanged, 4 copied, 0 removed
+  > Detected changes. Rebuilding Xcode references
+  > Created new group "Representables"
+  > Adding: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Adding: GradientScreenMixedAUIViewControllerRepresentable.swift
+  > Adding: GradientScreenMixedBUIViewControllerRepresentable.swift
+  > Adding: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > Summary: 4 added, 0 removed, 0 unchanged
+  > Xcodeproj saved successfully
+  > Done
+```
+
+</details>
+
+### Swift Export
+  
 To enable Swift Export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).
 
-When using dependencies from [other modules](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/7a7385f8f7f92c422d5f9d68b122ce652df98e18/sample/shared/build.gradle.kts#L23):
+When using dependencies from other modules:
 ```kotlin
 swiftExport {
+    moduleName = "Shared"
     export(projects.otherModule) { ... }
 }
 ```
-Don't forget to import the plugin in each module. Check the swift export [sample](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/7a7385f8f7f92c422d5f9d68b122ce652df98e18/sample/shared-models/build.gradle.kts#L5).
+Don't forget to import the plugin in [each module](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/00b24949caea0bba1fab7cf2807f0005dd570544/sample-swift-export/shared-models/build.gradle.kts#L5). Check the [sample-swift-export](sample-swift-export).
 
 > [!IMPORTANT]
 > When switching between modes - `embedAndSignAppleFrameworkForXcode` to `embedSwiftExportForXcode` or vice-versa - it's recommended to follow this 
 > steps:
 > 1. Delete the `Derived Data` using Xcode or DevCleaner app;
 > 2. Run `./gradlew clean --no-build-cache`.
+
+### SPM support - experimental
+The SPM export mode works with both **Swift Export** and **ObjC Export** . It generates a local Swift Package with the generated `UIViewControllerRepresentable` files, replacing the `xcodeproj` gem approach. Enable it in the `ComposeUiViewController` block:
+
+```kotlin
+ComposeUiViewController {
+    iosAppName = "Gradient"
+    targetName = "Gradient"
+    experimentalSpmExport = true
+}
+```
+
+#### One-time setup
+
+Run this task once after enabling `experimentalSpmExport`. It creates the local Swift Package stub and automatically adds the package reference to your Xcode project — no manual Xcode changes needed:
+
+```bash
+./gradlew :shared:createRepresentablesPackage
+```
+After running it, you should see a Swift Package Dependency in your project. The package is empty at this point, but it's ready to be populated with the generated `UIViewControllerRepresentable` files on every build.
+
+> [!NOTE]
+> This task is idempotent: safe to re-run after `./gradlew clean`.
+
+#### Fresh install
+
+To fully remove the generated SPM package and its Xcode project reference (e.g. to reset and start over), run:
+
+```bash
+./gradlew :shared:deleteRepresentablesPackage
+```
+
+This will remove the Package containing the Representables. Afterward, run `createRepresentablesPackage` to set it up again.
+
+<details><summary>How it works</summary>
+
+The xcodeproj gem approach manipulates `project.pbxproj` on every build (adding/removing file
+references). SPM local packages are resolved by Xcode natively — once the `XCLocalSwiftPackageReference`
+is in the project, Xcode handles everything. The xcodeproj gem is only needed once (during setup).
+
+On every Xcode build, the plugin hooks into `embedAndSignAppleFrameworkForXcode` or `embedSwiftExportForXcode` and runs the `exportToSpm` task, which adapts automatically to the export mode in use:
+
+**Swift Export** (`swiftExport { moduleName = "..." }`):
+1. Creates a stable symlink `build/SPMBuild/SwiftInterfaces → {arch}/{config}/dd-interfaces`.
+2. Updates `Package.swift` with `unsafeFlags(["-I", "SwiftInterfaces"])` pointing to pre-compiled Swift module interfaces. This avoids Xcode recompiling the KMP source package with a mismatched deployment target.
+
+**ObjC Export** (`binaries.framework { baseName = "..." }`):
+1. Creates a stable symlink `build/xcode-frameworks/current → {config}/{platform}`.
+2. Updates `Package.swift` with `unsafeFlags(["-F", "xcode-frameworks/current"])` pointing to the framework directory. Swift resolves `import {frameworkName}` from there without recompiling the KMP source.
+
+**Both modes:**
+3. Syncs the KSP-generated `.swift` files into `{exportFolderName}/Sources/{exportFolderName}/`.
+
+Declaring the KMP module as an SPM source dependency (`.package(path: "...")`) causes Xcode to
+**recompile the KMP source code** with SPM's own toolchain and a low default deployment target
+(iOS 12 for swift-tools-version 5.9). This causes availability errors (`UnsafeCurrentTask` requires
+iOS 13+). Using `unsafeFlags` points the compiler to **pre-compiled artifacts** instead.
+
+Using pre-compiled build artifacts (instead of declaring the KMP module as an SPM source dependency) is what keeps `Package.swift` stable across simulator/device switches and eliminates deployment target mismatch errors.
+
+After `./gradlew clean`, the `Package.swift` is automatically reset to a stub (no external dependencies) so Xcode can still open the project without resolution errors. Re-run `createRepresentablesPackage` to restore the full setup.
+
+</details>
+
+<details><summary>Troubleshooting</summary>
+
+If Representables are not found in Xcode, run the diagnostic task to inspect the full pipeline without triggering a build:
+
+```bash
+ ./gradlew validateRepresentables
+```
+
+It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for:
+1. KSP output — Swift files in `build/generated/ksp/`
+2. Destination — Swift files in `{iosAppFolderName}/{exportFolderName}/`
+3. Package.swift — exists at `{exportFolderName}/Package.swift`
+4. Sources — Swift files in `{exportFolderName}/Sources/{exportFolderName}/`
+
+If validation fails, the most common fix is:
+```bash
+ ./gradlew clean --no-build-cache
+```
+Then rebuild it again.
+
+</details>
+
+<details><summary>Build output (sample)</summary>
+
+When building the project, you should see output similar to this:
+
+```bash
+> Task :shared:exportToSpm
+  > Arch: iosSimulatorArm64, Config: Debug
+  > Swift Export: interfaces linked → iosSimulatorArm64/Debug/dd-interfaces
+  > Package.swift updated
+  > Starting smart sync process
+  > KSP output: 4 Swift file(s) found
+  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedAUIViewControllerRepresentable.swift
+  > New file: GradientScreenMixedBUIViewControllerRepresentable.swift
+  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
+  > Summary: 0 unchanged, 4 copied, 0 removed
+  > Done
+```
+Or, when using ObjC Export:
+```bash
+  > Task :shared:exportToSpm
+  > Arch: iosSimulatorArm64, Config: Debug
+  > ObjC Export: framework linked → Debug/iphonesimulator26.5
+  ...
+```
+
+</details>
 
 ## Code generation
 
@@ -121,11 +291,13 @@ import Shared
 import SwiftUI
 
 public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
-    func makeUIViewController(context _: Context) -> UIViewController {
+    public init() {}
+
+    public func makeUIViewController(context _: Context) -> UIViewController {
         ComposeSimpleViewUIViewController().make()
     }
 
-    func updateUIViewController(_: UIViewController, context _: Context) {
+    public func updateUIViewController(_: UIViewController, context _: Context) {
         // unused
     }
 }
@@ -163,14 +335,19 @@ import Shared
 import SwiftUI
 
 public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
-    @Binding var viewState: ViewState
-    let callback: () -> Void
+    @Binding public var viewState: ViewState
+    public let callback: () -> Void
 
-    func makeUIViewController(context _: Context) -> UIViewController {
+    public init(viewState: Binding<ViewState>, callback: @escaping () -> Void) {
+        self._viewState = viewState
+        self.callback = callback
+    }
+
+    public func makeUIViewController(context _: Context) -> UIViewController {
         ComposeAdvancedViewUIViewController().make(callback: callback)
     }
 
-    func updateUIViewController(_: UIViewController, context _: Context) {
+    public func updateUIViewController(_: UIViewController, context _: Context) {
         ComposeAdvancedViewUIViewController().update(viewState: viewState)
     }
 }
@@ -196,59 +373,12 @@ struct SomeView: View {
 }
 ```
 > [!IMPORTANT]
-> Avoid deleting `iosApp/Representables` without using Xcode.
-
-### Build output
-
-When building the KMP module, you should see output similar to this:
-```bash
-> Task :shared:copyFilesToXcode
-  > Using xcodeproj gem version 1.27.0 (minimum: 1.27.0)
-  > Starting smart sync process
-  > KSP output: 4 Swift file(s) found
-  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
-  > New file: GradientScreenMixedAUIViewControllerRepresentable.swift
-  > New file: GradientScreenMixedBUIViewControllerRepresentable.swift
-  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
-  > Summary: 0 unchanged, 4 copied, 0 removed
-  > Detected changes. Rebuilding Xcode references
-  > Created new group "Representables"
-  > Adding: GradientScreenComposeUIViewControllerRepresentable.swift
-  > Adding: GradientScreenMixedAUIViewControllerRepresentable.swift
-  > Adding: GradientScreenMixedBUIViewControllerRepresentable.swift
-  > Adding: GradientScreenSwiftUIViewControllerRepresentable.swift
-  > Summary: 4 added, 0 removed, 0 unchanged
-  > Xcodeproj saved successfully
-  > Done
-```
-
- #### Troubleshooting
-
-Sometimes the files are correctly generated and copied, but Android Studio doesn't recognize them. Select the `iosApp` project folder,
-right-click, and choose **"Reload from Disk"**. Once the files become visible, the build should succeed.
-
----
-
-If Representables are not found in Xcode, run the diagnostic task to inspect the full pipeline without triggering a build:
-
-```bash
- ./gradlew validateRepresentables
-```
-
-It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for:
- 1. KSP output — Swift files in `build/generated/ksp/`
- 2. Destination — Swift files in `iosApp/Representables/`
- 3. Sync — KSP output and destination match
- 4. xcodeproj — all Representables are referenced in `project.pbxproj`
-
- If validation fails, the most common fix is:
-```bash
- ./gradlew clean --no-build-cache
-```
-Then rebuild it again.
+> When not using SPM export mode, always delete `iosApp/Representables` through Xcode.
 
 ## Sample
-For a working [sample](sample) open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `iosApp` in run configurations.
+For working samples check [sample-objc-export](sample-objc-export), [sample-swift-export](sample-swift-export) or [sample-swift-export-spm](sample-swift-export-spm). 
+Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `Gradient` in run 
+configurations.
 
 You'll find different use cases:
 - `GradientScreenCompose`: A screen rendered entirely in Compose (UI+state) and embedded in iOS;
