@@ -376,7 +376,7 @@ struct SomeView: View {
 > When not using SPM export mode, always delete `iosApp/Representables` through Xcode.
 
 ## Sample
-For working samples check [sample-objc-export](sample-objc-export), [sample-swift-export](sample-swift-export) or [sample-swift-export-spm](sample-swift-export-spm). 
+For working samples check [sample-objc-export](sample-objc-export), [sample-objc-export-spm](sample-objc-export-spm), [sample-swift-export](sample-swift-export) or [sample-swift-export-spm](sample-swift-export-spm). 
 Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `Gradient` in run 
 configurations.
 
