@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.0-1.11.1-1]
+
+- Adds `composeuiviewcontroller.metadataPath` to pass the absolute path passed by the Gradle plugin. This is always correct regardless of the 
+  working directory at KSP execution time.
+
 ## [2.4.0-1.11.1]
 
 - Kotlin 2.4.0 🥳

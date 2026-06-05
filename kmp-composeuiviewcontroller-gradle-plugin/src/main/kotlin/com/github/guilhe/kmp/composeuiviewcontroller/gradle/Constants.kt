@@ -22,7 +22,7 @@ let package = Package(
 )
 """.trimIndent()
 
-internal const val VERSION_LIBRARY = "2.4.0-1.11.1"
+internal const val VERSION_LIBRARY = "2.4.0-1.11.1-1"
 internal const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
 internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
 internal const val PLUGIN_KSP = "com.google.devtools.ksp"
@@ -62,6 +62,7 @@ internal const val PARAM_SPM_MODULE = "spm_module_name"
 internal const val PARAM_IOS_DEPLOYMENT_TARGET = "ios_deployment_target"
 internal const val PARAM_SWIFT_TOOLS_VERSION = "swift_tools_version"
 internal const val KSP_ARG_METADATA_HASH = "composeuiviewcontroller.metadataHash"
+internal const val KSP_ARG_METADATA_PATH = "composeuiviewcontroller.metadataPath"
 internal const val ERROR_MISSING_KMP = "$LOG_TAG requires the Kotlin Multiplatform plugin to be applied."
 internal const val ERROR_MISSING_PACKAGE = "Could not determine project's package"
 internal const val ERROR_MISSING_FRAMEWORK_CONFIG = "No framework configuration found."

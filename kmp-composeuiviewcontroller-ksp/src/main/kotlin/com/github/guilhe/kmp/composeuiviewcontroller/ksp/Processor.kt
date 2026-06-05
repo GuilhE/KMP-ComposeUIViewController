@@ -21,7 +21,8 @@ import java.io.File
 import kotlinx.serialization.json.Json
 
 public class ProcessorProvider : SymbolProcessorProvider {
-	override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor = Processor(environment.codeGenerator, environment.logger)
+	override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor =
+		Processor(environment.codeGenerator, environment.logger, environment.options)
 }
 
 private data class TypeAliasInfo(
@@ -32,6 +33,7 @@ private data class TypeAliasInfo(
 internal class Processor(
 	private val codeGenerator: CodeGenerator,
 	private val logger: KSPLogger,
+	private val options: Map<String, String> = emptyMap(),
 ) : SymbolProcessor {
 
 	override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -193,10 +195,15 @@ internal class Processor(
 	}
 
 	private fun getFrameworkMetadataFromDisk(): List<ModuleMetadata> {
-		val file = if (System.getProperty("user.dir").endsWith("Pods")) {
-			File("../../build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
-		} else {
-			File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
+		// Prefer the absolute path passed by the Gradle plugin (composeuiviewcontroller.metadataPath).
+		// This is always correct regardless of the working directory at KSP execution time.
+		// Older plugin versions or Cocoapods setups (invoked from iosApp/ instead of the project root)
+		// do not set this arg, so we fall back to the legacy relative path heuristic.
+		val absolutePath = options["composeuiviewcontroller.metadataPath"]
+		val file = when {
+			!absolutePath.isNullOrBlank() -> File(absolutePath)
+			System.getProperty("user.dir").endsWith("Pods") -> File("../../build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
+			else -> File("./build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
 		}
 		val moduleMetadata = try {
 			Json.decodeFromString<List<ModuleMetadata>>(file.readText())

@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
 	group = "com.github.guilhe.kmp"
-	version = "2.4.0-1.11.1"
+	version = "2.4.0-1.11.1-1"
 }
 
 dependencies {
@@ -28,6 +28,14 @@ tasks.register("publishLibraryModules") {
 	dependsOn(":kmp-composeuiviewcontroller-common:publishToMavenCentral")
 	dependsOn(":kmp-composeuiviewcontroller-annotations:publishToMavenCentral")
 	finalizedBy(":kmp-composeuiviewcontroller-ksp:publishToMavenCentral")
+}
+
+tasks.register("publishLibraryModulesLocally") {
+	description = "Publishes all library modules to the local Maven repository (~/.m2) for local testing (no signing required)"
+	dependsOn(":kmp-composeuiviewcontroller-common:publishToMavenLocal")
+	dependsOn(":kmp-composeuiviewcontroller-annotations:publishToMavenLocal")
+	dependsOn(":kmp-composeuiviewcontroller-ksp:publishToMavenLocal")
+	dependsOn(":kmp-composeuiviewcontroller-gradle-plugin:publishToMavenLocal")
 }
 
 tasks.register("serveDokka") {
@@ -74,6 +82,9 @@ tasks.register("buildAllSamples") {
 				?: throw GradleException("No available iOS Simulator found. Install a simulator runtime in Xcode.")
 		}
 
+		data class BuildResult(val sample: String, val passed: Boolean, val reason: String? = null)
+		val results = mutableListOf<BuildResult>()
+
 		for (sample in samples) {
 			println("\n🔨 [$sample] Starting build...")
 
@@ -92,18 +103,56 @@ tasks.register("buildAllSamples") {
 				args.addAll(listOf("-sdk", "iphonesimulator"))
 			}
 
-			val pb = ProcessBuilder(args)
-				.directory(file(sample))
-				.redirectErrorStream(true)
+			try {
+				val pb = ProcessBuilder(args)
+					.directory(file(sample))
+					.redirectErrorStream(true)
 
-			val process = pb.start()
-			val reader = Thread { process.inputStream.bufferedReader().forEachLine { println("[$sample] $it") } }
-			reader.start()
-			val exitCode = process.waitFor()
-			reader.join()
+				val process = pb.start()
+				val outputLines = mutableListOf<String>()
+				val reader = Thread {
+					process.inputStream.bufferedReader().forEachLine { line ->
+						println("[$sample] $line")
+						outputLines.add(line)
+					}
+				}
+				reader.start()
+				val exitCode = process.waitFor()
+				reader.join()
 
-			if (exitCode != 0) throw GradleException("❌ [$sample] Build failed — stopping.")
-			println("✅ [$sample] Done!")
+				if (exitCode != 0) {
+					val errorLine = outputLines.lastOrNull { it.contains("error:", ignoreCase = true) }
+						?: outputLines.lastOrNull { it.isNotBlank() }
+						?: "exit code $exitCode"
+					println("❌ [$sample] Build failed — continuing to next sample.")
+					results.add(BuildResult(sample, false, errorLine.trim()))
+				} else {
+					println("✅ [$sample] Done!")
+					results.add(BuildResult(sample, true))
+				}
+			} catch (e: Exception) {
+				println("❌ [$sample] Exception during build — continuing to next sample.")
+				results.add(BuildResult(sample, false, e.message ?: "Unknown exception"))
+			}
+		}
+
+		println("\n" + "=".repeat(60))
+		println("📋 Build Summary")
+		println("=".repeat(60))
+		val passed = results.filter { it.passed }
+		val failed = results.filter { !it.passed }
+		if (passed.isNotEmpty()) {
+			println("\n✅ Passed (${passed.size}):")
+			passed.forEach { println("   • ${it.sample}") }
+		}
+		if (failed.isNotEmpty()) {
+			println("\n❌ Failed (${failed.size}):")
+			failed.forEach { println("   • ${it.sample}: ${it.reason}") }
+		}
+		println("\n" + "=".repeat(60))
+
+		if (failed.isNotEmpty()) {
+			throw GradleException("${failed.size} sample(s) failed to build. See summary above.")
 		}
 	}
 }

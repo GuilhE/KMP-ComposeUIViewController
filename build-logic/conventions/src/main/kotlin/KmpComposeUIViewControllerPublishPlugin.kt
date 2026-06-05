@@ -35,23 +35,23 @@ class KmpComposeUIViewControllerPublishPlugin : Plugin<Project> {
                 project.findProperty("signingInMemoryKeyId") != null ||
                 System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKeyId") != null
 
-        if (!hasSigning) {
-            project.logger.debug("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - no signing configuration found, skipping publish setup.")
-            return
+        project.logger.debug("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - hasSigning = $hasSigning")
+
+        if (hasSigning) {
+            project.plugins.apply("signing")
+            project.gradle.taskGraph.whenReady(object : Closure<Unit>(project) {
+                fun doCall(graph: org.gradle.api.execution.TaskExecutionGraph) {
+                    val isMavenLocal = graph.allTasks.any { it.name == "publishToMavenLocal" || it.path.endsWith("publishToMavenLocal") }
+                    project.extensions.getByType(SigningExtension::class.java).isRequired = !isMavenLocal
+                    project.logger.debug("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - isMavenLocal = $isMavenLocal")
+                }
+            })
         }
 
-        project.plugins.apply("signing")
-        project.gradle.taskGraph.whenReady(object : Closure<Unit>(project) {
-            fun doCall(graph: org.gradle.api.execution.TaskExecutionGraph) {
-                val isMavenLocal = graph.allTasks.any { it.name == "publishToMavenLocal" || it.path.endsWith("publishToMavenLocal") }
-                project.extensions.getByType(SigningExtension::class.java).isRequired = !isMavenLocal
-                project.logger.debug("\t> KmpComposeUIViewControllerPublishPlugin [${project.name}] - isMavenLocal = $isMavenLocal")
-            }
-        })
         project.plugins.apply("com.vanniktech.maven.publish")
         project.extensions.getByType(MavenPublishBaseExtension::class.java).apply {
             publishToMavenCentral(automaticRelease = false)
-            signAllPublications()
+            if (hasSigning) signAllPublications()
             pom {
                 name.set(LIB_NAME)
                 description.set(LIB_DESCRIPTION)

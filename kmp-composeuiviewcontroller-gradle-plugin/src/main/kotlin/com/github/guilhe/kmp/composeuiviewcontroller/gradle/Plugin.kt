@@ -327,7 +327,10 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			logger.info("\t> Registered $FILE_NAME_ARGS as input for task '${task.name}'")
 		}
 
-		// KSP level
+		// KSP level: pass the absolute path so the processor is independent of the working directory.
+		// Relative path resolution fails when Gradle is invoked from a subdirectory (e.g. Cocoapods
+		// invoking from iosApp/ instead of the project root).
+		extensions.findByType(KspExtension::class.java)?.arg(KSP_ARG_METADATA_PATH, metadataFile.absolutePath)
 		if (metadataFile.exists()) {
 			val metadataHash = metadataFile.readText().hashCode().toString()
 			extensions.findByType(KspExtension::class.java)?.arg(KSP_ARG_METADATA_HASH, metadataHash)
