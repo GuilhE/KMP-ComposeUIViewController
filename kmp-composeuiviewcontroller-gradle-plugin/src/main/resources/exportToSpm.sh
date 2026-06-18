@@ -110,7 +110,24 @@ add_to_xcodeproj_if_needed() {
 
   if grep -q "XCLocalSwiftPackageReference" "$project_pbxproj" 2>/dev/null && \
      grep -q "\"$group_name\"" "$project_pbxproj" 2>/dev/null; then
-    return 0
+    # Fast path: package reference exists. Still check for orphaned product dependencies
+    # (entries without a package pointer) that cause unresolvable build errors.
+    local orphaned_count
+    orphaned_count=$(ruby -e '
+      require "xcodeproj"
+      project = Xcodeproj::Project.open(ARGV[0]) rescue exit(0)
+      count = project.objects.count { |o|
+        o.isa == "XCSwiftPackageProductDependency" &&
+          o.respond_to?(:product_name) && o.product_name == ARGV[1] &&
+          (!o.respond_to?(:package) || o.package.nil?)
+      }
+      puts count
+    ' "$IOS_APP_DIR/$xcodeproj_path" "$group_name" 2>/dev/null || echo "0")
+
+    if [ "${orphaned_count:-0}" -eq 0 ] 2>/dev/null; then
+      return 0
+    fi
+    echo "  > Found $orphaned_count orphaned \"$group_name\" dependency entry/entries — cleaning up..."
   fi
 
   echo "  > Adding \"$group_name\" local package to Xcode project..."
@@ -137,26 +154,58 @@ add_to_xcodeproj_if_needed() {
       exit 1
     end
 
+    # Remove any orphaned product dependencies (no package pointer) left behind by
+    # previous manual additions or interrupted runs, to avoid duplicate/unresolvable entries.
+    orphaned = project.objects.select do |obj|
+      obj.isa == "XCSwiftPackageProductDependency" &&
+        obj.respond_to?(:product_name) &&
+        obj.product_name == product_name &&
+        (!obj.respond_to?(:package) || obj.package.nil?)
+    end
+    unless orphaned.empty?
+      puts "  > Removing #{orphaned.size} orphaned XCSwiftPackageProductDependency entry/entries for \"#{product_name}\""
+      project.targets.each do |t|
+        frameworks_phase = t.frameworks_build_phase
+        next unless frameworks_phase
+        to_remove = frameworks_phase.files.select { |bf| bf.respond_to?(:product_ref) && orphaned.include?(bf.product_ref) }
+        to_remove.each { |bf| frameworks_phase.remove_build_file(bf) }
+      end
+      project.targets.each do |t|
+        next unless t.respond_to?(:package_product_dependencies)
+        t.package_product_dependencies.delete_if { |dep| orphaned.include?(dep) }
+      end
+      orphaned.each(&:remove_from_project)
+    end
+
     existing_refs = project.root_object.package_references.to_a rescue []
-    already_added = existing_refs.any? do |ref|
+    pkg_ref = existing_refs.find do |ref|
       ref.isa == "XCLocalSwiftPackageReference" &&
         ref.respond_to?(:relative_path) &&
         ref.relative_path == relative_path
     end
 
-    if already_added
-      puts "  > Package \"#{product_name}\" already added to project. Skipping"
-      exit 0
+    if pkg_ref
+      already_linked = target.package_product_dependencies.any? { |dep| dep.package == pkg_ref && dep.product_name == product_name }
+      if already_linked
+        puts "  > Package \"#{product_name}\" already correctly linked. Skipping"
+        project.save if !orphaned.empty?
+        exit 0
+      end
+      puts "  > Package reference exists but target is not linked — re-linking \"#{product_name}\""
+    else
+      pkg_ref = project.new(Xcodeproj::Project::Object::XCLocalSwiftPackageReference)
+      pkg_ref.relative_path = relative_path
+      project.root_object.package_references << pkg_ref
     end
-
-    pkg_ref = project.new(Xcodeproj::Project::Object::XCLocalSwiftPackageReference)
-    pkg_ref.relative_path = relative_path
-    project.root_object.package_references << pkg_ref
 
     pkg_dep = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
     pkg_dep.package = pkg_ref
     pkg_dep.product_name = product_name
     target.package_product_dependencies << pkg_dep
+
+    build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
+    build_file.product_ref = pkg_dep
+    target.frameworks_build_phase.add_build_file(build_file)
 
     begin
       project.save

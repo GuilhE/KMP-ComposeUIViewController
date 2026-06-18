@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.4.0-1.11.1-2]
+
+- Fixes `deleteRepresentablesPackage`, `createRepresentablesPackage`, and `exportToSpm` scripts to detect and remove orphaned `XCSwiftPackageProductDependency` entries (entries without a `package` pointer left behind by previous manual or tool-assisted additions). These orphaned entries caused intermittent build failures — Xcode could resolve them from DerivedData cache, but failed with "cannot find type in scope" errors after a clean build or cache reset.
+
 ## [2.4.0-1.11.1-1]
 
 - Adds `composeuiviewcontroller.metadataPath` to pass the absolute path passed by the Gradle plugin. This is always correct regardless of the 

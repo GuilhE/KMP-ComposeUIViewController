@@ -71,8 +71,7 @@ remove_from_xcodeproj() {
     return 0
   fi
 
-  if ! grep -q "XCLocalSwiftPackageReference" "$project_pbxproj" 2>/dev/null || \
-     ! grep -q "\"$group_name\"" "$project_pbxproj" 2>/dev/null; then
+  if ! grep -q "$group_name" "$project_pbxproj" 2>/dev/null; then
     echo "  > Package \"$group_name\" not found in project. Skipping"
     return 0
   fi
@@ -94,30 +93,65 @@ remove_from_xcodeproj() {
       exit 1
     end
 
-    target = project.targets.find { |t| t.name == target_name }
-    unless target
-      puts "  > ERROR: Target \"#{target_name}\" not found in project"
-      exit 1
+    # Collect ALL product dependencies for this product name — including orphaned ones
+    # (entries without a package pointer left behind by previous manual/tool additions).
+    all_deps = project.objects.select do |obj|
+      obj.isa == "XCSwiftPackageProductDependency" &&
+        obj.respond_to?(:product_name) &&
+        obj.product_name == product_name
     end
 
-    pkg_ref = (project.root_object.package_references.to_a rescue []).find do |ref|
+    if all_deps.empty?
+      puts "  > No XCSwiftPackageProductDependency entries found for \"#{product_name}\". Skipping"
+    else
+      puts "  > Removing #{all_deps.size} XCSwiftPackageProductDependency entry/entries for \"#{product_name}\""
+
+      # Remove build-file entries from every target framework phase
+      project.targets.each do |target|
+        frameworks_phase = target.frameworks_build_phase
+        next unless frameworks_phase
+        to_remove = frameworks_phase.files.select do |bf|
+          bf.respond_to?(:product_ref) && all_deps.include?(bf.product_ref)
+        end
+        to_remove.each do |bf|
+          frameworks_phase.remove_build_file(bf)
+          puts "  > Removed \"#{product_name} in Frameworks\" from target \"#{target.name}\""
+        end
+      end
+
+      # Remove from each target package_product_dependencies list
+      project.targets.each do |target|
+        next unless target.respond_to?(:package_product_dependencies)
+        before = target.package_product_dependencies.size
+        target.package_product_dependencies.delete_if { |dep| all_deps.include?(dep) }
+        removed = before - target.package_product_dependencies.size
+        puts "  > Removed #{removed} product dependency reference(s) from target \"#{target.name}\"" if removed > 0
+      end
+
+      # Remove the dependency objects themselves
+      all_deps.each(&:remove_from_project)
+    end
+
+    # Remove the XCLocalSwiftPackageReference (there may be more than one if setup ran multiple times)
+    pkg_refs = (project.root_object.package_references.to_a rescue []).select do |ref|
       ref.isa == "XCLocalSwiftPackageReference" &&
         ref.respond_to?(:relative_path) &&
         ref.relative_path == relative_path
     end
 
-    unless pkg_ref
-      puts "  > Package \"#{product_name}\" not found in project. Skipping"
-      exit 0
+    if pkg_refs.empty?
+      puts "  > No XCLocalSwiftPackageReference found for \"#{product_name}\". Skipping"
+    else
+      pkg_refs.each do |ref|
+        project.root_object.package_references.delete(ref)
+        ref.remove_from_project
+      end
+      puts "  > Removed #{pkg_refs.size} XCLocalSwiftPackageReference entry/entries for \"#{product_name}\""
     end
-
-    target.package_product_dependencies.delete_if { |dep| dep.package == pkg_ref }
-    project.root_object.package_references.delete(pkg_ref)
-    pkg_ref.remove_from_project
 
     begin
       project.save
-      puts "  > Removed \"#{product_name}\" local package from target \"#{target_name}\""
+      puts "  > Xcode project saved"
     rescue => e
       puts "  > ERROR: Failed to save Xcode project: #{e.message}"
       exit 1
@@ -144,4 +178,4 @@ echo "  > Removing package reference from Xcode project..."
 remove_from_xcodeproj
 
 echo ""
-echo "  > Done. Run setupRepresentablesSpmPackage to set up again."
+echo "  > Done. Run createRepresentablesPackage to set up again."
