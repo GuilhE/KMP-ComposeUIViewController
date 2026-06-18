@@ -190,10 +190,6 @@ add_to_xcodeproj() {
     pkg_dep.product_name = product_name
     target.package_product_dependencies << pkg_dep
 
-    build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
-    build_file.product_ref = pkg_dep
-    target.frameworks_build_phase.add_build_file(build_file)
-
     begin
       project.save
       puts "  > Added \"#{product_name}\" local package to target \"#{target_name}\""
@@ -213,6 +209,5 @@ check_for_xcodeproj
 cd "$IOS_APP_DIR" || exit
 add_to_xcodeproj
 
-echo ""
 echo "  > Setup complete."
 echo "  > Build the project once in Xcode — the full Swift Export dependency will be activated automatically."

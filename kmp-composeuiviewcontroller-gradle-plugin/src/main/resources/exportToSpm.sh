@@ -203,10 +203,6 @@ add_to_xcodeproj_if_needed() {
     pkg_dep.product_name = product_name
     target.package_product_dependencies << pkg_dep
 
-    build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
-    build_file.product_ref = pkg_dep
-    target.frameworks_build_phase.add_build_file(build_file)
-
     begin
       project.save
       puts "  > Added \"#{product_name}\" local package to target \"#{target_name}\""

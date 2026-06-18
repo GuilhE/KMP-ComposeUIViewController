@@ -177,5 +177,4 @@ SPM_OTHER_INCLUDES_SYMLINK="$PROJECT_ROOT/$kmp_module/build/SPMPackage/OtherIncl
 echo "  > Removing package reference from Xcode project..."
 remove_from_xcodeproj
 
-echo ""
 echo "  > Done. Run createRepresentablesPackage to set up again."
