@@ -185,7 +185,7 @@ On every Xcode build, the plugin hooks into `embedAndSignAppleFrameworkForXcode`
 
 **ObjC Export** (`binaries.framework { baseName = "..." }`):
 1. Creates a stable symlink `build/xcode-frameworks/current → {config}/{platform}`.
-2. Updates `Package.swift` with `unsafeFlags(["-F", "xcode-frameworks/current"])` pointing to the framework directory. Swift resolves `import {frameworkName}` from there without recompiling the KMP source.
+2. Updates `Package.swift` with both `swiftSettings: [.unsafeFlags(["-F", "xcode-frameworks/current"])]` and `linkerSettings: [.unsafeFlags(["-F", "xcode-frameworks/current", "-framework", "{frameworkName}"])]`. The `swiftSettings` flag lets Swift resolve `import {frameworkName}` from the pre-compiled framework; the explicit `linkerSettings` flag avoids intermittent `Undefined symbols for architecture` linker errors caused by Swift auto-linking being fragile in SPM static-library contexts.
 
 **Both modes:**
 3. Syncs the KSP-generated `.swift` files into `{exportFolderName}/Sources/{exportFolderName}/`.
