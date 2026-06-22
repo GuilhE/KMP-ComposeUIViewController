@@ -17,6 +17,9 @@ let package = Package(
             path: "Sources/Representables",
             swiftSettings: [
                 .unsafeFlags(["-F", "../../shared/build/xcode-frameworks/current"])
+            ],
+            linkerSettings: [
+                .unsafeFlags(["-F", "../../shared/build/xcode-frameworks/current", "-framework", "Composables"])
             ]
         )
     ]

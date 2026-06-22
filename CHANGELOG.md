@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.4.0-1.11.1-4]
+
+- Fixes intermittent `Undefined symbols for architecture arm64` linker errors when using `experimentalSpmExport = true` with ObjC Export. The generated `Package.swift` now includes `linkerSettings: [.unsafeFlags(["-F", "...", "-framework", "<FrameworkName>"])]` alongside the existing `swiftSettings`, making the linker flag explicit instead of relying on Swift auto-linking (which is fragile in SPM static-library contexts).
+
 ## [2.4.0-1.11.1-3]
 
 - Fixes `createRepresentablesPackage` and `exportToSpm` scripts crashing with `undefined method 'add_build_file'` — the `PBXBuildFile` entry is now omitted from the script since Xcode adds it automatically when it resolves the package on first build.

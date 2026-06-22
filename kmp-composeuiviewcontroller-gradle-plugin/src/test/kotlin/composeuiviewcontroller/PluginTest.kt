@@ -738,6 +738,225 @@ class PluginTest {
 	}
 
 	@Test
+	fun `exportToSpm generates Package swift with linkerSettings for ObjC export when framework exists`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework {
+                        baseName = "MyFramework"
+                    }
+                }
+            }
+            ComposeUiViewController {
+                experimentalSpmExport = true
+                iosAppFolderName = "iosApp"
+                iosAppName = "iosApp"
+                targetName = "iosApp"
+                exportFolderName = "Representables"
+                iosDeploymentTarget = "18"
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// Simulate the framework produced by embedAndSignAppleFrameworkForXcode.
+		// The script resolves PROJECT_ROOT as $projectDir/ (script sits 2 dirs below build/),
+		// then appends kmp_module (= project.name = "testProject") to find the framework dir.
+		File(projectDir, "testProject/build/xcode-frameworks/Debug/iphonesimulator18.0/MyFramework.framework")
+			.also { it.mkdirs() }
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_EXPORT_TO_SPM))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+		val packageSwift = File(projectDir, "iosApp/Representables/Package.swift")
+		assertTrue(packageSwift.exists(), "Package.swift should be generated")
+
+		val content = packageSwift.readText()
+		assertTrue(content.contains("swiftSettings"), "Package.swift should contain swiftSettings")
+		assertTrue(content.contains("linkerSettings"), "Package.swift should contain linkerSettings for ObjC export")
+		assertTrue(content.contains("\"-framework\""), "linkerSettings should include -framework flag")
+		assertTrue(content.contains("\"MyFramework\""), "linkerSettings should reference the framework name")
+		assertFalse(content.contains("Stub:"), "Package.swift should not be the stub when framework is present")
+	}
+
+	@Test
+	fun `exportToSpm generates Package swift stub without linkerSettings for ObjC export when framework is absent`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework {
+                        baseName = "MyFramework"
+                    }
+                }
+            }
+            ComposeUiViewController {
+                experimentalSpmExport = true
+                iosAppFolderName = "iosApp"
+                iosAppName = "iosApp"
+                targetName = "iosApp"
+                exportFolderName = "Representables"
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// No framework directory — embedAndSignAppleFrameworkForXcode has not run yet
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_EXPORT_TO_SPM))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+		val packageSwift = File(projectDir, "iosApp/Representables/Package.swift")
+		assertTrue(packageSwift.exists(), "Stub Package.swift should be generated even without framework")
+
+		val content = packageSwift.readText()
+		assertFalse(content.contains("linkerSettings"), "Stub Package.swift should not contain linkerSettings")
+		assertTrue(content.contains("Stub:"), "Package.swift should be the stub when framework is absent")
+	}
+
+	@Test
+	fun `exportToSpm generates Package swift with -I swiftSettings and no linkerSettings for Swift Export`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+            ComposeUiViewController {
+                experimentalSpmExport = true
+                iosAppFolderName = "iosApp"
+                iosAppName = "iosApp"
+                targetName = "iosApp"
+                exportFolderName = "Representables"
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// Simulate dd-interfaces produced by embedSwiftExportForXcode.
+		// KOTLIN_ARCH defaults to "iosSimulatorArm64" (PLATFORM_NAME unset → iphonesimulator),
+		// BUILD_CONFIG defaults to "Debug".
+		File(projectDir, "testProject/build/SPMBuild/iosSimulatorArm64/Debug/dd-interfaces").also { it.mkdirs() }
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_EXPORT_TO_SPM))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+		val content = File(projectDir, "iosApp/Representables/Package.swift").readText()
+		assertTrue(content.contains("\"-I\""), "Package.swift should use -I flags for Swift Export")
+		assertTrue(content.contains("SwiftInterfaces"), "Package.swift should reference the SwiftInterfaces symlink path")
+		assertFalse(content.contains("\"-F\""), "Package.swift should not use -F flags for Swift Export")
+		assertFalse(content.contains("linkerSettings"), "Package.swift should not contain linkerSettings for Swift Export")
+		assertFalse(content.contains("Stub:"), "Package.swift should not be the stub when interfaces are present")
+	}
+
+	@Test
+	fun `exportToSpm generates Package swift with -I flags for each OtherIncludes subdir`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+            ComposeUiViewController {
+                experimentalSpmExport = true
+                iosAppFolderName = "iosApp"
+                iosAppName = "iosApp"
+                targetName = "iosApp"
+                exportFolderName = "Representables"
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		File(projectDir, "testProject/build/SPMBuild/iosSimulatorArm64/Debug/dd-interfaces").also { it.mkdirs() }
+		// Simulate Clang bridge module subdirs produced by embedSwiftExportForXcode
+		File(projectDir, "testProject/build/SPMPackage/iosSimulatorArm64/Debug/OtherIncludes/KotlinRuntime").also { it.mkdirs() }
+		File(projectDir, "testProject/build/SPMPackage/iosSimulatorArm64/Debug/OtherIncludes/KotlinRuntimeSupportBridge").also { it.mkdirs() }
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_EXPORT_TO_SPM))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+		val content = File(projectDir, "iosApp/Representables/Package.swift").readText()
+		assertTrue(content.contains("OtherIncludes/KotlinRuntime"), "Package.swift should include -I for KotlinRuntime")
+		assertTrue(content.contains("OtherIncludes/KotlinRuntimeSupportBridge"), "Package.swift should include -I for KotlinRuntimeSupportBridge")
+		assertFalse(content.contains("linkerSettings"), "Package.swift should not contain linkerSettings for Swift Export")
+	}
+
+	@Test
+	fun `exportToSpm Swift Export takes priority over ObjC Export when both build outputs exist`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework {
+                        baseName = "MyFramework"
+                    }
+                }
+            }
+            ComposeUiViewController {
+                experimentalSpmExport = true
+                iosAppFolderName = "iosApp"
+                iosAppName = "iosApp"
+                targetName = "iosApp"
+                exportFolderName = "Representables"
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// Both build outputs present — Swift Export must win
+		File(projectDir, "testProject/build/SPMBuild/iosSimulatorArm64/Debug/dd-interfaces").also { it.mkdirs() }
+		File(projectDir, "testProject/build/xcode-frameworks/Debug/iphonesimulator18.0/MyFramework.framework").also { it.mkdirs() }
+
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_EXPORT_TO_SPM))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+
+		val content = File(projectDir, "iosApp/Representables/Package.swift").readText()
+		assertTrue(content.contains("\"-I\""), "Swift Export path should be chosen when both outputs exist")
+		assertFalse(content.contains("\"-F\""), "ObjC -F flag should not appear when Swift Export interfaces exist")
+		assertFalse(content.contains("linkerSettings"), "linkerSettings should not be generated for Swift Export path")
+	}
+
+	@Test
 	fun `autoExport false in SPM mode does not finalize tasks`() {
 		Templates.createCommonMainSource(projectDir, packageName = "com.test")
 		Templates.writeBuildGradle(
