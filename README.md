@@ -91,7 +91,7 @@ If validation fails, the most common fix is:
 ```
 Then rebuild it again.
 
-If `validateRepresentables` reports `KSP output: 0 Swift file(s) found` even though your code has `@ComposeUIViewController` annotations, Gradle's UP-TO-DATE check for the `ksp*` task may be "stuck" on a stale, empty result from a previous run (e.g. after an interrupted build). Since nothing about that task's declared inputs changed since then, Gradle keeps skipping it — so `clean` alone doesn't always help if the very next KSP run reproduces the same empty result. Force a real re-execution of just that task instead:
+If `validateRepresentables` reports `KSP output: 0 Swift file(s) found` even though your code has `@ComposeUIViewController` annotations, Gradle's UP-TO-DATE check for the `ksp*` task may be "stuck" on a stale, empty result from a previous run (e.g. after an interrupted build). Since nothing about that task's declared inputs changed since then, Gradle would otherwise keep skipping it forever — the plugin detects this automatically (comparing the `ksp*` task's output against `@ComposeUIViewController` annotations still present in source) and forces that task to re-run within the same build, logging a warning when it does. If you ever need to force it manually (e.g. outside of a normal build):
 ```bash
  ./gradlew :<module>:kspKotlin<Target> --rerun-tasks
 ```
@@ -227,7 +227,7 @@ If validation fails, the most common fix is:
 ```
 Then rebuild it again.
 
-If `validateRepresentables` reports `KSP output: 0 Swift file(s) found` even though your code has `@ComposeUIViewController` annotations, Gradle's UP-TO-DATE check for the `ksp*` task may be "stuck" on a stale, empty result from a previous run (e.g. after an interrupted build). Since nothing about that task's declared inputs changed since then, Gradle keeps skipping it — so `clean` alone doesn't always help if the very next KSP run reproduces the same empty result. Force a real re-execution of just that task instead:
+If `validateRepresentables` reports `KSP output: 0 Swift file(s) found` even though your code has `@ComposeUIViewController` annotations, Gradle's UP-TO-DATE check for the `ksp*` task may be "stuck" on a stale, empty result from a previous run (e.g. after an interrupted build). Since nothing about that task's declared inputs changed since then, Gradle would otherwise keep skipping it forever — the plugin detects this automatically (comparing the `ksp*` task's output against `@ComposeUIViewController` annotations still present in source) and forces that task to re-run within the same build, logging a warning when it does. If you ever need to force it manually (e.g. outside of a normal build):
 ```bash
  ./gradlew :<module>:kspKotlin<Target> --rerun-tasks
 ```

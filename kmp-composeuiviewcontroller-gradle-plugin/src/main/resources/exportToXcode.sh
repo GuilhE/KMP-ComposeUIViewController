@@ -15,6 +15,24 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../../" && pwd )"
 IOS_APP_DIR="$PROJECT_ROOT/$iosApp_project_folder"
 
+determine_kotlin_arch() {
+  if [[ "${PLATFORM_NAME:-iphonesimulator}" == "iphoneos" ]]; then
+    echo "iosArm64"
+  else
+    echo "iosSimulatorArm64"
+  fi
+}
+
+# Capitalizes the first letter only — portable across bash 3.2 (macOS default) and bash 4+,
+# unlike the `${var^}` expansion which requires bash 4+.
+capitalize_first() {
+  local s="$1"
+  printf '%s%s' "$(tr '[:lower:]' '[:upper:]' <<< "${s:0:1}")" "${s:1}"
+}
+
+KOTLIN_ARCH=$(determine_kotlin_arch)
+KSP_TASK_NAME="kspKotlin$(capitalize_first "$KOTLIN_ARCH")"
+
 install_gem() {
   local gem_name="$1"
   local version_constraint="$2"
@@ -152,7 +170,7 @@ smart_sync_files() {
     if [ "$expected_count" -gt 0 ]; then
       echo "  > ERROR: KSP output ($files_source) has 0 Swift file(s), but found $expected_count @ComposeUIViewController annotation(s) in $kmp_module/src."
       echo "  > This is a known Gradle/KSP issue: the ksp* task's UP-TO-DATE check can get stuck on a stale, empty result from a previous run (e.g. an interrupted build), and Gradle keeps skipping it even though nothing was actually generated. Force a real re-execution of just that task:"
-      echo "  ./gradlew :$kmp_module:kspKotlin<Target> --rerun-tasks"
+      echo "  ./gradlew :$kmp_module:$KSP_TASK_NAME --rerun-tasks"
       if [ "$dest_count" -gt 0 ]; then
         echo "  > Preserving existing $dest_count file(s) in destination in the meantime."
       fi

@@ -2,8 +2,9 @@
 
 ## [2.4.0-1.11.1-5]
 
-- Fixes silent framework corruption when the `ksp*` task's Gradle UP-TO-DATE check gets stuck on a stale, empty result (e.g. after an interrupted build): `copyFilesToXcode` and `exportToSpm` now count `@ComposeUIViewController` annotations in the module's Kotlin source whenever KSP output is empty. If annotations are still present, the build now fails immediately with an actionable message pointing to `./gradlew :<module>:kspKotlin<Target> --rerun-tasks`, instead of silently preserving stale Representables and producing a framework missing the expected `UIViewController` symbols. The previous behavior (warn + preserve destination) is kept for the case where no annotations remain in source, which still indicates an intentional removal.
-- Adds `configureKspOutputSelfHeal` to the Plugin to fix the above issue automatically. 
+- Fixes silent framework corruption when a `ksp*` task's Gradle UP-TO-DATE check gets stuck on a stale, empty result (e.g. after an interrupted build): since nothing about the task's declared inputs changed since then, Gradle would otherwise keep skipping it forever, silently producing a framework missing the expected `UIViewController` symbols.
+- Adds `configureKspOutputSelfHeal`: whenever a `ksp*` task's declared output has no `*UIViewController.kt` file despite `@ComposeUIViewController` annotations still being present in the module's Kotlin source, its `outputs.upToDateWhen` is overridden to force a real re-execution within the same build, logging a warning when it does. A no-op otherwise, so the normal KSP incremental cache is left untouched.
+- `copyFilesToXcode` and `exportToSpm` perform the same annotation-vs-output check as a fallback safety net: if KSP output is still empty after the self-heal above (e.g. the underlying KSP run is itself non-deterministic), the build now fails immediately with an actionable message pointing to `./gradlew :<module>:kspKotlin<Target> --rerun-tasks`, instead of silently preserving stale Representables. The previous behavior (warn + preserve destination) is kept for the case where no annotations remain in source, which still indicates an intentional removal.
 
 ## [2.4.0-1.11.1-4]
 
