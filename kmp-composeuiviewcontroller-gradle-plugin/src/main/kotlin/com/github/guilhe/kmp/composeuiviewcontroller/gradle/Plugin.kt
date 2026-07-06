@@ -95,6 +95,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 						args = buildFrameworkPackages(packageNames, frameworkNames)
 					)
 					configureKspTasksForCacheInvalidation()
+					configureKspOutputSelfHeal()
 
 					if (extension.experimentalSpmExport) {
 						configureTaskToRegisterCreateRepresentablesPackage(
@@ -336,6 +337,61 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			extensions.findByType(KspExtension::class.java)?.arg(KSP_ARG_METADATA_HASH, metadataHash)
 			logger.info("\t> Passed metadata hash ($metadataHash) to KSP processor as '$KSP_ARG_METADATA_HASH'")
 		}
+	}
+
+	/**
+	 * Forces a genuine re-execution of `ksp*` tasks when their declared output is missing the expected
+	 * `{name}UIViewController.kt` files despite `@ComposeUIViewController` annotations still being present
+	 * in source.
+	 *
+	 * This can happen when Gradle's UP-TO-DATE check gets stuck on a stale, empty result from a previous
+	 * run (e.g. an interrupted build): since nothing about the task's declared inputs changed since then,
+	 * Gradle keeps skipping it forever, silently producing a framework missing the expected ObjC-exported
+	 * symbols. `Task.outputs.upToDateWhen { ... }` predicates are evaluated *before* Gradle decides whether
+	 * to skip a task, so returning `false` here safely forces a real re-run within the same build — no
+	 * nested Gradle invocation (and its lock/deadlock risks) is involved.
+	 *
+	 * A no-op (returns `true`, doesn't override Gradle's normal decision) whenever the module has no
+	 * `@ComposeUIViewController` annotations, or the expected generated files are already present.
+	 */
+	private fun Project.configureKspOutputSelfHeal() {
+		tasks.matching { it.name.startsWith("ksp") }.configureEach { task ->
+			task.outputs.upToDateWhen {
+				if (!hasComposableAnnotationsInSource()) return@upToDateWhen true
+
+				val hasGeneratedOutput = task.outputs.files.any { outputRoot ->
+					outputRoot.exists() && outputRoot.walkTopDown().any { it.name.endsWith(GENERATED_UI_VIEW_CONTROLLER_SUFFIX) }
+				}
+				if (hasGeneratedOutput) return@upToDateWhen true
+
+				logger.warn(
+					"\n> $LOG_TAG: Task '${task.name}' produced no *$GENERATED_UI_VIEW_CONTROLLER_SUFFIX file(s) despite " +
+						"$COMPOSABLE_ANNOTATION annotations still present in source. This can happen when Gradle's " +
+						"UP-TO-DATE check gets stuck on a stale, empty result from a previous interrupted build. " +
+						"Forcing '${task.name}' to re-run."
+				)
+				false
+			}
+		}
+	}
+
+	/**
+	 * Heuristic (not a real parser): ignores lines that look commented-out (a leading `//`, `*`, or the
+	 * start of a block comment) so a disabled/commented `@ComposeUIViewController` example doesn't cause
+	 * a false positive.
+	 */
+	private fun Project.hasComposableAnnotationsInSource(): Boolean {
+		val sourceRoot = File(projectDir, "src")
+		if (!sourceRoot.exists()) return false
+		return sourceRoot.walkTopDown()
+			.filter { it.isFile && it.extension == "kt" }
+			.any { file ->
+				file.readText().lineSequence().any { line ->
+					val trimmed = line.trimStart()
+					line.contains(COMPOSABLE_ANNOTATION) &&
+						!trimmed.startsWith("*") && !trimmed.startsWith("//") && !trimmed.startsWith("/*")
+				}
+			}
 	}
 
 	private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS

@@ -575,6 +575,76 @@ class PluginTest {
 	// region KSP cache invalidation
 
 	@Test
+	fun `configureKspOutputSelfHeal forces a ksp task to re-run when output is empty but annotations exist`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+
+		val sourceDir = File(projectDir, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+		File(sourceDir, "Screen.kt").writeText(
+			"""
+            package com.test
+
+            import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
+
+            @ComposeUIViewController
+            @Composable
+            fun TestScreen() {}
+            """.trimIndent()
+		)
+
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+
+            val fakeKspOutputDir = layout.buildDirectory.dir("generated/ksp/fake/kotlin")
+            tasks.register("kspFakeIosTask") {
+                outputs.dir(fakeKspOutputDir)
+                doLast {
+                    val dir = fakeKspOutputDir.get().asFile.apply { mkdirs() }
+                    if (project.hasProperty("writeFakeOutput")) {
+                        File(dir, "TestScreenUIViewController.kt").writeText("// generated")
+                    }
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		val generatedFile = File(projectDir, "build/generated/ksp/fake/kotlin/TestScreenUIViewController.kt")
+
+		// First run: the fake ksp-like task "succeeds" but — like the real, flaky KSP bug — produces
+		// zero output. Gradle legitimately records this empty result as the new UP-TO-DATE baseline,
+		// since nothing about the task's declared inputs changed.
+		val firstResult = Templates.runGradle(projectDir, args = listOf("kspFakeIosTask"))
+		assertTrue(firstResult.output.contains("BUILD SUCCESSFUL"))
+		assertFalse(generatedFile.exists())
+
+		// Second run: task inputs are still unchanged. Without configureKspOutputSelfHeal, Gradle
+		// would report this task UP-TO-DATE forever and never regenerate the missing file.
+		val secondResult = Templates.runGradle(
+			projectDir,
+			args = listOf("kspFakeIosTask", "-PwriteFakeOutput=true")
+		)
+		assertTrue(secondResult.output.contains("BUILD SUCCESSFUL"))
+		assertFalse(
+			secondResult.output.contains("kspFakeIosTask UP-TO-DATE"),
+			"Task should be forced to re-run instead of being considered UP-TO-DATE"
+		)
+		assertTrue(secondResult.output.contains("produced no *UIViewController.kt file(s)"))
+		assertTrue(generatedFile.exists(), "Self-heal should force the task to re-run and regenerate the missing file")
+	}
+
+	@Test
 	fun `configureKspTasksForCacheInvalidation declares metadata file as Gradle input to ksp tasks`() {
 		with(project) {
 			val fakeKspTaskProvider = tasks.register("kspFakeForCacheTest")
