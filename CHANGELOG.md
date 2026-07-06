@@ -3,6 +3,7 @@
 ## [2.4.0-1.11.1-5]
 
 - Fixes silent framework corruption when the `ksp*` task's Gradle UP-TO-DATE check gets stuck on a stale, empty result (e.g. after an interrupted build): `copyFilesToXcode` and `exportToSpm` now count `@ComposeUIViewController` annotations in the module's Kotlin source whenever KSP output is empty. If annotations are still present, the build now fails immediately with an actionable message pointing to `./gradlew :<module>:kspKotlin<Target> --rerun-tasks`, instead of silently preserving stale Representables and producing a framework missing the expected `UIViewController` symbols. The previous behavior (warn + preserve destination) is kept for the case where no annotations remain in source, which still indicates an intentional removal.
+- Adds `configureKspOutputSelfHeal` to the Plugin to fix the above issue automatically. 
 
 ## [2.4.0-1.11.1-4]
 
