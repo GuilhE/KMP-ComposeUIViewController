@@ -426,13 +426,9 @@ smart_sync_files() {
     expected_count=$(count_expected_annotations "$kmp_module/src")
 
     if [ "$expected_count" -gt 0 ]; then
-      echo "  > ERROR: KSP output ($files_source) has 0 Swift file(s), but found $expected_count"
-      echo "  >        @ComposeUIViewController annotation(s) in $kmp_module/src."
-      echo "  > This is a known Gradle/KSP issue: the ksp* task's UP-TO-DATE check can get stuck on a"
-      echo "  > stale, empty result from a previous run (e.g. an interrupted build), and Gradle keeps"
-      echo "  > skipping it even though nothing was actually generated."
-      echo "  > Force a real re-execution of just that task:"
-      echo "  >     ./gradlew :$kmp_module:kspKotlin<Target> --rerun-tasks"
+      echo "  > ERROR: KSP output ($files_source) has 0 Swift file(s), but found $expected_count @ComposeUIViewController annotation(s) in $kmp_module/src."
+      echo "  > This is a known Gradle/KSP issue: the ksp* task's UP-TO-DATE check can get stuck on a stale, empty result from a previous run (e.g. an interrupted build), and Gradle keeps skipping it even though nothing was actually generated. Force a real re-execution of just that task:"
+      echo "  ./gradlew :$kmp_module:kspKotlin<Target> --rerun-tasks"
       if [ "$dest_count" -gt 0 ]; then
         echo "  > Preserving existing $dest_count file(s) in destination in the meantime."
       fi
