@@ -8,7 +8,7 @@ KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIVi
 
 | [Version](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | [Kotlin](https://github.com/JetBrains/kotlin/releases) | [KSP](https://github.com/Google/KSP/releases) | [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/releases) | Xcode  |
 |--------------------------------------------------------------------------------------------------|:------------------------------------------------------:|:---------------------------------------------:|:------------------------------------------------------------------------------------:|:------:|
-| 2.4.0-1.11.1-4                                                                                   |                         2.4.0                          |                     2.3.9                     |                                        1.11.1                                        | 26.5.0 |
+| 2.4.0-1.11.1-5                                                                                   |                         2.4.0                          |                     2.3.9                     |                                        1.11.1                                        | 26.5.0 |
 
 [![Android Weekly](https://androidweekly.net/issues/issue-583/badge)](https://androidweekly.net/issues/issue-583) [![Featured in Kotlin Weekly - Issue #378](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23378-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-378) [![Featured in Kotlin Weekly - Issue #389](https://img.shields.io/badge/Featured_in_Kotlin_Weekly-Issue_%23389-7878b4)](https://mailchi.mp/kotlinweekly/kotlin-weekly-389) <a href="https://jetc.dev/issues/177.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23177-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #177"></a> <a href="https://jetc.dev/issues/188.html"><img src="https://img.shields.io/badge/As_Seen_In-jetc.dev_Newsletter_Issue_%23188-blue?logo=Jetpack+Compose&amp;logoColor=white" alt="As Seen In - jetc.dev Newsletter Issue #188"></a>
 
@@ -90,6 +90,12 @@ If validation fails, the most common fix is:
  ./gradlew clean --no-build-cache
 ```
 Then rebuild it again.
+
+If `validateRepresentables` reports `KSP output: 0 Swift file(s) found` even though your code has `@ComposeUIViewController` annotations, Gradle's UP-TO-DATE check for the `ksp*` task may be "stuck" on a stale, empty result from a previous run (e.g. after an interrupted build). Since nothing about that task's declared inputs changed since then, Gradle keeps skipping it — so `clean` alone doesn't always help if the very next KSP run reproduces the same empty result. Force a real re-execution of just that task instead:
+```bash
+ ./gradlew :<module>:kspKotlin<Target> --rerun-tasks
+```
+e.g. `./gradlew :shared:kspKotlinIosSimulatorArm64 --rerun-tasks`. This is cheaper than a full `clean` and bypasses both Gradle's and KSP's incremental caches for that task only.
 
 </details>
 
@@ -220,6 +226,12 @@ If validation fails, the most common fix is:
  ./gradlew clean --no-build-cache
 ```
 Then rebuild it again.
+
+If `validateRepresentables` reports `KSP output: 0 Swift file(s) found` even though your code has `@ComposeUIViewController` annotations, Gradle's UP-TO-DATE check for the `ksp*` task may be "stuck" on a stale, empty result from a previous run (e.g. after an interrupted build). Since nothing about that task's declared inputs changed since then, Gradle keeps skipping it — so `clean` alone doesn't always help if the very next KSP run reproduces the same empty result. Force a real re-execution of just that task instead:
+```bash
+ ./gradlew :<module>:kspKotlin<Target> --rerun-tasks
+```
+e.g. `./gradlew :shared:kspKotlinIosSimulatorArm64 --rerun-tasks`. This is cheaper than a full `clean` and bypasses both Gradle's and KSP's incremental caches for that task only.
 
 </details>
 

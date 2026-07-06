@@ -53,6 +53,17 @@ KMP_OBJC_FRAMEWORK_SYMLINK="$PROJECT_ROOT/$kmp_module/build/xcode-frameworks/cur
 KMP_OBJC_FRAMEWORK_RELPATH="../../$kmp_module/build/xcode-frameworks/current"
 OBJC_FRAMEWORK_NAME=$(ls "$KMP_OBJC_FRAMEWORK_PARENT_ABS/" 2>/dev/null | grep "\.framework$" | head -1 | sed 's/\.framework$//')
 
+# Counts @ComposeUIViewController occurrences in the module's Kotlin source, ignoring lines
+# that look commented-out (//, *, /* at line start). This is a heuristic, not a real parser —
+# it's only used to decide whether an empty KSP output is expected (annotations removed) or
+# a sign of the erratic Gradle/KSP UP-TO-DATE bug (annotations still present).
+count_expected_annotations() {
+  local source_dir="$1"
+  grep -rh "@ComposeUIViewController" "$source_dir" --include="*.kt" 2>/dev/null \
+    | grep -v -E '^[[:space:]]*(\*|//|/\*)' \
+    | wc -l | tr -d ' '
+}
+
 install_gem() {
   local gem_name="$1"
   local version_constraint="$2"
@@ -410,6 +421,24 @@ smart_sync_files() {
   if [ ! -s "$source_files_map" ]; then
     local dest_count
     dest_count=$(find "$files_destination" -type f -name '*.swift' 2>/dev/null | wc -l | tr -d ' ')
+
+    local expected_count
+    expected_count=$(count_expected_annotations "$kmp_module/src")
+
+    if [ "$expected_count" -gt 0 ]; then
+      echo "  > ERROR: KSP output ($files_source) has 0 Swift file(s), but found $expected_count"
+      echo "  >        @ComposeUIViewController annotation(s) in $kmp_module/src."
+      echo "  > This is a known Gradle/KSP issue: the ksp* task's UP-TO-DATE check can get stuck on a"
+      echo "  > stale, empty result from a previous run (e.g. an interrupted build), and Gradle keeps"
+      echo "  > skipping it even though nothing was actually generated."
+      echo "  > Force a real re-execution of just that task:"
+      echo "  >     ./gradlew :$kmp_module:kspKotlin<Target> --rerun-tasks"
+      if [ "$dest_count" -gt 0 ]; then
+        echo "  > Preserving existing $dest_count file(s) in destination in the meantime."
+      fi
+      exit 1
+    fi
+
     if [ "$dest_count" -gt 0 ]; then
       echo "  > WARNING: No Swift files found in KSP output ($files_source)."
       echo "  > Preserving existing $dest_count file(s) to avoid data loss."

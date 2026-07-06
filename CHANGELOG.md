@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.4.0-1.11.1-5]
+
+- Fixes silent framework corruption when the `ksp*` task's Gradle UP-TO-DATE check gets stuck on a stale, empty result (e.g. after an interrupted build): `copyFilesToXcode` and `exportToSpm` now count `@ComposeUIViewController` annotations in the module's Kotlin source whenever KSP output is empty. If annotations are still present, the build now fails immediately with an actionable message pointing to `./gradlew :<module>:kspKotlin<Target> --rerun-tasks`, instead of silently preserving stale Representables and producing a framework missing the expected `UIViewController` symbols. The previous behavior (warn + preserve destination) is kept for the case where no annotations remain in source, which still indicates an intentional removal.
+
 ## [2.4.0-1.11.1-4]
 
 - Fixes intermittent `Undefined symbols for architecture arm64` linker errors when using `experimentalSpmExport = true` with ObjC Export. The generated `Package.swift` now includes `linkerSettings: [.unsafeFlags(["-F", "...", "-framework", "<FrameworkName>"])]` alongside the existing `swiftSettings`, making the linker flag explicit instead of relying on Swift auto-linking (which is fragile in SPM static-library contexts).

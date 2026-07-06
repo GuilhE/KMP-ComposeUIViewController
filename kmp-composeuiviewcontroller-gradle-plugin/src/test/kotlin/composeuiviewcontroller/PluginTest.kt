@@ -291,6 +291,53 @@ class PluginTest {
 		assertFalse(tempFile.exists())
 	}
 
+	@Test
+	fun `Task copyFilesToXcode fails when KSP output is empty but annotations exist in source`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+
+		val buildFile = Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+        """
+		)
+		assertTrue(buildFile.exists())
+
+		val settingsFile = Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		assertTrue(settingsFile.exists())
+
+		val annotatedSourceDir = File(projectDir, "testProject/src/commonMain/kotlin/com/test").apply { mkdirs() }
+		File(annotatedSourceDir, "Screen.kt").writeText(
+			"""
+            package com.test
+
+            import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
+
+            @ComposeUIViewController
+            @Composable
+            fun TestScreen() {}
+            """.trimIndent()
+		)
+
+		// KSP never ran (build/generated/ksp does not exist), but source has a real annotation —
+		// this must fail loudly instead of silently producing a broken framework.
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_COPY_FILES_TO_XCODE), expectFailure = true)
+		assertTrue(result.output.contains("ERROR: KSP output"))
+		assertTrue(result.output.contains("but found 1"))
+		assertTrue(result.output.contains("--rerun-tasks"))
+	}
+
 	// region retrieveFrameworkBaseNamesFromIosTargets
 
 	@Test
@@ -665,6 +712,56 @@ class PluginTest {
 		assertTrue(content.contains("$PARAM_GROUP=\"Composables\""))
 		assertTrue(content.contains("$PARAM_IOS_DEPLOYMENT_TARGET=\"17\""))
 		assertTrue(content.contains("$PARAM_SWIFT_TOOLS_VERSION=\"5.9\""))
+	}
+
+	@Test
+	fun `Task exportToSpm fails when KSP output is empty but annotations exist in source`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "MyModule"
+                }
+            }
+            ComposeUiViewController {
+                experimentalSpmExport = true
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// The script resolves source relative to `$kmp_module` (= project.name = "testProject"),
+		// itself resolved relative to the task's working dir (project.rootDir) — mirroring how a real
+		// multi-module repo lays out `<repo-root>/<module-name>/src/...`. See also
+		// `exportToSpm generates Package swift with linkerSettings for ObjC export when framework exists`.
+		val annotatedSourceDir = File(projectDir, "testProject/src/commonMain/kotlin/com/test").apply { mkdirs() }
+		File(annotatedSourceDir, "Screen.kt").writeText(
+			"""
+            package com.test
+
+            import com.github.guilhe.kmp.composeuiviewcontroller.ComposeUIViewController
+
+            @ComposeUIViewController
+            @Composable
+            fun TestScreen() {}
+            """.trimIndent()
+		)
+
+		// KSP never ran (build/generated/ksp does not exist), but source has a real annotation —
+		// this must fail loudly instead of silently producing a broken framework.
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_EXPORT_TO_SPM), expectFailure = true)
+		assertTrue(result.output.contains("ERROR: KSP output"))
+		assertTrue(result.output.contains("but found 1"))
+		assertTrue(result.output.contains("--rerun-tasks"))
 	}
 
 	@Test
