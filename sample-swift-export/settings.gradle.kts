@@ -37,6 +37,6 @@ includeBuild("..") {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "Gradient-SwiftExport"
+rootProject.name = "Gradient-SwiftExport-SPM"
 include(":shared")
 include(":shared-models")

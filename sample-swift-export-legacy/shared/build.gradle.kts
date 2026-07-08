@@ -1,3 +1,7 @@
+@file:OptIn(ExperimentalSwiftExportDsl::class)
+
+import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
+
 plugins {
 	alias(global.plugins.kotlin.multiplatform)
 	alias(local.plugins.compose.compiler)
@@ -6,17 +10,20 @@ plugins {
 }
 
 ComposeUiViewController {
-	iosAppName = "Gradient"
 	targetName = "Gradient"
-	experimentalSpmExport = true
+	iosAppName = "Gradient"
+	legacyMode = true
 }
 
 kotlin {
-	listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
-		target.binaries.framework {
-			baseName = "Composables"
-			isStatic = true
-			export(projects.sharedModels)
+	iosArm64()
+	iosSimulatorArm64()
+	swiftExport {
+		moduleName = "Composables"
+		flattenPackage = "com.sample.shared"
+		export(projects.sharedModels) {
+			moduleName = "Models"
+			flattenPackage = "com.sample.models"
 		}
 	}
 

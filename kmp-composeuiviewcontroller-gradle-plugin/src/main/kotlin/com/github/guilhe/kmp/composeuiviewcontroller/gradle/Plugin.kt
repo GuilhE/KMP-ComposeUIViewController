@@ -35,29 +35,33 @@ public class PluginConfigurationException(message: String, cause: Throwable? = n
  * Heavy lifts Gradle configurations when using [KMP-ComposeUIViewController](https://github.com/GuilhE/KMP-ComposeUIViewController) library.
  *
  * Exposes the following tasks under the `composeuiviewcontroller` group:
- * - `copyFilesToXcode` — syncs KSP-generated Swift Representables to `iosApp/Representables/` and
- *   updates the Xcode project references. Triggered automatically after `embedAndSignAppleFrameworkForXcode`,
- *   `embedSwiftExportForXcode`, or `syncFramework` when [PluginParameters.autoExport] is `true`.
- *   Not registered when [PluginParameters.experimentalSpmExport] is `true`.
- * - `exportToSpm` — experimental. Creates and maintains a local SPM package at `iosApp/Representables/`
+ * - `exportToSpm` — default. Creates and maintains a local SPM package at `iosApp/Representables/`
  *   (folder names driven by [PluginParameters.iosAppFolderName] and [PluginParameters.exportFolderName]).
- *   Triggered automatically after `embedSwiftExportForXcode` when [PluginParameters.experimentalSpmExport] is `true`.
- *   Requires Swift Export to be configured.
+ *   Triggered automatically after `embedAndSignAppleFrameworkForXcode`, `embedSwiftExportForXcode`, or `syncFramework`
+ *   when [PluginParameters.autoExport] is `true`. Not registered when [PluginParameters.legacyMode] is `true`.
+ *   Requires a one-time setup via `createRepresentablesPackage` (the plugin warns automatically if this hasn't been run yet).
+ * - `createRepresentablesPackage` — one-time setup for the SPM package: creates the stub `Package.swift` and adds the
+ *   package reference to the Xcode project. Not registered when [PluginParameters.legacyMode] is `true`.
+ * - `deleteRepresentablesPackage` — reverses `createRepresentablesPackage`. Always manual — never run automatically.
+ * - `copyFilesToXcode` — legacy. Syncs KSP-generated Swift Representables to `iosApp/Representables/` and
+ *   updates the Xcode project references by manipulating `project.pbxproj` directly on every build.
+ *   Only registered when [PluginParameters.legacyMode] is `true`.
  * - `formatSwiftFiles` — formats generated `.swift` files with `swiftformat` default rules (if available).
  * - `validateRepresentables` — inspects the full Representables pipeline without triggering a build.
  *   Useful for diagnosing why Xcode cannot find generated `UIViewControllerRepresentable` files.
- *   Run it with `./gradlew validateRepresentables`. Reports `OK`, `WARN`, or `FAIL` for each check:
+ *   Run it with `./gradlew validateRepresentables`. Reports `OK`, `WARN`, or `FAIL` for each check, adapting to
+ *   whichever mode ([PluginParameters.legacyMode] or the default SPM mode) is active:
  *
- *   | Check       | What it verifies                                       | Fails when                             |
- *   |-------------|--------------------------------------------------------|----------------------------------------|
- *   | KSP output  | `.swift` files exist in `build/generated/ksp/`         | KSP never ran or failed mid-generation |
- *   | Destination | `.swift` files exist in `iosApp/Representables/`       | `copyFilesToXcode` did not run         |
- *   | Sync        | KSP output and destination contain the same files      | Files are stale or missing             |
- *   | xcodeproj   | All Representables are referenced in `project.pbxproj` | `rebuild_file_references` failed       |
+ *   | Check       | What it verifies                                                     | Fails when                       |
+ *   |-------------|-----------------------------------------------------------------------|-----------------------------------|
+ *   | KSP output  | `.swift` files exist in `build/generated/ksp/`                        | KSP never ran or failed mid-generation |
+ *   | Destination | `.swift` files exist in `iosApp/Representables/` (or `Sources/` in SPM mode) | Export task did not run    |
+ *   | Sync        | KSP output and destination contain the same files                     | Files are stale or missing       |
+ *   | xcodeproj / Package.swift | Representables are referenced in `project.pbxproj` (legacy) or `Package.swift` exists (SPM) | Setup step failed |
  *
- *   `WARN` entries (stale destination files, xcodeproj not found) do not fail the task.
+ *   `WARN` entries (stale destination files, xcodeproj/Package.swift not found) do not fail the task.
  *   `FAIL` entries throw a [GradleException] listing all errors. The most common fix is `./gradlew clean`.
- *   The xcodeproj check is skipped when [PluginParameters.autoExport] is `false`.
+ *   The reference check is skipped when [PluginParameters.autoExport] is `false`.
  */
 public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
@@ -97,12 +101,15 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 					configureKspTasksForCacheInvalidation()
 					configureKspOutputSelfHeal()
 
-					if (extension.experimentalSpmExport) {
+					if (extension.legacyMode) {
+						configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = extension, tempFolder = tempFolder)
+					} else {
 						configureTaskToRegisterCreateRepresentablesPackage(
 							project = project,
 							extensionParameters = extension,
 							spmModuleName = frameworkNames.first()
 						)
+						warnIfRepresentablesPackageNotSetUp(extension)
 						configureTaskToRegisterDeleteRepresentablesPackage(
 							project = project,
 							extensionParameters = extension
@@ -114,8 +121,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 							spmModuleName = frameworkNames.first()
 						)
 						configureCleanSpmStub(extension)
-					} else {
-						configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = extension, tempFolder = tempFolder)
 					}
 					configureTaskToFinalizeByCopyFilesToXcode(extension)
 				} catch (e: PluginConfigurationException) {
@@ -392,6 +397,32 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 						!trimmed.startsWith("*") && !trimmed.startsWith("//") && !trimmed.startsWith("/*")
 				}
 			}
+	}
+
+	private fun Project.warnIfRepresentablesPackageNotSetUp(extensionParameters: PluginParameters) {
+		val packageSwift = File(
+			rootProject.rootDir,
+			"${extensionParameters.iosAppFolderName}/${extensionParameters.exportFolderName}/Package.swift"
+		)
+		val projectPbxproj = File(
+			rootProject.rootDir,
+			"${extensionParameters.iosAppFolderName}/${extensionParameters.iosAppName}.xcodeproj/project.pbxproj"
+		)
+
+		val referenceMissing = !projectPbxproj.exists() ||
+			projectPbxproj.readText().let { content ->
+				!content.contains("XCLocalSwiftPackageReference") || !content.contains("\"${extensionParameters.exportFolderName}\"")
+			}
+
+		if (!packageSwift.exists() || referenceMissing) {
+			val moduleTaskPath = if (path == ":") TASK_SETUP_SPM_PACKAGE else "$path:$TASK_SETUP_SPM_PACKAGE"
+			logger.warn(
+				"\n> $LOG_TAG: the \"${extensionParameters.exportFolderName}\" local SPM package hasn't been set up yet. " +
+					"Run this once before your first Xcode build — the package reference must exist in project.pbxproj " +
+					"before Xcode resolves Swift Package dependencies:\n" +
+					"\t./gradlew $moduleTaskPath"
+			)
+		}
 	}
 
 	private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS

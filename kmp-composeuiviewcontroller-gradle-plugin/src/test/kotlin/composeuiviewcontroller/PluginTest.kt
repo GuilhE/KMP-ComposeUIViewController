@@ -189,6 +189,7 @@ class PluginTest {
 			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
 				iosSimulatorArm64().binaries.framework { baseName = "TestFramework" }
 			}
+			extensions.configure(PluginParameters::class.java) { it.legacyMode = true }
 
 			val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
 			File(folder, "File.kt").writeText("package com.test\nclass Test()")
@@ -277,6 +278,10 @@ class PluginTest {
                     moduleName = "TestModule"
                 }
             }
+
+            ComposeUiViewController {
+                legacyMode = true
+            }
         """
 		)
 		assertTrue(buildFile.exists())
@@ -309,6 +314,10 @@ class PluginTest {
                 swiftExport {
                     moduleName = "TestModule"
                 }
+            }
+
+            ComposeUiViewController {
+                legacyMode = true
             }
         """
 		)
@@ -538,6 +547,7 @@ class PluginTest {
                     iosAppName = "iosApp"
                     targetName = "iosTarget"
                     exportFolderName = "Composables"
+                    legacyMode = true
                 }
 
                 kotlin {
@@ -709,19 +719,16 @@ class PluginTest {
 
 	// endregion
 
-	// region experimentalSpmExport
+	// region SPM export (default)
 
 	@Test
-	fun `exportToSpm and setupRepresentablesSpmPackage tasks are registered and copyFilesToXcode is not in SPM mode`() {
+	fun `exportToSpm and setupRepresentablesSpmPackage tasks are registered and copyFilesToXcode is not registered by default`() {
 		with(project) {
 			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
 				val swiftExport = extensions.getByType(SwiftExportExtension::class.java)
 
 				iosSimulatorArm64()
 				swiftExport.moduleName.set("TestModule")
-			}
-			extensions.configure(PluginParameters::class.java) {
-				it.experimentalSpmExport = true
 			}
 
 			val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
@@ -733,6 +740,66 @@ class PluginTest {
 			assertNotNull(tasks.findByName(TASK_SETUP_SPM_PACKAGE))
 			assertNull(tasks.findByName(TASK_COPY_FILES_TO_XCODE))
 		}
+	}
+
+	@Test
+	fun `warns when the SPM package has not been set up yet`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// No Package.swift and no xcodeproj reference exist yet — any Gradle invocation (even one
+		// unrelated to the export pipeline) should surface the reminder during afterEvaluate.
+		val result = Templates.runGradle(projectDir, args = listOf("help"))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+		assertTrue(result.output.contains("local SPM package hasn't been set up yet"))
+		assertTrue(result.output.contains("./gradlew $TASK_SETUP_SPM_PACKAGE"))
+	}
+
+	@Test
+	fun `does not warn when the SPM package and xcodeproj reference already exist`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		File(projectDir, "iosApp/Representables/Package.swift").apply { parentFile.mkdirs() }.writeText("// stub")
+		File(projectDir, "iosApp/iosApp.xcodeproj/project.pbxproj").apply { parentFile.mkdirs() }.writeText(
+			"""XCLocalSwiftPackageReference "Representables" """
+		)
+
+		val result = Templates.runGradle(projectDir, args = listOf("help"))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+		assertFalse(result.output.contains("local SPM package hasn't been set up yet"))
 	}
 
 	@Test
@@ -753,7 +820,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 iosAppFolderName = "iosFolder"
                 iosAppName = "MyApp"
                 targetName = "MyTarget"
@@ -803,7 +869,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
             }
             """
 		)
@@ -843,9 +908,6 @@ class PluginTest {
 				iosSimulatorArm64()
 				swiftExport.moduleName.set("TestModule")
 			}
-			extensions.configure(PluginParameters::class.java) {
-				it.experimentalSpmExport = true
-			}
 
 			val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
 			File(folder, "File.kt").writeText("package com.test\nclass Test()")
@@ -883,7 +945,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 iosAppFolderName = "iosApp"
                 iosAppName = "TestApp"
                 targetName = "TestApp"
@@ -923,7 +984,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 iosAppFolderName = "iosApp"
                 iosAppName = "iosApp"
                 targetName = "iosApp"
@@ -973,7 +1033,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 iosAppFolderName = "iosApp"
                 iosAppName = "iosApp"
                 targetName = "iosApp"
@@ -1013,7 +1072,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 iosAppFolderName = "iosApp"
                 iosAppName = "iosApp"
                 targetName = "iosApp"
@@ -1057,7 +1115,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 iosAppFolderName = "iosApp"
                 iosAppName = "iosApp"
                 targetName = "iosApp"
@@ -1100,7 +1157,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 iosAppFolderName = "iosApp"
                 iosAppName = "iosApp"
                 targetName = "iosApp"
@@ -1141,7 +1197,6 @@ class PluginTest {
                 }
             }
             ComposeUiViewController {
-                experimentalSpmExport = true
                 autoExport = false
             }
             """
@@ -1198,6 +1253,9 @@ class PluginTest {
                     binaries.framework { baseName = "TestFramework" }
                 }
             }
+            ComposeUiViewController {
+                legacyMode = true
+            }
             """
 		)
 		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
@@ -1224,6 +1282,9 @@ class PluginTest {
                 iosSimulatorArm64 {
                     binaries.framework { baseName = "TestFramework" }
                 }
+            }
+            ComposeUiViewController {
+                legacyMode = true
             }
             """
 		)
@@ -1254,6 +1315,9 @@ class PluginTest {
                 iosSimulatorArm64 {
                     binaries.framework { baseName = "TestFramework" }
                 }
+            }
+            ComposeUiViewController {
+                legacyMode = true
             }
             """
 		)
@@ -1289,6 +1353,9 @@ class PluginTest {
                     binaries.framework { baseName = "TestFramework" }
                 }
             }
+            ComposeUiViewController {
+                legacyMode = true
+            }
             """
 		)
 		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
@@ -1322,6 +1389,9 @@ class PluginTest {
                 iosSimulatorArm64 {
                     binaries.framework { baseName = "TestFramework" }
                 }
+            }
+            ComposeUiViewController {
+                legacyMode = true
             }
             """
 		)

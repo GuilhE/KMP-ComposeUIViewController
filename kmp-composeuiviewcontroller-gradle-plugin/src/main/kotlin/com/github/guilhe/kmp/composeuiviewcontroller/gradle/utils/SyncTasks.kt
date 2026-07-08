@@ -306,7 +306,7 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 }
 
 internal fun Project.configureTaskToFinalizeByCopyFilesToXcode(extensionParameters: PluginParameters) {
-	val exportTask = if (extensionParameters.experimentalSpmExport) TASK_EXPORT_TO_SPM else TASK_COPY_FILES_TO_XCODE
+	val exportTask = if (extensionParameters.legacyMode) TASK_COPY_FILES_TO_XCODE else TASK_EXPORT_TO_SPM
 	val triggerTasks = listOf(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE, TASK_EMBED_SWIFT_EXPORT_FOR_XCODE, TASK_SYNC_FRAMEWORK)
 	tasks.matching { it.name in triggerTasks }.configureEach { task ->
 		if (extensionParameters.autoExport) {
@@ -326,4 +326,4 @@ internal fun PluginParameters.toList() =
 	listOf(iosAppFolderName, iosAppName, targetName, autoExport, exportFolderName)
 
 internal fun PluginParameters.toSpmList() =
-	listOf(iosAppFolderName, exportFolderName, autoExport, experimentalSpmExport)
+	listOf(iosAppFolderName, exportFolderName, autoExport, legacyMode)

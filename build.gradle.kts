@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
 	group = "com.github.guilhe.kmp"
-	version = "2.4.0-1.11.1-5"
+	version = "2.4.10-1.11.1"
 }
 
 dependencies {
@@ -66,12 +66,12 @@ tasks.register("buildAllSamples") {
 	doLast {
 		val samples = listOf(
  			"sample-objc-export",
- 			"sample-objc-export-spm",
+ 			"sample-objc-export-legacy",
  			"sample-swift-export",
- 			"sample-swift-export-spm"
+ 			"sample-swift-export-legacy"
 		)
 
-		val swiftExportSamples = setOf("sample-swift-export", "sample-swift-export-spm")
+		val swiftExportSamples = setOf("sample-swift-export", "sample-swift-export-legacy")
 
 		val simulatorUDID: String by lazy {
 			val proc = ProcessBuilder("xcrun", "simctl", "list", "devices", "available", "--json")
