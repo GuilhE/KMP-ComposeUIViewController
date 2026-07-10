@@ -62,7 +62,7 @@ tasks.register("serveDokka") {
 }
 
 tasks.register("buildAllSamples") {
-	description = "Builds all samples via xcodebuild (full pipeline: KSP + plugin + framework), streaming output to this console"
+	description = "Cleans (--no-build-cache) and builds all samples via xcodebuild (KSP + plugin + framework), streaming output to console"
 	doLast {
 		val samples = listOf(
  			"sample-objc-export",
@@ -85,7 +85,31 @@ tasks.register("buildAllSamples") {
 		data class BuildResult(val sample: String, val passed: Boolean, val reason: String? = null)
 		val results = mutableListOf<BuildResult>()
 
+ 		println("\n" + "=".repeat(60))
+ 		println("🧹 Cleaning all samples (--no-build-cache)")
+ 		println("=".repeat(60))
+ 		val cleanFailures = mutableSetOf<String>()
+ 		for (sample in samples) {
+ 			println("\n🧹 [$sample] Cleaning (no build cache)...")
+ 			val cleanProcess = ProcessBuilder(file("$sample/gradlew").absolutePath, "clean", "--no-build-cache", "--no-daemon")
+ 				.directory(file(sample))
+ 				.redirectErrorStream(true)
+ 				.start()
+ 			cleanProcess.inputStream.bufferedReader().forEachLine { println("[$sample] $it") }
+ 			val cleanExitCode = cleanProcess.waitFor()
+ 			if (cleanExitCode != 0) {
+ 				println("❌ [$sample] Clean failed — will be skipped in the build phase.")
+ 				cleanFailures.add(sample)
+ 				results.add(BuildResult(sample, false, "clean --no-build-cache failed with exit code $cleanExitCode"))
+ 			}
+ 		}
+
+		println("\n" + "=".repeat(60))
+		println("🔨 Building all samples")
+		println("=".repeat(60))
 		for (sample in samples) {
+ 			if (sample in cleanFailures) continue
+
 			println("\n🔨 [$sample] Starting build...")
 
 			val args = mutableListOf(
@@ -93,6 +117,7 @@ tasks.register("buildAllSamples") {
 				"-project", file("$sample/iosApp/Gradient.xcodeproj").absolutePath,
 				"-scheme", "Gradient",
 				"-configuration", "Debug",
+				"-derivedDataPath", file("$sample/build/DerivedData").absolutePath,
 				"ARCHS=arm64",
 				"CODE_SIGNING_ALLOWED=NO",
 				"build"

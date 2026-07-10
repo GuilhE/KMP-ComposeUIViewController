@@ -2,6 +2,9 @@
 
 ## [2.4.10-1.11.1]
 
+- Kotlin 2.4.10
+- KSP 2.3.10
+
 > [!CAUTION]
 > **Breaking change**: SPM export is now the default (previously opt-in via `experimentalSpmExport`). The old `xcodeproj`-gem-based export is
 > still available, renamed to `legacyMode`.
