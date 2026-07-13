@@ -62,53 +62,120 @@ tasks.register("serveDokka") {
 }
 
 tasks.register("buildAllSamples") {
-	description = "Cleans (--no-build-cache) and builds all samples via xcodebuild (KSP + plugin + framework), streaming output to console"
+	description = "Cleans (--no-build-cache), pre-generates KMP frameworks/Swift export packages, then builds all samples via xcodebuild"
 	doLast {
 		val samples = listOf(
- 			"sample-objc-export",
- 			"sample-objc-export-legacy",
- 			"sample-swift-export",
- 			"sample-swift-export-legacy"
+			"sample-objc-export",
+			"sample-objc-export-legacy",
+			"sample-swift-export",
+			"sample-swift-export-legacy"
 		)
 
 		val swiftExportSamples = setOf("sample-swift-export", "sample-swift-export-legacy")
 
+		fun printSection(title: String) {
+			println("\n" + "=".repeat(60))
+			println(title)
+			println("=".repeat(60))
+		}
+
 		val simulatorUDID: String by lazy {
-			val proc = ProcessBuilder("xcrun", "simctl", "list", "devices", "available", "--json")
+			val proc = ProcessBuilder("xcrun", "simctl", "list", "devices", "available")
 				.redirectErrorStream(true).start()
 			val output = proc.inputStream.bufferedReader().readText()
 			proc.waitFor()
-			Regex(""""udid"\s*:\s*"([A-F0-9-]{36})"""").find(output)?.groupValues?.get(1)
-				?: throw GradleException("No available iOS Simulator found. Install a simulator runtime in Xcode.")
+
+			val iosSection = Regex("""-- iOS ([\d.]+) --\n((?:.*\n)*?)(?=--|\z)""").findAll(output)
+				.maxByOrNull { match ->
+					val parts = match.groupValues[1].split(".").map { it.toIntOrNull() ?: 0 }
+					parts.getOrElse(0) { 0 } * 10_000 + parts.getOrElse(1) { 0 } * 100 + parts.getOrElse(2) { 0 }
+				}
+				?.groupValues?.get(2)
+				?: throw GradleException("No iOS Simulator runtime found. Install an iOS simulator runtime in Xcode.")
+
+			val udidPattern = Regex("""[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}""")
+			iosSection.lineSequence()
+				.firstOrNull { it.contains("iPhone") }
+				?.let { udidPattern.find(it)?.value }
+				?: throw GradleException("No available iPhone Simulator found. Install a simulator runtime in Xcode.")
+		}
+
+		val simulatorSdkVersion: String by lazy {
+			val proc = ProcessBuilder("xcrun", "--sdk", "iphonesimulator", "--show-sdk-version")
+				.redirectErrorStream(true).start()
+			val out = proc.inputStream.bufferedReader().readText().trim()
+			proc.waitFor()
+			out.ifBlank { throw GradleException("Unable to determine iphonesimulator SDK version via xcrun.") }
+		}
+
+		fun iosDeploymentTarget(sample: String): String {
+			val pbxproj = file("$sample/iosApp/Gradient.xcodeproj/project.pbxproj").readText()
+			return Regex("""IPHONEOS_DEPLOYMENT_TARGET\s*=\s*([\d.]+);""").find(pbxproj)?.groupValues?.get(1) ?: "16.0"
 		}
 
 		data class BuildResult(val sample: String, val passed: Boolean, val reason: String? = null)
 		val results = mutableListOf<BuildResult>()
 
- 		println("\n" + "=".repeat(60))
- 		println("🧹 Cleaning all samples (--no-build-cache)")
- 		println("=".repeat(60))
- 		val cleanFailures = mutableSetOf<String>()
- 		for (sample in samples) {
- 			println("\n🧹 [$sample] Cleaning (no build cache)...")
- 			val cleanProcess = ProcessBuilder(file("$sample/gradlew").absolutePath, "clean", "--no-build-cache", "--no-daemon")
- 				.directory(file(sample))
- 				.redirectErrorStream(true)
- 				.start()
- 			cleanProcess.inputStream.bufferedReader().forEachLine { println("[$sample] $it") }
- 			val cleanExitCode = cleanProcess.waitFor()
- 			if (cleanExitCode != 0) {
- 				println("❌ [$sample] Clean failed — will be skipped in the build phase.")
- 				cleanFailures.add(sample)
- 				results.add(BuildResult(sample, false, "clean --no-build-cache failed with exit code $cleanExitCode"))
- 			}
- 		}
-
-		println("\n" + "=".repeat(60))
-		println("🔨 Building all samples")
-		println("=".repeat(60))
+		printSection("🧹 Cleaning all samples (--no-build-cache)")
+		val cleanFailures = mutableSetOf<String>()
 		for (sample in samples) {
- 			if (sample in cleanFailures) continue
+			println("\n🧹 [$sample] Cleaning (no build cache)...")
+			val cleanProcess = ProcessBuilder(file("$sample/gradlew").absolutePath, "clean", "--no-build-cache", "--no-daemon")
+				.directory(file(sample))
+				.redirectErrorStream(true)
+				.start()
+			cleanProcess.inputStream.bufferedReader().forEachLine { println("[$sample] $it") }
+			val cleanExitCode = cleanProcess.waitFor()
+			if (cleanExitCode != 0) {
+				println("❌ [$sample] Clean failed — will be skipped in the build phase.")
+				cleanFailures.add(sample)
+				results.add(BuildResult(sample, false, "clean --no-build-cache failed with exit code $cleanExitCode"))
+			}
+		}
+
+		printSection("⚙️  Pre-generating KMP frameworks / Swift export packages")
+		val prepareFailures = mutableSetOf<String>()
+		for (sample in samples) {
+			if (sample in cleanFailures) continue
+
+			println("\n⚙️  [$sample] Pre-generating (outside Xcode, so Package.swift is stable before xcodebuild runs)...")
+			val embedTask = if (sample in swiftExportSamples) ":shared:embedSwiftExportForXcode" else ":shared:embedAndSignAppleFrameworkForXcode"
+			val scratchDir = file("$sample/build/XcodeEmbedPrep/Debug-iphonesimulator")
+			file("$scratchDir/Gradient.app").mkdirs()
+
+			val prepareProcessBuilder = ProcessBuilder(file("$sample/gradlew").absolutePath, embedTask, "--no-daemon")
+				.directory(file(sample))
+				.redirectErrorStream(true)
+			val env = prepareProcessBuilder.environment()
+			env["CONFIGURATION"] = "Debug"
+			env["SDK_NAME"] = "iphonesimulator$simulatorSdkVersion"
+			env["PLATFORM_NAME"] = "iphonesimulator"
+			env["ARCHS"] = "arm64"
+			env["TARGET_BUILD_DIR"] = scratchDir.absolutePath
+			env["BUILT_PRODUCTS_DIR"] = scratchDir.absolutePath
+			env["FRAMEWORKS_FOLDER_PATH"] = "Gradient.app/Frameworks"
+			env["UNLOCALIZED_RESOURCES_FOLDER_PATH"] = "Gradient.app"
+			env["CONTENTS_FOLDER_PATH"] = "Gradient.app"
+			env["EXECUTABLE_FOLDER_PATH"] = "Gradient.app"
+			env.remove("EXPANDED_CODE_SIGN_IDENTITY")
+			if (sample in swiftExportSamples) {
+				env["DEPLOYMENT_TARGET_SETTING_NAME"] = "IPHONEOS_DEPLOYMENT_TARGET"
+				env["IPHONEOS_DEPLOYMENT_TARGET"] = iosDeploymentTarget(sample)
+			}
+
+			val prepareProcess = prepareProcessBuilder.start()
+			prepareProcess.inputStream.bufferedReader().forEachLine { println("[$sample] $it") }
+			val prepareExitCode = prepareProcess.waitFor()
+			if (prepareExitCode != 0) {
+				println("❌ [$sample] Pre-generation failed — will be skipped in the build phase.")
+				prepareFailures.add(sample)
+				results.add(BuildResult(sample, false, "$embedTask failed with exit code $prepareExitCode"))
+			}
+		}
+
+		printSection("🔨 Building all samples")
+		for (sample in samples) {
+			if (sample in cleanFailures || sample in prepareFailures) continue
 
 			println("\n🔨 [$sample] Starting build...")
 
@@ -161,9 +228,7 @@ tasks.register("buildAllSamples") {
 			}
 		}
 
-		println("\n" + "=".repeat(60))
-		println("📋 Build Summary")
-		println("=".repeat(60))
+		printSection("📋 Build Summary")
 		val passed = results.filter { it.passed }
 		val failed = results.filter { !it.passed }
 		if (passed.isNotEmpty()) {
