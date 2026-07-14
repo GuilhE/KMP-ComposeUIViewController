@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -16,6 +16,7 @@
 		5C43A0332FCC951200882795 /* GradientScreenMixedB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02D2FCC951200882795 /* GradientScreenMixedB.swift */; };
 		5C43A0342FCC951200882795 /* GradientScreenSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02E2FCC951200882795 /* GradientScreenSwift.swift */; };
 		5C43A0352FCC951200882795 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02F2FCC951200882795 /* Utils.swift */; };
+		5C9016FA3006A69F0012C84E /* Representables in Frameworks */ = {isa = PBXBuildFile; productRef = 3D16BA58EA2786A5210A2ACA /* Representables */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -50,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5C9016FA3006A69F0012C84E /* Representables in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
