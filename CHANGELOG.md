@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.4.10-1.11.1]
+
+- Kotlin 2.4.10
+- KSP 2.3.10
+
+> [!CAUTION]
+> **Breaking change**: SPM export is now the default (previously opt-in via `experimentalSpmExport`). The old `xcodeproj`-gem-based export is
+> still available, renamed to `legacyMode`.
+>
+> - **If you had `experimentalSpmExport = true`**: remove that line. Behavior is unchanged — SPM export is now the default, no other action needed.
+> - **If you never set `experimentalSpmExport`** (i.e. you were using the `xcodeproj`-gem-based export): add `legacyMode = true` to your
+>   `ComposeUiViewController` block to keep the current behavior. Everything else stays the same.
+> - **If you want to move to the new default**: remove `legacyMode`/`experimentalSpmExport` entirely and run `./gradlew :<module>:createRepresentablesPackage`
+>   once before your first Xcode build (the plugin also warns automatically if this step is missing). See [SPM export](README.md#spm-export).
+>
+> `experimentalSpmExport` has been removed (not deprecated) — referencing it after upgrading fails to compile with an "unresolved reference"
+> error, so migration can't happen silently. Projects that are not ready to migrate should stay on a version below `2.4.10-1.11.1`; nothing forces
+> an upgrade.
+>
+> Sample modules were renamed to match: `sample-objc-export-spm` → `sample-objc-export` (now the default-config sample), `sample-objc-export` →
+> `sample-objc-export-legacy`, and the same pattern for `sample-swift-export*`.
+
 ## [2.4.0-1.11.1-5]
 
 - Fixes silent framework corruption when a `ksp*` task's Gradle UP-TO-DATE check gets stuck on a stale, empty result (e.g. after an interrupted build): since nothing about the task's declared inputs changed since then, Gradle would otherwise keep skipping it forever, silently producing a framework missing the expected `UIViewController` symbols.

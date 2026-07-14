@@ -33,7 +33,7 @@ internal fun Project.configureTaskToRegisterValidateRepresentables(
                 logger.lifecycle("\t> [OK] KSP output: ${kspFiles.size} Swift file(s)")
             }
 
-            if (extensionParameters.experimentalSpmExport) {
+            if (!extensionParameters.legacyMode) {
                 val sourcesDir = File(
                     project.rootDir,
                     "${extensionParameters.iosAppFolderName}/${extensionParameters.exportFolderName}/Sources/${extensionParameters.exportFolderName}"
