@@ -4,6 +4,7 @@
 - Kotlin 2.4.20
 - KSP 2.3.11
 - CMP 1.12.0
+- Fixes `buildAllSamples` intermittently failing: a reused Gradle daemon never refreshes its process environment, so leftover Xcode build-phase variables (`PLATFORM_NAME`, `SDK_NAME`, `SWIFT_*`, ...) from a previous invocation could leak into the `clean`/`prepare`/`xcodebuild` subprocesses and trip Kotlin's Xcode-environment detection. These subprocesses now start from a minimal environment allowlist instead of inheriting the daemon's full environment
 
 ## [2.4.10-1.11.1]
 

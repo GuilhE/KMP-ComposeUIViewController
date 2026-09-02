@@ -79,6 +79,19 @@ tasks.register("buildAllSamples") {
 			println("=".repeat(60))
 		}
 
+		// A reused Gradle daemon never refreshes its process environment, so leftover
+		// Xcode build-phase variables (PLATFORM_NAME, SDK_NAME, SWIFT_*, ...) from an
+		// earlier invocation can leak into these subprocesses and confuse Kotlin's
+		// Xcode-environment detection. Start from an allowlist instead of inheriting.
+		val inheritableEnvKeys = setOf("PATH", "HOME", "USER", "JAVA_HOME", "LANG", "LC_ALL", "TMPDIR", "SHELL")
+		fun ProcessBuilder.withSanitizedEnvironment(): ProcessBuilder = apply {
+			environment().apply {
+				val base = System.getenv().filterKeys { it in inheritableEnvKeys }
+				clear()
+				putAll(base)
+			}
+		}
+
 		val simulatorUDID: String by lazy {
 			val proc = ProcessBuilder("xcrun", "simctl", "list", "devices", "available")
 				.redirectErrorStream(true).start()
@@ -123,6 +136,7 @@ tasks.register("buildAllSamples") {
 			val cleanProcess = ProcessBuilder(file("$sample/gradlew").absolutePath, "clean", "--no-build-cache", "--no-daemon")
 				.directory(file(sample))
 				.redirectErrorStream(true)
+				.withSanitizedEnvironment()
 				.start()
 			cleanProcess.inputStream.bufferedReader().forEachLine { println("[$sample] $it") }
 			val cleanExitCode = cleanProcess.waitFor()
@@ -146,6 +160,7 @@ tasks.register("buildAllSamples") {
 			val prepareProcessBuilder = ProcessBuilder(file("$sample/gradlew").absolutePath, embedTask, "--no-daemon")
 				.directory(file(sample))
 				.redirectErrorStream(true)
+				.withSanitizedEnvironment()
 			val env = prepareProcessBuilder.environment()
 			env["CONFIGURATION"] = "Debug"
 			env["SDK_NAME"] = "iphonesimulator$simulatorSdkVersion"
@@ -199,6 +214,7 @@ tasks.register("buildAllSamples") {
 				val pb = ProcessBuilder(args)
 					.directory(file(sample))
 					.redirectErrorStream(true)
+					.withSanitizedEnvironment()
 
 				val process = pb.start()
 				val outputLines = mutableListOf<String>()
