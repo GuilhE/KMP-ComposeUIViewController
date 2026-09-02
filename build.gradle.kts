@@ -94,6 +94,7 @@ tasks.register("buildAllSamples") {
 
 		val simulatorUDID: String by lazy {
 			val proc = ProcessBuilder("xcrun", "simctl", "list", "devices", "available")
+				.withSanitizedEnvironment()
 				.redirectErrorStream(true).start()
 			val output = proc.inputStream.bufferedReader().readText()
 			proc.waitFor()
@@ -115,10 +116,12 @@ tasks.register("buildAllSamples") {
 
 		val simulatorSdkVersion: String by lazy {
 			val proc = ProcessBuilder("xcrun", "--sdk", "iphonesimulator", "--show-sdk-version")
+				.withSanitizedEnvironment()
 				.redirectErrorStream(true).start()
 			val out = proc.inputStream.bufferedReader().readText().trim()
 			proc.waitFor()
-			out.ifBlank { throw GradleException("Unable to determine iphonesimulator SDK version via xcrun.") }
+			out.lineSequence().lastOrNull { it.matches(Regex("""^\d+(\.\d+)*$""")) }
+				?: throw GradleException("Unable to determine iphonesimulator SDK version via xcrun. Output was:\n$out")
 		}
 
 		fun iosDeploymentTarget(sample: String): String {
@@ -133,6 +136,7 @@ tasks.register("buildAllSamples") {
 		val cleanFailures = mutableSetOf<String>()
 		for (sample in samples) {
 			println("\n🧹 [$sample] Cleaning (no build cache)...")
+			file("$sample/.gradle").deleteRecursively()
 			val cleanProcess = ProcessBuilder(file("$sample/gradlew").absolutePath, "clean", "--no-build-cache", "--no-daemon")
 				.directory(file(sample))
 				.redirectErrorStream(true)
@@ -157,34 +161,58 @@ tasks.register("buildAllSamples") {
 			val scratchDir = file("$sample/build/XcodeEmbedPrep/Debug-iphonesimulator")
 			file("$scratchDir/Gradient.app").mkdirs()
 
-			val prepareProcessBuilder = ProcessBuilder(file("$sample/gradlew").absolutePath, embedTask, "--no-daemon")
-				.directory(file(sample))
-				.redirectErrorStream(true)
-				.withSanitizedEnvironment()
-			val env = prepareProcessBuilder.environment()
-			env["CONFIGURATION"] = "Debug"
-			env["SDK_NAME"] = "iphonesimulator$simulatorSdkVersion"
-			env["PLATFORM_NAME"] = "iphonesimulator"
-			env["ARCHS"] = "arm64"
-			env["TARGET_BUILD_DIR"] = scratchDir.absolutePath
-			env["BUILT_PRODUCTS_DIR"] = scratchDir.absolutePath
-			env["FRAMEWORKS_FOLDER_PATH"] = "Gradient.app/Frameworks"
-			env["UNLOCALIZED_RESOURCES_FOLDER_PATH"] = "Gradient.app"
-			env["CONTENTS_FOLDER_PATH"] = "Gradient.app"
-			env["EXECUTABLE_FOLDER_PATH"] = "Gradient.app"
-			env.remove("EXPANDED_CODE_SIGN_IDENTITY")
-			if (sample in swiftExportSamples) {
-				env["DEPLOYMENT_TARGET_SETTING_NAME"] = "IPHONEOS_DEPLOYMENT_TARGET"
-				env["IPHONEOS_DEPLOYMENT_TARGET"] = iosDeploymentTarget(sample)
+			fun runPrepare(diagnose: Boolean = false): Int {
+				val args = mutableListOf(file("$sample/gradlew").absolutePath, embedTask, "--no-daemon")
+				if (diagnose) args.add("--info")
+				val prepareProcessBuilder = ProcessBuilder(args)
+					.directory(file(sample))
+					.redirectErrorStream(true)
+					.withSanitizedEnvironment()
+				val env = prepareProcessBuilder.environment()
+				env["CONFIGURATION"] = "Debug"
+				env["SDK_NAME"] = "iphonesimulator$simulatorSdkVersion"
+				env["PLATFORM_NAME"] = "iphonesimulator"
+				env["ARCHS"] = "arm64"
+				env["TARGET_BUILD_DIR"] = scratchDir.absolutePath
+				env["BUILT_PRODUCTS_DIR"] = scratchDir.absolutePath
+				env["FRAMEWORKS_FOLDER_PATH"] = "Gradient.app/Frameworks"
+				env["UNLOCALIZED_RESOURCES_FOLDER_PATH"] = "Gradient.app"
+				env["CONTENTS_FOLDER_PATH"] = "Gradient.app"
+				env["EXECUTABLE_FOLDER_PATH"] = "Gradient.app"
+				env.remove("EXPANDED_CODE_SIGN_IDENTITY")
+				if (sample in swiftExportSamples) {
+					env["DEPLOYMENT_TARGET_SETTING_NAME"] = "IPHONEOS_DEPLOYMENT_TARGET"
+					env["IPHONEOS_DEPLOYMENT_TARGET"] = iosDeploymentTarget(sample)
+				}
+				if (diagnose) {
+					println("  [$sample] diagnostic env: CONFIGURATION=${env["CONFIGURATION"]} SDK_NAME=${env["SDK_NAME"]} PLATFORM_NAME=${env["PLATFORM_NAME"]} ARCHS=${env["ARCHS"]}")
+				}
+
+				val prepareProcess = prepareProcessBuilder.start()
+				prepareProcess.inputStream.bufferedReader().forEachLine { line ->
+					if (!diagnose || line.contains("does not match Xcode-requested build type or architecture")) {
+						println("[$sample] $line")
+					}
+				}
+				return prepareProcess.waitFor()
 			}
 
-			val prepareProcess = prepareProcessBuilder.start()
-			prepareProcess.inputStream.bufferedReader().forEachLine { println("[$sample] $it") }
-			val prepareExitCode = prepareProcess.waitFor()
+			// Kotlin's embedAndSignAppleFrameworkForXcode/embedSwiftExportForXcode can intermittently
+			// disable themselves ("Task is enabled" onlyIf false) even right after freshly linking the
+			// framework in the very same invocation — a KGP-side environment/build-state matching quirk.
+			// exportToSpm.sh now fails loudly (instead of silently degrading to a stub) whenever this
+			// happens, so retrying is cheap. It doesn't always recover (root cause not yet pinned down),
+			// so the retry runs with --info and surfaces KGP's own "does not match Xcode-requested build
+			// type or architecture" diagnostic line to help find it.
+			var prepareExitCode = runPrepare()
 			if (prepareExitCode != 0) {
-				println("❌ [$sample] Pre-generation failed — will be skipped in the build phase.")
+				println("⚠️  [$sample] Pre-generation failed — retrying once ($embedTask can intermittently no-op itself)...")
+				prepareExitCode = runPrepare(diagnose = true)
+			}
+			if (prepareExitCode != 0) {
+				println("❌ [$sample] Pre-generation failed twice — will be skipped in the build phase.")
 				prepareFailures.add(sample)
-				results.add(BuildResult(sample, false, "$embedTask failed with exit code $prepareExitCode"))
+				results.add(BuildResult(sample, false, "$embedTask failed with exit code $prepareExitCode (after 1 retry)"))
 			}
 		}
 

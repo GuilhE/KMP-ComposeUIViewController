@@ -61,6 +61,34 @@ KMP_OBJC_FRAMEWORK_SYMLINK="$PROJECT_ROOT/$kmp_module/build/xcode-frameworks/cur
 KMP_OBJC_FRAMEWORK_RELPATH="../../$kmp_module/build/xcode-frameworks/current"
 OBJC_FRAMEWORK_NAME=$(ls "$KMP_OBJC_FRAMEWORK_PARENT_ABS/" 2>/dev/null | grep "\.framework$" | head -1 | sed 's/\.framework$//')
 
+# This script only ever runs as a finalizer of embedAndSignAppleFrameworkForXcode,
+# embedSwiftExportForXcode, or syncFramework — so by the time it starts, one of those tasks has
+# already finished. But their own on-disk writes (framework copy + ad-hoc codesign for ObjC export,
+# or the SPM interfaces directory for Swift Export) can still be settling, so a plain one-shot check
+# is racy: it can find nothing yet and silently fall back to a stub Package.swift, which xcodebuild
+# then happily compiles against (no `platforms:` entry, so it resolves to SPM's oldest default
+# deployment target — surfacing much later as a confusing Swift availability error). Poll briefly
+# and re-derive the ObjC variables each attempt, since the platform directory name only exists once
+# embedAndSignAppleFrameworkForXcode has written it.
+wait_for_kmp_build_output() {
+  local max_attempts=30
+  local attempt=0
+  while [ "$attempt" -lt "$max_attempts" ]; do
+    if [ -d "$KMP_INTERFACES_ABS" ]; then
+      return 0
+    fi
+    OBJC_PLATFORM_DIR=$(ls "$XCODE_FRAMEWORKS_BASE/" 2>/dev/null | grep "^${PLATFORM_NAME:-iphonesimulator}" | head -1)
+    KMP_OBJC_FRAMEWORK_PARENT_ABS="$XCODE_FRAMEWORKS_BASE/$OBJC_PLATFORM_DIR"
+    if [ -n "$OBJC_PLATFORM_DIR" ] && [ -d "$KMP_OBJC_FRAMEWORK_PARENT_ABS" ]; then
+      OBJC_FRAMEWORK_NAME=$(ls "$KMP_OBJC_FRAMEWORK_PARENT_ABS/" 2>/dev/null | grep "\.framework$" | head -1 | sed 's/\.framework$//')
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 0.5
+  done
+  return 1
+}
+
 # Counts @ComposeUIViewController occurrences in the module's Kotlin source, ignoring lines
 # that look commented-out (//, *, /* at line start). This is a heuristic, not a real parser —
 # it's only used to decide whether an empty KSP output is expected (annotations removed) or
@@ -502,6 +530,15 @@ smart_sync_files() {
 }
 
 echo "  > Arch: $KOTLIN_ARCH, Config: $BUILD_CONFIG"
+if ! wait_for_kmp_build_output; then
+  echo "  > ERROR: KMP build output not found (waited ~15s)." >&2
+  echo "  >   Expected Swift Export interfaces at: $KMP_INTERFACES_ABS" >&2
+  echo "  >   or an ObjC framework under: $XCODE_FRAMEWORKS_BASE/${PLATFORM_NAME:-iphonesimulator}*" >&2
+  echo "  > This task only runs as a finalizer of embedAndSignAppleFrameworkForXcode, embedSwiftExportForXcode," >&2
+  echo "  > or syncFramework, so this means that task did not actually produce its expected output." >&2
+  echo "  > Try re-running with --rerun-tasks." >&2
+  exit 1
+fi
 setup_spm_package
 add_to_xcodeproj_if_needed
 echo "  > Starting smart sync process"

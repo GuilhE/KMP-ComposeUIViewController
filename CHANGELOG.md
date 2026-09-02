@@ -4,7 +4,12 @@
 - Kotlin 2.4.20
 - KSP 2.3.11
 - CMP 1.12.0
-- Fixes `buildAllSamples` intermittently failing: a reused Gradle daemon never refreshes its process environment, so leftover Xcode build-phase variables (`PLATFORM_NAME`, `SDK_NAME`, `SWIFT_*`, ...) from a previous invocation could leak into the `clean`/`prepare`/`xcodebuild` subprocesses and trip Kotlin's Xcode-environment detection. These subprocesses now start from a minimal environment allowlist instead of inheriting the daemon's full environment
+- Fixes `buildAllSamples` intermittently failing (`Platform is not supported`, or `embedAndSignAppleFrameworkForXcode`/`embedSwiftExportForXcode` silently disabling themselves):
+  - All `clean`/`prepare`/`xcrun`/`xcodebuild` subprocesses now start from a minimal environment allowlist instead of inheriting the caller's full environment. A reused Gradle daemon never refreshes its process environment, so leftover Xcode build-phase variables (`PLATFORM_NAME`, `SDK_NAME`, `SWIFT_*`, ...) from a previous invocation — or from an IDE that injects them into its own Gradle daemon — could leak in and trip Kotlin's Xcode-environment detection.
+  - `simulatorSdkVersion` no longer trusts `xcrun`'s raw stdout+stderr merge: if `xcrun` emits an "unknown environment variable" warning (exactly the kind of leaked variable above), it used to get woven straight into the derived `SDK_NAME`, corrupting it into a multi-line value that Kotlin's Xcode-requested-binary matching would silently reject. Only the line that actually looks like a version number is now trusted.
+  - Each sample's `.gradle/` directory (Gradle's task-execution-history cache, never touched by `./gradlew clean`) is now deleted before every clean, since it can pin a task's `onlyIf` outcome to a stale environment snapshot.
+  - `exportToSpm.sh` no longer silently falls back to a stub `Package.swift` when the expected KMP build output isn't found: it now waits briefly for it to appear and fails loudly with a clear message instead of exiting 0, so a mismatch surfaces immediately instead of downstream as a confusing Swift `'Binding' is only available in iOS 13.0 or newer`-style compile error.
+  - The `prepare` step retries once (with `--info` diagnostics on the retry) if the embed task still doesn't produce output.
 
 ## [2.4.10-1.11.1]
 
