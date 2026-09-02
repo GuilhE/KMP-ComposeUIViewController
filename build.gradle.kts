@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
 	group = "com.github.guilhe.kmp"
-	version = "2.4.10-1.11.1"
+	version = "2.4.20-1.12.0"
 }
 
 dependencies {

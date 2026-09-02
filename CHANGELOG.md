@@ -1,4 +1,9 @@
 # Changelog
+## [2.4.20-1.12.0]
+
+- Kotlin 2.4.20
+- KSP 2.3.11
+- CMP 1.12.0
 
 ## [2.4.10-1.11.1]
 
@@ -85,11 +90,9 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
 - Protocol conformance methods changed from `func` to `public func`
 - Fixes `indentParameters` to use `lastOrNull { it.isNotEmpty() }` instead of `lastOrNull()`: the previous implementation returned zero indentation when a multi-line string (e.g. `letParameters`) was immediately followed by another multi-line string, causing the second block to be written at column 0
 
-#### Bug fixes
+## Bug fixes
 
 - Fixes `cleanTempFilesFolder` task failing with `--no-build-cache` under Gradle 9.5: removed `task.inputs.dir(tempFolder).optional()` which was causing a validation error when the temp folder does not exist yet
-
----
 
 ## [2.4.0-RC2-1.11.0-1]
 
@@ -108,21 +111,15 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
   xcodeproj already has references, the script now warns about potential stale references and
   suggests `./gradlew clean` instead of silently exiting
 
----
-
 ## [2.4.0-RC2-1.11.0]
 
 - Kotlin 2.4.0-RC2
 - KSP 2.3.8
 
----
-
 ## [2.4.0-RC-1.11.0]
 
 - Kotlin 2.4.0-RC
 - CMP 1.11.0
-
----
 
 ## [2.4.0-Beta2-1.11.0-rc01]
 
@@ -131,13 +128,9 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
 - CMP 1.11.0-rc01
 - Serialization 1.11.0
 
----
-
 ## [2.3.20-1.10.3-1]
 
 - Removes `frameworkBaseName`
-
----
 
 ## [2.3.20-1.10.3]
 
@@ -147,60 +140,42 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
   for all `ksp*` tasks, and its content hash is passed as a KSP processor argument — busting
   both the Gradle-level and KSP-internal incremental caches whenever module metadata changes.
 
----
-
 ## [2.4.0-Beta1-1.11.0-beta01-1]
 
 - Fixes false KSP UP-TO-DATE cache hits: `modules.json` is now declared as a Gradle task input
   for all `ksp*` tasks, and its content hash is passed as a KSP processor argument — busting
   both the Gradle-level and KSP-internal incremental caches whenever module metadata changes.
 
----
-
 ## [2.4.0-Beta1-1.11.0-beta01]
 
 - Kotlin 2.4.0-Beta1
 - CMP 1.11.0-beta01
 
----
-
 ## [2.3.20-1.11.0-alpha04]
 
 - CMP 1.11.0-alpha04
-
----
 
 ## [2.3.20-1.10.1]
 
 - Kotlin 2.3.20
 
----
-
 ## [2.3.20-RC2-1.10.1]
 
 - Kotlin 2.3.20-RC2
-
----
 
 ## [2.3.20-RC-1.10.1]
 
 - Kotlin 2.3.20-RC
 - KSP 2.3.6
 
----
-
 ## [2.3.20-Beta2-1.10.1]
 
 - CMP 1.10.1
 - Adds swiftFormat Task to format generated .swift files with `swiftformat` default rules. This task is executed after the KSP code generation.
 
----
-
 ## [2.3.20-Beta2-1.10.0-1]
 
 - Fixed: Import generation now correctly handles external types nested in generic collections (List<Data>, Map<String, CustomType>, etc.)
-
----
 
 ## [2.3.20-Beta2-1.10.0]
 
@@ -208,31 +183,21 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
 - KSP 2.3.5
 - Serialization 1.10.0
 
----
-
 ## [2.3.20-Beta1-1.10.0]
 
 - CMP 1.10.0
-
----
 
 ## [2.3.20-Beta1-1.10.0-rc02]
 
 - Kotlin 2.3.20-Beta1
 
----
-
 ## [2.3.0-1.10.0-rc02-6]
 
 - Fixes `Processor` bug when fetching annotations parameters
 
----
-
 ## [2.3.0-1.10.0-rc02-5]
 
 - Adds `opaque` property to `@ComposeUIViewController` to activate `ComposeUIViewController` `opaque` configuration.
-
----
 
 ## [2.3.0-1.10.0-rc02-4]
 
@@ -242,70 +207,48 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
   - `GradientScreenSwift`: 100% Swift UI with state managed by iOS
   - `GradientScreenMixed`: 50% Compose UI with state managed by iOS and 50% Swift View inside Composable
 
----
-
 ## [2.3.0-1.10.0-rc02-3]
 
 - Improves swift output to match `swiftformat` default rules
-
----
 
 ## [2.3.0-1.10.0-rc02-2]
 
 - Improves swift output to match `swiftformat` default rules
 
----
-
 ## [2.3.0-1.10.0-rc02-1]
 
 - Fixes state type in swift export and name in composable export
 
----
-
 ## [2.3.0-1.10.0-rc02]
 
 - Kotlin 2.3.0
-
----
 
 ## [2.3.0-RC3-1.10.0-rc02-4]
 
 - Global code review for improvements and optimization
 - KSP 2.3.4
 
----
-
 ## [2.3.0-RC3-1.10.0-rc02-3]
 
 - Fixes type conversion from Kotlin to Swift (from objcExport)
-
----
 
 ## [2.3.0-RC3-1.10.0-rc02-2]
 
 - Improves Xcode code export script
 
----
-
 ## [2.3.0-RC3-1.10.0-rc02-1]
 
 - Improves Xcode code export script and sets xcodeproj minimum version to 1.27.0
-
----
 
 ## [2.3.0-RC3-1.10.0-rc02]
 
 - Kotlin 2.3.0-RC3
 - CMP 1.10.0-rc02
 
----
-
 ## [2.3.0-RC2-1.10.0-rc01]
 
 - Kotlin 2.3.0-RC2
 - CMP 1.10.0-rc01
-
----
 
 ## [2.3.0-RC-1.10.0-beta01]
 
@@ -313,27 +256,19 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
 - KSP 2.3.3
 - Removes necessity of adding ksp dependency in the module that applies the plugin. User can still override KSP version by adding the dependency manually.
 
----
-
 ## [2.3.0-RC-1.10.0-beta01]
 
 - Kotlin 2.3.0-RC
 - KSP 2.3.2
 - SerializationPlugin 2.3.0-RC
 
----
-
 ## [2.3.0-Beta2-1.10.0-beta01]
 
 - CMP 1.10.0-beta01
 
----
-
 ## [2.3.0-Beta2-1.10.0-alpha03]
 
 - Kotlin 2.3.0-Beta2
-
----
 
 ## [2.3.0-Beta2-91-1.10.0-alpha03]
 
@@ -341,68 +276,48 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
 - CMP 1.10.0-alpha03
 - KSP 2.3.0
 
----
-
 ## [2.2.21-1.9.1]
 
 - Kotlin 2.0.21
 - CMP 1.9.1
 - KSP 2.3.0
 
----
-
 ## [2.3.0-Beta1-1.9.0]
 
 - Kotlin 2.3.0-Beta1
-
----
 
 ## [2.2.20-1.9.0]
 
 - CMP 1.9.0
 
----
-
 ## [2.3.0-dev-5897-1.9.0]
 
 - CMP 1.9.0
-
----
 
 ## [2.2.20-1.9.0-rc01]
 
 - Kotlin 2.2.20
 - SerializationPlugin 2.2.20
 
----
-
 ## [2.3.0-dev-5897-1.9.0-rc01]
 
 - Kotlin 2.3.0-dev-5897
 - CMP 1.9.0-rc01
-
----
 
 ## [2.2.20-RC2-1.9.0-rc01]
 
 - Kotlin 2.2.20-RC2
 - CMP 1.9.0-rc01
 
----
-
 ## [2.3.0-dev-4778-1.9.0-beta03-1]
 
 Fixes bug in flattenConfigured logic
-
----
 
 ## [2.3.0-dev-4778-1.9.0-beta03]
 
 - Kotlin 2.3.0-dev-4778
 
 __Note:__ This development version is required for Swift Export support until the official release of Kotlin 2.3.0.
-
----
 
 ## [2.2.20-RC-1.9.0-beta03-1]
 
@@ -412,14 +327,10 @@ __Note:__ This development version is required for Swift Export support until th
 **Note:** Kotlin 2.2.20-RC has the following issues with Swift Export: [KT-80347](https://youtrack.jetbrains.com/issue/KT-80347/Swift-Export-IllegalArgumentException-Collection-contains-more-than-one-matching-element), [KT-79889](https://youtrack.jetbrains.com/issue/KT-79889/K-N-swift-export-fails-under-several-different-conditions).  
 Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 
----
-
 ## [2.2.10-1.9.0-beta03]
 
 - Kotlin 2.2.10
 - CMP 1.9.0-beta03
-
----
 
 ## [2.2.0-1.8.2]
 
@@ -427,13 +338,9 @@ Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 - KSP 2.0.2
 - CMP 1.8.2
 
----
-
 ## [2.1.21-1.8.1]
 
 - CMP 1.8.1
-
----
 
 ## [2.1.21-1.8.0]
 
@@ -444,28 +351,20 @@ Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 - Serialization 1.8.1
 - SerializationPlugin 2.1.21
 
----
-
 ## [2.1.20-1.8.0-beta02-BETA]
 
 - KSP 2.0.0
 - CMP 1.8.0-beta02
-
----
 
 ## [2.1.20-1.8.0-beta01-BETA]
 
 - Kotlin 2.1.20
 - CMP 1.8.0-beta01
 
----
-
 ## [2.1.10-1.8.0-alpha04-BETA]
 
 - KSP 1.0.31
 - CMP 1.8.0-alpha04
-
----
 
 ## [2.1.10-1.8.0-alpha03-BETA]
 
@@ -473,20 +372,14 @@ Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 - KSP 1.0.30
 - CMP 1.8.0-alpha03
 
----
-
 ## [2.1.0-1.8.0-alpha02-BETA]
 
 - CMP 1.8.0-alpha02
 - Serialization 1.8.0
 
----
-
 ## [2.1.0-1.7.2-BETA]
 
 - CMP 1.7.2
-
----
 
 ## [2.1.0-1.7.1-BETA]
 
@@ -496,27 +389,19 @@ Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 - Removes junit dependencies
 - Migrates to [ZacSweers/kotlin-compile-testing](https://github.com/ZacSweers/kotlin-compile-testing)
 
----
-
 ## [2.0.21-1.7.0-BETA-1]
 
 - Fixes type resolve for Functions when `ksp.useKSP2=true`
 - Adds generics to List, Map, MutableList and MutableMap
 
----
-
 ## [2.0.21-1.7.0-BETA]
 
 - CMP 1.7.0
-
----
 
 ## [2.0.21-1.7.0-rc01-BETA]
 
 - Kotlin 2.0.21
 - KSP 1.0.25
-
----
 
 ## [2.0.20-1.7.0-rc01-BETA-1]
 
@@ -527,44 +412,33 @@ Use `2.3.0-dev-4778-1.9.0-beta03` if you need Swift Export support.
 - Adds exception print to ModuleDecodeException
 - Fixes `getFrameworkMetadataFromDisk()` throwing not found for cocoapods projects
 
----
-
 ## [2.0.20-1.7.0-beta01-BETA-1]
 
 - CMP 1.7.0-beta01
 - KSP 1.0.25
 
----
-
 ## [2.0.20-1.7.0-alpha03-BETA-1]
 
 - Kotlin 2.0.20
 - KSP 1.0.24
-
 ## [2.0.20-Beta1-1.6.11-BETA-7]
 
 - Adds `experimentalNamespaceFeature` flag to enable/disable experimental feature to import types from external modules. Read more in [CHANGELOG.md#2020-beta1-1611-beta-4](CHANGELOG.md#2020-beta1-1611-beta-4)
-
----
 
 ## [2.0.20-Beta1-1.6.11-BETA-6]
 
 - Fixes EmptyFrameworkBaseNameException bug (incorrectly using `contains` instead of `startsWith`)
 
----
-
 ## [2.0.20-Beta1-1.6.11-BETA-5]
 
 - Fixes EmptyFrameworkBaseNameException bug
-
----
 
 ## [2.0.20-Beta1-1.6.11-BETA-4]
 
 - Adds experimental feature to import types from external modules.
 
 > [!CAUTION]
-> Theres an [actual limitation](https://kotlinlang.slack.com/archives/C3SGXARS6/p1719961104891399) on Kotlin Multiplatform where each binary framework is compiled as a "closed world“, meaning it's not possible to pass custom type between two frameworks even it’s the same in Kotlin.
+> There's an [actual limitation](https://kotlinlang.slack.com/archives/C3SGXARS6/p1719961104891399) on Kotlin Multiplatform where each binary framework is compiled as a "closed world“, meaning it's not possible to pass custom type between two frameworks even it’s the same in Kotlin.
 >
 > Let’s say I have two modules, `shared` and `shared-models`, each providing their own binary frameworks: “Shared” and “SharedModels” respectively. The `shared-models` contains a `data class Hello`, and the `shared` module `implements(project(":shared-models"))` and has a public method that takes `Hello` as a parameter.
 >
@@ -602,69 +476,47 @@ ComposeUiViewController {
 }
 ```
 
----
-
 ## [2.0.20-Beta1-1.6.11-BETA-3]
 
 - Adds all KMP targets available to `kmp-composeuiviewcontroller-annotations`
-
----
 
 ## [2.0.20-Beta1-1.6.11-BETA-2]
 
 - Compatible with Plugin 1.1.0
 
----
-
 ## [2.0.20-Beta1-1.6.11-BETA-1]
 
 - Prepares Processor for Plugin 1.1.0 where it will be capable of checking for compilerArgs
-
----
 
 ## [2.0.20-Beta1-1.6.11-BETA]
 
 - Kotlin 2.0.20-Beta1
 - KSP 1.0.22
 
----
-
 ## [2.0.0-1.6.11-BETA-1]
 
 - Improves `exportToXcode.sh`
 - Renames iosApp sample to Gradient
 
----
-
 ## [2.0.0-1.6.11]
 
 - Compose Multiplatform 1.6.11
-
----
 
 ## [2.0.0-1.6.10-BETA-4]
 
 Reverts `@ComposeUIViewController` default parameter to `SharedComposables`
 
----
-
 ## [2.0.0-1.6.10-BETA-3]
 
 `@ComposeUIViewController` uses `ComposeApp` as default parameter to match [Kotlin Multiplatform Wizard](https://kmp.jetbrains.com/)
-
----
 
 ## [2.0.0-1.6.10-BETA-2]
 
 Removes the necessity for default values of `@ComposeUIViewControllerState`
 
----
-
 ## [2.0.0-1.6.10-BETA-1]
 
 Allows `@ComposeUIViewController` without `@ComposeUIViewControllerState` for simples wrapper cases.
-
----
 
 ## [2.0.0-1.6.10-BETA]
 
@@ -672,93 +524,65 @@ Allows `@ComposeUIViewController` without `@ComposeUIViewControllerState` for si
 
 From now on `KMP-ComposeUIViewController` version will map `Kotlin` and `Compose Multiplatform` versions
 
----
-
 ## [1.8.0-ALPHA]
 
 - Kotlin 2.0.0
 - KSP 1.0.21
-
----
 
 ## [1.8.0-ALPHA]
 
 - Kotlin 2.0.0-RC3
 - Compose 1.6.10
 
----
-
 ## [1.7.0-ALPHA]
 
 - Kotlin 2.0.0-RC2
-
----
 ## [1.6.0-ALPHA]
 
 - Kotlin 2.0.0-RC1
 - KSP 1.0.20
-
----
 
 ## [1.5.0-ALPHA]
 
 - Kotlin 1.9.23
 - KSP 1.0.19
 
----
-
 ## [1.4.4-ALPHA]
 
 - Adds `indentParameters` and `removeAdjacentEmptyLines` for better code indentation in `.swift` files.
 
----
-
 ## [1.4.3-ALPHA]
 
 - Fixes Processor bug in `getFrameworkNameFromAnnotations()` function that was accepting empty values
-
----
 
 ## [1.4.2-ALPHA]
 
 - Fixes Processor bug where functions that should be discarded from the analysis were not
 - Sample updated with a use-case with a function parameter with a Kotlin primitive type
 
----
-
 ## [1.4.1-ALPHA]
 
 Adds `kotlinTypeToSwift` function to reflect https://kotlinlang.org/docs/apple-framework.html#generated-framework-headers
-
----
 
 ## [1.4.0-ALPHA]
 
 - Kotlin 1.9.22
 - KSP 1.0.17
 
----
-
 ## [1.3.0-ALPHA]
 
 - Kotlin 1.9.21
 - KSP 1.0.15
-
----
 
 ## [1.2.0-ALPHA]
 
 - Kotlin 1.9.20
 - KSP 1.0.13
 
----
-
 ## [1.1.0-ALPHA]
 
 - Adds capability to generate `.swift` files with `UIViewControllerRepresentables`.
 - Adds script to include those generated files into `xcodeproj` to be accessible in iOS project;
-
----
 
 ## [1.0.0-ALPHA-1]
 

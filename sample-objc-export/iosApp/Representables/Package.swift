@@ -16,7 +16,10 @@ let package = Package(
             name: "Representables",
             path: "Sources/Representables",
             swiftSettings: [
-                .unsafeFlags(["-I", "../../shared/build/SPMBuild/SwiftInterfaces", "-I", "../../shared/build/SPMPackage/OtherIncludes/KotlinCoroutineSupportBridge", "-I", "../../shared/build/SPMPackage/OtherIncludes/KotlinRuntime", "-I", "../../shared/build/SPMPackage/OtherIncludes/KotlinRuntimeSupportBridge", "-I", "../../shared/build/SPMPackage/OtherIncludes/SharedBridge_GradientObjcExportSPMSharedModels", "-I", "../../shared/build/SPMPackage/OtherIncludes/SharedBridge_Shared"])
+                .unsafeFlags(["-F", "../../shared/build/xcode-frameworks/current"])
+            ],
+            linkerSettings: [
+                .unsafeFlags(["-F", "../../shared/build/xcode-frameworks/current", "-framework", "Composables"])
             ]
         )
     ]
