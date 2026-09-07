@@ -52,15 +52,6 @@ ComposeUiViewController {
 With this setup, all necessary configurations are automatically applied. You only need to adjust the `ComposeUiViewController` block to match your
 project settings (e.g. `iosAppName` and `targetName`). If you wish to change the default values, check the available parameters.
 
-By default, the plugin generates a local Swift Package (see [SPM export](#spm-export)). This requires a one-time setup step before your first
-Xcode build:
-
-```bash
-./gradlew :shared:createRepresentablesPackage
-```
-
-The plugin warns you automatically (during any Gradle sync or build) if this hasn't been run yet.
-
 <details><summary>Parameters available</summary>
 
 - `iosAppFolderName` name of the folder containing the iosApp in the root's project tree;
@@ -77,57 +68,14 @@ The plugin warns you automatically (during any Gradle sync or build) if this has
 
 </details>
 
-<details><summary>Troubleshooting</summary>
-
-Sometimes the files are correctly generated and copied, but Android Studio doesn't recognize them. Select the `iosApp` project folder,
-right-click, and choose **"Reload from Disk"**. Once the files become visible, the build should succeed.
-
-If Representables are not found in Xcode, run the diagnostic task to inspect the full pipeline without triggering a build:
+By default, the plugin generates a local Swift Package (see [SPM export](#spm-export)). This requires a one-time setup step before your first
+Xcode build:
 
 ```bash
- ./gradlew validateRepresentables
+./gradlew :shared:createRepresentablesPackage
 ```
 
-It checks and reports `[OK]`, `[WARN]`, or `[FAIL]` for (adapting automatically to [legacy mode](#legacy-mode) or the default SPM export):
-1. KSP output — Swift files in `build/generated/ksp/`
-2. Destination — Swift files in `{iosAppFolderName}/{exportFolderName}/` (or `Sources/{exportFolderName}/` in SPM mode)
-3. Sync — KSP output and destination match
-4. Package.swift exists (SPM mode) or all Representables are referenced in `project.pbxproj` (legacy mode)
-
-If validation fails, the most common fix is:
-```bash
- ./gradlew clean --no-build-cache
-```
-Then rebuild it again.
-
-If `validateRepresentables` reports `KSP output: 0 Swift file(s) found` even though your code has `@ComposeUIViewController` annotations, Gradle's UP-TO-DATE check for the `ksp*` task may be "stuck" on a stale, empty result from a previous run (e.g. after an interrupted build). Since nothing about that task's declared inputs changed since then, Gradle would otherwise keep skipping it forever — the plugin detects this automatically (comparing the `ksp*` task's output against `@ComposeUIViewController` annotations still present in source) and forces that task to re-run within the same build, logging a warning when it does. If you ever need to force it manually (e.g. outside of a normal build):
-```bash
- ./gradlew :<module>:kspKotlin<Target> --rerun-tasks
-```
-e.g. `./gradlew :shared:kspKotlinIosSimulatorArm64 --rerun-tasks`. This is cheaper than a full `clean` and bypasses both Gradle's and KSP's incremental caches for that task only.
-
-</details>
-
-<details><summary>Build output (sample)</summary>
-
-When building the project (default SPM export), you should see output similar to this:
-```bash
-> Task :shared:exportToSpm
-  > Arch: iosSimulatorArm64, Config: Debug
-  > ObjC Export: framework linked → Debug/iphonesimulator26.5
-  > Package.swift is up to date
-  > Starting smart sync process
-  > KSP output: 4 Swift file(s) found
-  > New file: GradientScreenSwiftUIViewControllerRepresentable.swift
-  > New file: GradientScreenMixedAUIViewControllerRepresentable.swift
-  > New file: GradientScreenMixedBUIViewControllerRepresentable.swift
-  > New file: GradientScreenComposeUIViewControllerRepresentable.swift
-  > Summary: 0 unchanged, 4 copied, 0 removed
-  > Done
-```
-See [SPM export](#spm-export) for the full breakdown, or [Legacy mode](#legacy-mode) for the `xcodeproj`-gem-based output.
-
-</details>
+The plugin warns you automatically (during any Gradle sync or build) if this hasn't been run yet.
 
 ### Swift Export
   
@@ -444,6 +392,7 @@ public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
 After a successful build the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj` ready to be used:
 
 ```swift
+import Representables
 import SwiftUI
 import Shared
 
