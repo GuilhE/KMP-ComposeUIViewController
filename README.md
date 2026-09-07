@@ -4,7 +4,7 @@
 
 KSP library and Gradle plugin for generating `ComposeUIViewController` and `UIViewControllerRepresentable` files when using [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) for iOS.
 
-### Compatibility 
+### Compatibility
 
 | [Version](https://plugins.gradle.org/plugin/io.github.guilhe.kmp.plugin-composeuiviewcontroller) | [Kotlin](https://github.com/JetBrains/kotlin/releases) | [KSP](https://github.com/Google/KSP/releases) | [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/releases) | Xcode  |
 |--------------------------------------------------------------------------------------------------|:------------------------------------------------------:|:---------------------------------------------:|:------------------------------------------------------------------------------------:|:------:|
