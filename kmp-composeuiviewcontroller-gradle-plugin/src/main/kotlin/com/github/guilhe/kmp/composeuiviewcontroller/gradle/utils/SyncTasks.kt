@@ -259,6 +259,20 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 		task.description = "Creates and maintains a local SPM package with KSP-generated Swift Representables"
 		task.outputs.upToDateWhen { false }
 		task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toSpmList()}") }
+		task.doFirst {
+			// Only the real embedAndSignAppleFrameworkForXcode/embedSwiftExportForXcode/syncFramework
+			// finalizer chain can race with the KMP build output it depends on — a standalone/manual/CI
+			// invocation (e.g. this task run directly) has no such race, so the script must not apply
+			// its build-output wait/fail gate in that case.
+			val isFinalizerRun = project.gradle.taskGraph.allTasks.any {
+				it.name in setOf(
+					TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE,
+					TASK_EMBED_SWIFT_EXPORT_FOR_XCODE,
+					TASK_SYNC_FRAMEWORK
+				)
+			}
+			task.environment("XCODE_BUILD_FINALIZER_RUN", isFinalizerRun.toString())
+		}
 
 		val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
 		val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/${FILE_NAME_SPM_SCRIPT}")

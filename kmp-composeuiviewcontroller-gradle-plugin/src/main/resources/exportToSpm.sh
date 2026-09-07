@@ -530,14 +530,16 @@ smart_sync_files() {
 }
 
 echo "  > Arch: $KOTLIN_ARCH, Config: $BUILD_CONFIG"
-if ! wait_for_kmp_build_output; then
-  echo "  > ERROR: KMP build output not found (waited ~15s)." >&2
-  echo "  >   Expected Swift Export interfaces at: $KMP_INTERFACES_ABS" >&2
-  echo "  >   or an ObjC framework under: $XCODE_FRAMEWORKS_BASE/${PLATFORM_NAME:-iphonesimulator}*" >&2
-  echo "  > This task only runs as a finalizer of embedAndSignAppleFrameworkForXcode, embedSwiftExportForXcode," >&2
-  echo "  > or syncFramework, so this means that task did not actually produce its expected output." >&2
-  echo "  > Try re-running with --rerun-tasks." >&2
-  exit 1
+if [ "${XCODE_BUILD_FINALIZER_RUN:-false}" = "true" ]; then
+  if ! wait_for_kmp_build_output; then
+    echo "  > ERROR: KMP build output not found (waited ~15s)." >&2
+    echo "  >   Expected Swift Export interfaces at: $KMP_INTERFACES_ABS" >&2
+    echo "  >   or an ObjC framework under: $XCODE_FRAMEWORKS_BASE/${PLATFORM_NAME:-iphonesimulator}*" >&2
+    echo "  > This task only runs as a finalizer of embedAndSignAppleFrameworkForXcode, embedSwiftExportForXcode," >&2
+    echo "  > or syncFramework, so this means that task did not actually produce its expected output." >&2
+    echo "  > Try re-running with --rerun-tasks." >&2
+    exit 1
+  fi
 fi
 setup_spm_package
 add_to_xcodeproj_if_needed
