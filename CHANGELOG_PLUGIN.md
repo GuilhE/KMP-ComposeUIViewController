@@ -1,7 +1,7 @@
 # Changelog
 
-## [2.5.0-Beta2-2-1.12.1]
-- Compatible with 2.5.0-Beta2-2-1.12.1
+## [2.5.0-Beta2-1.12.1]
+- Compatible with 2.5.0-Beta2-1.12.1
 - Detects `moduleName`/`rootPackage` from the replacement `export { swift { } }` DSL too, not just the legacy `swiftExport { }` one (deprecated, scheduled for removal in Kotlin 2.7). The replacement DSL doesn't expose these values through a public API, so they're read back from the build script text — same approach already used to detect a module exported by a sibling project.
 
 ## [2.4.10-1.12.0]

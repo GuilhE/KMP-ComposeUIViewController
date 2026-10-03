@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
 	group = "com.github.guilhe.kmp"
-	version = "2.4.20-1.12.0"
+	version = "2.5.0-Beta2-1.12.1"
 }
 
 dependencies {
@@ -65,8 +65,8 @@ tasks.register("buildAllSamples") {
 	description = "Cleans (--no-build-cache), pre-generates KMP frameworks/Swift export packages, then builds all samples via xcodebuild"
 	doLast {
 		val samples = listOf(
-// 			"sample-objc-export",
-// 			"sample-objc-export-legacy",
+ 			"sample-objc-export",
+ 			"sample-objc-export-legacy",
 			"sample-swift-export",
 			"sample-swift-export-legacy"
 		)
