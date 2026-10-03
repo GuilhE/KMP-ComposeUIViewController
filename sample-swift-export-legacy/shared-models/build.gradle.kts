@@ -1,7 +1,3 @@
-@file:OptIn(ExperimentalSwiftExportDsl::class)
-
-import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
-
 plugins {
     alias(global.plugins.kotlin.multiplatform)
     alias(local.plugins.compose.compiler)
@@ -12,12 +8,6 @@ plugins {
 kotlin {
 	iosArm64()
 	iosSimulatorArm64()
-	export {
-		swift {
-			moduleName = "Models"
-			rootPackage = "com.sample.models"
-		}
-	}
     sourceSets {
         commonMain.dependencies {
             implementation(local.kotlinx.collections)

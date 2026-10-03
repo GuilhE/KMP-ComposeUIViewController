@@ -22,7 +22,12 @@ kotlin {
 		swift {
 			moduleName = "Composables"
 			rootPackage = "com.sample.shared"
-			xcodeIntegration()
+			xcodeIntegration {
+				configure(projects.sharedModels) {
+					moduleName = "Models"
+					rootPackage = "com.sample.models"
+				}
+			}
 		}
 	}
 
