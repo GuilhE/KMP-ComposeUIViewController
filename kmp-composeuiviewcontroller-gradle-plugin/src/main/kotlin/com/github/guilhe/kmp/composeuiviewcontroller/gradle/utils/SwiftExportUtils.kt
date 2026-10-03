@@ -11,6 +11,30 @@ internal data class SwiftExportConfig(val moduleName: String?, val flattenPackag
 internal object SwiftExportUtils {
 
 	/**
+	 * Retrieves this project's own SwiftExport configuration when declared with the replacement
+	 * `export { swift { } }` DSL (the legacy `swiftExport { }` DSL is read directly off
+	 * [org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension] instead, since it exposes
+	 * `moduleName`/`flattenPackage` as public properties).
+	 *
+	 * The replacement DSL's configuration (`ExportExtension.swiftExportConfiguration`) is internal to the Kotlin
+	 * Gradle Plugin, so there is no typed API to read `moduleName`/`rootPackage` back from it. This falls back to
+	 * scanning the build script text instead, the same way [getSwiftExportConfigForProject] already does for a
+	 * module exported by a sibling project.
+	 */
+	fun Project.getOwnNewDslSwiftExportConfig(): SwiftExportConfig? {
+		return try {
+			if (!buildFile.exists()) return null
+			val swiftBlock = Regex("""swift\s*\{([\s\S]*?)\}""").find(buildFile.readText())?.groupValues?.get(1) ?: return null
+			val moduleName = Regex("""moduleName\s*=\s*["']([^"']+)["']""").find(swiftBlock)?.groupValues?.get(1) ?: return null
+			val rootPackage = Regex("""rootPackage\s*=\s*["']([^"']+)["']""").find(swiftBlock)?.groupValues?.get(1)
+			SwiftExportConfig(moduleName, rootPackage)
+		} catch (e: Exception) {
+			logger.warn("\t> Exception while parsing 'export { swift { } }' config: ${e.message}")
+			null
+		}
+	}
+
+	/**
 	 * Retrieves the specific SwiftExport configuration for the current project.
 	 * Since SwiftExport doesn't expose the exports collection, we need to look
 	 * in the root project or parent projects for the SwiftExport configuration
@@ -61,32 +85,39 @@ internal object SwiftExportUtils {
 
 			val buildFileContent = buildFile.readText()
 
-			// Extract only the export blocks from swiftExport
-			// Look for patterns like: export(projects.something) { ... } or export(project(":something")) { ... }
-			val exportPattern = Regex(
-				"""export\s*\(\s*(?:projects\.([a-zA-Z0-9_-]+)|project\(\s*["']([^"']*)["']\s*\))\s*\)\s*\{([^}]*)\}""",
-				RegexOption.DOT_MATCHES_ALL
+			// Extract the export blocks that reference a dependency, from either DSL:
+			// - legacy: swiftExport { export(projects.something) { moduleName = ...; flattenPackage = ... } }
+			// - replacement: export { swift { xcodeIntegration { configure(projects.something) { moduleName = ...; rootPackage = ... } } } }
+			val patterns = listOf(
+				Regex(
+					"""export\s*\(\s*(?:projects\.([a-zA-Z0-9_-]+)|project\(\s*["']([^"']*)["']\s*\))\s*\)\s*\{([^}]*)\}""",
+					RegexOption.DOT_MATCHES_ALL
+				) to "flattenPackage",
+				Regex(
+					"""configure\s*\(\s*(?:projects\.([a-zA-Z0-9_-]+)|project\(\s*["']([^"']*)["']\s*\))\s*\)\s*\{([^}]*)\}""",
+					RegexOption.DOT_MATCHES_ALL
+				) to "rootPackage"
 			)
 
-			val exportMatches = exportPattern.findAll(buildFileContent)
+			for ((exportPattern, packageProperty) in patterns) {
+				for (match in exportPattern.findAll(buildFileContent)) {
+					val projectNameWithAccessors = match.groupValues[1] // projects.sharedModels
+					val projectNameDirect = match.groupValues[2] // shared-models (with or without :)
+					val configBlock = match.groupValues[3] // the content inside the braces
 
-			for (match in exportMatches) {
-				val projectNameWithAccessors = match.groupValues[1] // projects.sharedModels
-				val projectNameDirect = match.groupValues[2] // shared-models (with or without :)
-				val configBlock = match.groupValues[3] // the content inside the braces
+					val projectName = projectNameWithAccessors.ifEmpty { projectNameDirect.removePrefix(":") }
 
-				val projectName = projectNameWithAccessors.ifEmpty { projectNameDirect.removePrefix(":") }
+					if (isProjectNameMatch(projectName, targetProject.name)) {
+						val moduleNamePattern = Regex("""moduleName\s*=\s*["']([^"']+)["']""")
+						val moduleNameMatch = moduleNamePattern.find(configBlock)
+						val moduleName = moduleNameMatch?.groupValues?.get(1) ?: continue
 
-				if (isProjectNameMatch(projectName, targetProject.name)) {
-					val moduleNamePattern = Regex("""moduleName\s*=\s*["']([^"']+)["']""")
-					val moduleNameMatch = moduleNamePattern.find(configBlock)
-					val moduleName = moduleNameMatch?.groupValues?.get(1) ?: continue
+						val packageValuePattern = Regex("""$packageProperty\s*=\s*["']([^"']+)["']""")
+						val packageValueMatch = packageValuePattern.find(configBlock)
+						val packageValue = packageValueMatch?.groupValues?.get(1)
 
-					val flattenPackagePattern = Regex("""flattenPackage\s*=\s*["']([^"']+)["']""")
-					val flattenPackageMatch = flattenPackagePattern.find(configBlock)
-					val flattenPackage = flattenPackageMatch?.groupValues?.get(1)
-
-					return SwiftExportConfig(moduleName, flattenPackage)
+						return SwiftExportConfig(moduleName, packageValue)
+					}
 				}
 			}
 			null

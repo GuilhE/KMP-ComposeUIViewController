@@ -3,13 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* GradientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* GradientApp.swift */; };
+		5C07E145305E0A410018BCEB /* Representables in Frameworks */ = {isa = PBXBuildFile; productRef = 44DEE1ECD38CF7E971CDC290 /* Representables */; };
 		5C43A0302FCC951200882795 /* GradientScreenMixedA.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02C2FCC951200882795 /* GradientScreenMixedA.swift */; };
 		5C43A0312FCC951200882795 /* GradientScreenCompose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02B2FCC951200882795 /* GradientScreenCompose.swift */; };
 		5C43A0322FCC951200882795 /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C43A02A2FCC951200882795 /* ButtonView.swift */; };
@@ -50,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5C07E145305E0A410018BCEB /* Representables in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
