@@ -43,6 +43,9 @@ class ProcessorTest {
 		workingDir = tempFolder
 		inheritClassPath = true
 		verbose = false
+		// kctfork 0.12.1 bundles a compiler whose embedded stdlib metadata predates this project's
+		// Kotlin 2.5.0 pre-release; inheritClassPath pulls in the newer stdlib regardless.
+		kotlincArguments = listOf("-Xskip-metadata-version-check")
 		usesKsp2 = precursorTools.contains("ksp2")
 		if (!usesKsp2) {
 			languageVersion = "1.9"
