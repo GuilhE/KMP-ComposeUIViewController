@@ -266,7 +266,7 @@ is in the project, Xcode handles everything. The xcodeproj gem is only needed on
 
 On every Xcode build, the plugin hooks into `embedAndSignAppleFrameworkForXcode` or `embedSwiftExportForXcode` and runs the `exportToSpm` task, which adapts automatically to the export mode in use:
 
-**Swift Export** (`swiftExport { moduleName = "..." }`):
+**Swift Export** (`export { swift { moduleName = "..." }}`):
 1. Creates a stable symlink `build/SPMBuild/SwiftInterfaces → {arch}/{config}/dd-interfaces`.
 2. Updates `Package.swift` with `unsafeFlags(["-I", "SwiftInterfaces"])` pointing to pre-compiled Swift module interfaces. This avoids Xcode recompiling the KMP source package with a mismatched deployment target.
 
