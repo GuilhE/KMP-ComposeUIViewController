@@ -89,7 +89,7 @@ export {
             configure(projects.sharedModels) { ... }
         }
     }
-	}
+}
 ```
 Don't forget to import the plugin in [each module](https://github.com/GuilhE/KMP-ComposeUIViewController/blob/00b24949caea0bba1fab7cf2807f0005dd570544/sample-swift-export/shared-models/build.gradle.kts#L5). Check the [sample-swift-export](sample-swift-export).
 
