@@ -99,6 +99,133 @@ Don't forget to import the plugin in [each module](https://github.com/GuilhE/KMP
 > 1. Delete the `Derived Data` using Xcode or DevCleaner app;
 > 2. Run `./gradlew clean --no-build-cache`.
 
+## Code generation
+
+### KMP module
+
+Inside `iosMain` we can take advantage of two annotations:
+
+`@ComposeUIViewController`:  
+To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the  iOS app.
+
+`@ComposeUIViewControllerState`:  
+To annotate the parameter as the composable state variable (for **advanced** use cases).
+
+> [!IMPORTANT]
+>  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
+
+#### Examples
+
+<details><summary>Simple</summary>
+
+```kotlin
+@ComposeUIViewController
+@Composable
+internal fun ComposeSimpleView() { }
+```
+will produce a `ComposeSimpleViewUIViewController`:
+```kotlin
+object ComposeSimpleViewUIViewController {
+    fun make(): UIViewController {
+        return ComposeUIViewController {
+            ComposeSimpleView()
+        }
+    }
+}
+```
+and also a `ComposeSimpleViewRepresentable`:
+```swift
+import Shared
+import SwiftUI
+
+public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
+    public init() {}
+
+    public func makeUIViewController(context _: Context) -> UIViewController {
+        ComposeSimpleViewUIViewController().make()
+    }
+
+    public func updateUIViewController(_: UIViewController, context _: Context) {
+        // unused
+    }
+}
+```    
+</details>
+
+<details><summary>Advanced</summary>
+
+```kotlin
+data class ViewState(val isLoading: Boolean)
+
+@ComposeUIViewController
+@Composable
+internal fun ComposeAdvancedView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
+```
+will produce a `ComposeAdvancedViewUIViewController`:
+```kotlin
+object ComposeAdvancedViewUIViewController {
+    private val viewState = mutableStateOf<ViewState?>(null)
+
+    fun make(callback: () -> Unit): UIViewController {
+        return ComposeUIViewController {
+            viewState.value?.let { ComposeAdvancedView(it, callback) }
+        }
+    }
+
+    fun update(viewState: ViewState) {
+        this.viewState.value = uiState
+    }
+}
+```
+and also a `ComposeAdvancedViewRepresentable`:
+```swift
+import Shared
+import SwiftUI
+
+public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
+    @Binding public var viewState: ViewState
+    public let callback: () -> Void
+
+    public init(viewState: Binding<ViewState>, callback: @escaping () -> Void) {
+        self._viewState = viewState
+        self.callback = callback
+    }
+
+    public func makeUIViewController(context _: Context) -> UIViewController {
+        ComposeAdvancedViewUIViewController().make(callback: callback)
+    }
+
+    public func updateUIViewController(_: UIViewController, context _: Context) {
+        ComposeAdvancedViewUIViewController().update(viewState: viewState)
+    }
+}
+```
+</details>
+
+### iOSApp
+
+After a successful build the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj` ready to be used:
+
+```swift
+import Representables
+import SwiftUI
+import Shared
+
+struct SomeView: View {
+    @State private var state: ViewState = ViewState(isLoading: false)
+    var body: some View {
+        VStack {
+            ComposeSimpleViewRepresentable()
+            ComposeAdvancedViewRepresentable(viewState: $state, callback: {})
+        }
+    }
+}
+```
+> [!IMPORTANT]
+> When using [legacy mode](#legacy-mode), always delete `iosApp/Representables` through Xcode.
+
+## How it works
+
 ### SPM export
 This is the default export mode (see [Legacy mode](#legacy-mode) for the previous `xcodeproj`-gem-based approach). It works with both **Swift Export** and **ObjC Export**, generating a local Swift Package with the generated `UIViewControllerRepresentable` files — nothing to enable, just configure the usual parameters:
 
@@ -287,132 +414,7 @@ When building the project, you should see output similar to this:
 
 </details>
 
-## Code generation
-
-### KMP module
-
-Inside `iosMain` we can take advantage of two annotations:
-
-`@ComposeUIViewController`:  
-To annotate the `@Composable` as a desired `ComposeUIViewController` to be used by the  iOS app.
-
-`@ComposeUIViewControllerState`:  
-To annotate the parameter as the composable state variable (for **advanced** use cases).
-
-> [!IMPORTANT]
->  Only 0 or 1 `@ComposeUIViewControllerState` and an arbitrary number of parameter types (excluding `@Composable`) are allowed in `@ComposeUIViewController` functions.
-
-#### Examples
-
-<details><summary>Simple</summary>
-
-```kotlin
-@ComposeUIViewController
-@Composable
-internal fun ComposeSimpleView() { }
-```
-will produce a `ComposeSimpleViewUIViewController`:
-```kotlin
-object ComposeSimpleViewUIViewController {
-    fun make(): UIViewController {
-        return ComposeUIViewController {
-            ComposeSimpleView()
-        }
-    }
-}
-```
-and also a `ComposeSimpleViewRepresentable`:
-```swift
-import Shared
-import SwiftUI
-
-public struct ComposeSimpleViewRepresentable: UIViewControllerRepresentable {
-    public init() {}
-
-    public func makeUIViewController(context _: Context) -> UIViewController {
-        ComposeSimpleViewUIViewController().make()
-    }
-
-    public func updateUIViewController(_: UIViewController, context _: Context) {
-        // unused
-    }
-}
-```    
-</details>
-
-<details><summary>Advanced</summary>
-
-```kotlin
-data class ViewState(val isLoading: Boolean)
-
-@ComposeUIViewController
-@Composable
-internal fun ComposeAdvancedView(@ComposeUIViewControllerState viewState: ViewState, callback: () -> Unit) { }
-```
-will produce a `ComposeAdvancedViewUIViewController`:
-```kotlin
-object ComposeAdvancedViewUIViewController {
-    private val viewState = mutableStateOf<ViewState?>(null)
-
-    fun make(callback: () -> Unit): UIViewController {
-        return ComposeUIViewController {
-            viewState.value?.let { ComposeAdvancedView(it, callback) }
-        }
-    }
-
-    fun update(viewState: ViewState) {
-        this.viewState.value = uiState
-    }
-}
-```
-and also a `ComposeAdvancedViewRepresentable`:
-```swift
-import Shared
-import SwiftUI
-
-public struct ComposeAdvancedViewRepresentable: UIViewControllerRepresentable {
-    @Binding public var viewState: ViewState
-    public let callback: () -> Void
-
-    public init(viewState: Binding<ViewState>, callback: @escaping () -> Void) {
-        self._viewState = viewState
-        self.callback = callback
-    }
-
-    public func makeUIViewController(context _: Context) -> UIViewController {
-        ComposeAdvancedViewUIViewController().make(callback: callback)
-    }
-
-    public func updateUIViewController(_: UIViewController, context _: Context) {
-        ComposeAdvancedViewUIViewController().update(viewState: viewState)
-    }
-}
-```
-</details>
-
-### iOSApp
-
-After a successful build the `UIViewControllerRepresentable` files are included and referenced in the `xcodeproj` ready to be used:
-
-```swift
-import Representables
-import SwiftUI
-import Shared
-
-struct SomeView: View {
-    @State private var state: ViewState = ViewState(isLoading: false)
-    var body: some View {
-        VStack {
-            ComposeSimpleViewRepresentable()
-            ComposeAdvancedViewRepresentable(viewState: $state, callback: {})
-        }
-    }
-}
-```
-> [!IMPORTANT]
-> When using [legacy mode](#legacy-mode), always delete `iosApp/Representables` through Xcode.
-
-## Sample
+## Samples
 For working samples check [sample-objc-export](sample-objc-export), [sample-objc-export-legacy](sample-objc-export-legacy), [sample-swift-export](sample-swift-export) or [sample-swift-export-legacy](sample-swift-export-legacy). 
 Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `Gradient` in run 
 configurations.
