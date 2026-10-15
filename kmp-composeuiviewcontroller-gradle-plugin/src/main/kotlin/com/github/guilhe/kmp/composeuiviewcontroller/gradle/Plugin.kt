@@ -6,6 +6,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.PackageResolver
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getOwnNewDslSwiftExportConfig
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getSwiftExportConfigForProject
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToFinalizeByCopyFilesToXcode
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterCopyFilesToXcode
@@ -222,10 +223,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			return Triple(frameworkNames, false, false)
 		}
 
-		// Priority 2: SwiftExport for current Project
+		// Priority 2: SwiftExport for current Project (legacy `swiftExport { }` DSL, or its `export { swift { } }` replacement)
 		val swiftExport = kmp.extensions.getByType(SwiftExportExtension::class.java)
-		val moduleName = swiftExport.moduleName.orNull
-		val flattenPackage = swiftExport.flattenPackage.orNull
+		val newDslConfig = if (swiftExport.moduleName.orNull.isNullOrBlank()) getOwnNewDslSwiftExportConfig() else null
+		val moduleName = swiftExport.moduleName.orNull ?: newDslConfig?.moduleName
+		val flattenPackage = swiftExport.flattenPackage.orNull ?: newDslConfig?.flattenPackage
 		val flattenConfigured = flattenPackage?.let { flatten ->
 			packageNames.any { it.startsWith("$flatten.") } || packageNames.contains(flatten)
 		} ?: false

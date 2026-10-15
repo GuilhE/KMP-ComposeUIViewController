@@ -411,6 +411,41 @@ class PluginTest {
 	}
 
 	@Test
+	fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with moduleName using new export swift DSL`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+
+		val buildFile = Templates.writeBuildGradle(
+			projectDir,
+			"""
+                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+
+                kotlin {
+                    iosSimulatorArm64()
+                    @OptIn(ExperimentalSwiftExportDsl::class)
+                    export {
+                        swift {
+                            moduleName = "CustomModuleName"
+                            rootPackage = "com.test.abc"
+                        }
+                    }
+                }
+                """
+		)
+		assertTrue(buildFile.exists())
+
+		val settingsFile = Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		assertTrue(settingsFile.exists())
+
+		val result = Templates.runGradle(projectDir)
+		assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [CustomModuleName]"))
+	}
+
+	@Test
 	fun `Method retrieveFrameworkBaseNamesFromIosTargets throws exception when no moduleName exists`() {
 		Templates.createCommonMainSource(projectDir, packageName = "com.test")
 
@@ -481,6 +516,74 @@ class PluginTest {
                         export(project(":abc")) {
                             moduleName = "ExportedModule"
                             flattenPackage = "com.exported"
+                        }
+                    }
+                }
+                """
+		)
+		assertTrue(buildFile.exists())
+
+		val settingsFile = Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject", extra = "include(\":abc\")")
+		assertTrue(settingsFile.exists())
+
+		val result = Templates.runGradle(projectDir)
+		assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [DefaultModule]"))
+		assertTrue(result.output.contains("$INFO_MODULE_NAME_BY_SWIFT_EXPORT [ExportedModule]"))
+	}
+
+	@Test
+	fun `Method retrieveFrameworkBaseNamesFromIosTargets handles SwiftExport with self-declared moduleName using new export swift DSL`() {
+		val commonFile = Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		assertTrue(commonFile.exists())
+
+		// The replacement `export { swift { } }` DSL has no consumer-side `export(dependency) { }` (yet): each
+		// project declares its own moduleName/rootPackage instead, which is how sample-swift-export's shared-models
+		// module is set up now. This exercises `getOwnNewDslSwiftExportConfig`, not `getSwiftExportConfigForProject`.
+		val abcProjectDir = File(projectDir, "abc").apply { mkdirs() }
+		val abcCommonFile = Templates.createCommonMainSource(abcProjectDir, packageName = "com.abc", className = "AbcTest")
+		assertTrue(abcCommonFile.exists())
+
+		val abcBuildFile = Templates.writeBuildGradle(
+			abcProjectDir,
+			"""
+                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+
+                kotlin {
+                    iosSimulatorArm64()
+                    @OptIn(ExperimentalSwiftExportDsl::class)
+                    export {
+                        swift {
+                            moduleName = "ExportedModule"
+                            rootPackage = "com.exported"
+                        }
+                    }
+                }
+                """
+		)
+		assertTrue(abcBuildFile.exists())
+
+		val buildFile = Templates.writeBuildGradle(
+			projectDir,
+			"""
+                import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+
+                kotlin {
+                    iosSimulatorArm64()
+                    @OptIn(ExperimentalSwiftExportDsl::class)
+                    export {
+                        swift {
+                            moduleName = "DefaultModule"
+                            rootPackage = "com.test"
                         }
                     }
                 }
