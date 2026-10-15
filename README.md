@@ -86,7 +86,7 @@ export {
     swift {
         moduleName = "Shared"			
         xcodeIntegration {
-            configure(projects.sharedModels) { ... }
+            configure(projects.otherModules) { ... }
         }
     }
 }
