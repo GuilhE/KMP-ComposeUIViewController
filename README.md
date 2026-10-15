@@ -76,7 +76,7 @@ Xcode build:
 
 The plugin warns you automatically (during any Gradle sync or build) if this hasn't been run yet.
 
-### Swift Export
+#### Swift Export
   
 To enable Swift Export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).
 
@@ -224,7 +224,7 @@ struct SomeView: View {
 > [!IMPORTANT]
 > When using [legacy mode](#legacy-mode), always delete `iosApp/Representables` through Xcode.
 
-## How it works
+## Under the Hood (exporting to iOS)
 
 ### SPM export
 This is the default export mode (see [Legacy mode](#legacy-mode) for the previous `xcodeproj`-gem-based approach). It works with both **Swift Export** and **ObjC Export**, generating a local Swift Package with the generated `UIViewControllerRepresentable` files — nothing to enable, just configure the usual parameters:
