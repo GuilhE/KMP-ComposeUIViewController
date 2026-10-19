@@ -1,9 +1,9 @@
 [versions]
-kotlin = "2.5.0-Beta2-2"
-composeMultiplatform = "1.12.1"
+kotlin = "2.5.0-Beta2-164"
+composeMultiplatform = "1.12.2"
 
 composeMaterial3 = "1.9.0"
-kotlinxCollections = "0.5.1"
+kotlinxCollections = "0.5.2"
 
 [plugins]
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }

@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
 	group = "com.github.guilhe.kmp"
-	version = "2.5.0-Beta2-1.12.1"
+	version = "2.5.0-Beta2-1.12.2"
 }
 
 dependencies {
@@ -186,7 +186,8 @@ tasks.register("buildAllSamples") {
 					env["IPHONEOS_DEPLOYMENT_TARGET"] = iosDeploymentTarget(sample)
 				}
 				if (diagnose) {
-					println("  [$sample] diagnostic env: CONFIGURATION=${env["CONFIGURATION"]} SDK_NAME=${env["SDK_NAME"]} PLATFORM_NAME=${env["PLATFORM_NAME"]} ARCHS=${env["ARCHS"]}")
+					println("  [$sample] diagnostic env: CONFIGURATION=${env["CONFIGURATION"]} SDK_NAME=${env["SDK_NAME"]} " +
+						"PLATFORM_NAME=${env["PLATFORM_NAME"]} ARCHS=${env["ARCHS"]}")
 				}
 
 				val prepareProcess = prepareProcessBuilder.start()

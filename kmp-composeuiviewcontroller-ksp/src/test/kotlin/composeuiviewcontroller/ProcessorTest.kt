@@ -201,7 +201,7 @@ class ProcessorTest {
 	}
 
 	@Test
-	fun `Composable functions properly using @ComposeUIViewController and @ComposeUIViewControllerState will generate respective UIViewController and UIViewControllerRepresentable files`() {
+	fun `Composable functions properly using lib annotations will generate respective UIViewController and UIViewControllerRepresentable files`() {
 		tempArgs.writeText(ModuleConfigs.singleModule())
 		val code = CodeTemplates.multipleScreensWithDifferentStates()
 		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())

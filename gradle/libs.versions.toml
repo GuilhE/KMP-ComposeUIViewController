@@ -1,12 +1,12 @@
 [versions]
-kotlin = "2.5.0-Beta2-2"
-kotlinxSerialization = "1.11.0"
+kotlin = "2.5.0-Beta2-164"
+kotlinxSerialization = "1.12.0"
 ksp = "2.3.12"
 
 dokka = "2.2.0"
-gradlePublish = "2.1.0"
-compileTesting = "0.12.1"
-vanniktech = "0.36.0"
+compileTesting = "0.14.0"
+gradlePublish = "2.2.1"
+mavenPublish = "0.37.0"
 
 [plugins]
 gradle-publish = { id = "com.gradle.plugin-publish", version.ref = "gradlePublish" }
@@ -14,12 +14,12 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-vanniktech-maven = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech" }
+vanniktech-maven = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 
 [libraries]
 gradle-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 gradle-ksp = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
-gradle-vanniktech = { group = "com.vanniktech", name = "gradle-maven-publish-plugin", version.ref = "vanniktech" }
+gradle-vanniktech = { group = "com.vanniktech", name = "gradle-maven-publish-plugin", version.ref = "mavenPublish" }
 
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 

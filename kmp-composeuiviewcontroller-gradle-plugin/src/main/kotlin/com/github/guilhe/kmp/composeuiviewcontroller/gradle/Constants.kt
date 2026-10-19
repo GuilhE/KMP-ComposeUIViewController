@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 
 internal fun stubPackageSwift(packageName: String): String =
@@ -22,7 +24,7 @@ let package = Package(
 )
 """.trimIndent()
 
-internal const val VERSION_LIBRARY = "2.5.0-Beta2-1.12.1"
+internal const val VERSION_LIBRARY = "2.5.0-Beta2-1.12.2"
 internal const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
 internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
 internal const val PLUGIN_KSP = "com.google.devtools.ksp"

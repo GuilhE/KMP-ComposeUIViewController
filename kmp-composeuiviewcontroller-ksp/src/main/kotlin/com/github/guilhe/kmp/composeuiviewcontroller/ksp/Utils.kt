@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package com.github.guilhe.kmp.composeuiviewcontroller.ksp
 
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
@@ -145,7 +147,8 @@ private fun convertPrimitiveInCollection(primitiveType: String, isNullable: Bool
 	return if (isNullable) "$converted?" else converted
 }
 
-private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullable: Boolean = false, insideFunctionType: Boolean = false): String = if (withSwiftExport) {
+private fun convertToSwift(baseType: String, withSwiftExport: Boolean, isNullable: Boolean = false, insideFunctionType: Boolean = false): String =
+	if (withSwiftExport) {
 		convertToSwiftFromSwiftExport(baseType)
 	} else {
 		convertToSwiftFromObjcExport(baseType, isNullable, insideFunctionType)
@@ -240,29 +243,6 @@ private fun removeAdjacentEmptyLines(list: List<String>): List<String> = list.fo
 		}
 		acc
 	}.toList()
-
-/**
- * Removes empty lines between struct declaration and the first public func in generated Swift code
- * when there are no parameters. This ensures proper formatting ([swiftformat](https://github.com/nicklockwood/SwiftFormat)) of the generated code.
- */
-internal fun removeEmptyLineBetweenStructAndFunc(code: String): String {
-	val lines = code.lines().toMutableList()
-	var i = 0
-	while (i < lines.size - 1) {
-		val currentLine = lines[i].trim()
-		val nextLine = lines.getOrNull(i + 1)?.trim() ?: ""
-
-		if (currentLine.endsWith("UIViewControllerRepresentable {") &&
-			nextLine.isEmpty() &&
-			i + 2 < lines.size &&
-			lines[i + 2].trim().startsWith("public func")
-		) {
-			lines.removeAt(i + 1)
-		}
-		i++
-	}
-	return lines.joinToString("\n")
-}
 
 /**
  * Recursively extracts all types from a KSType, including generic type arguments.
