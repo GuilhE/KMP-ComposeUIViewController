@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.5.0-Beta2-164"
+kotlin = "2.5.0-Beta2"
 composeMultiplatform = "1.12.2"
 
 composeMaterial3 = "1.9.0"
