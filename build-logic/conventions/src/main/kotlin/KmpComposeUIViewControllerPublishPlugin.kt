@@ -1,4 +1,4 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "SpellCheckingInspection")
 
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import groovy.lang.Closure

@@ -1,4 +1,4 @@
-@file:Suppress("TestFunctionName", "SpellCheckingInspection")
+@file:Suppress("TestFunctionName", "SpellCheckingInspection", "unused")
 @file:OptIn(ExperimentalCompilerApi::class)
 
 package composeuiviewcontroller

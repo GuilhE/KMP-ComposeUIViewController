@@ -17,12 +17,16 @@ ComposeUiViewController {
 kotlin {
 	iosArm64()
 	iosSimulatorArm64()
-	swiftExport {
-		moduleName = "Composables"
-		flattenPackage = "com.sample.shared"
-		export(projects.sharedModels) {
-			moduleName = "Models"
-			flattenPackage = "com.sample.models"
+	export {
+		swift {
+			moduleName = "Composables"
+			rootPackage = "com.sample.shared"
+			xcodeIntegration {
+				configure(projects.sharedModels) {
+					moduleName = "Models"
+					rootPackage = "com.sample.models"
+				}
+			}
 		}
 	}
 
