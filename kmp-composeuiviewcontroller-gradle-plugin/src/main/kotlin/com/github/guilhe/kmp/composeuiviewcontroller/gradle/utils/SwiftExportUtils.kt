@@ -8,7 +8,40 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExten
 
 internal data class SwiftExportConfig(val moduleName: String?, val flattenPackage: String?)
 
+/**
+ * The directory name receiving `export<BuildType>SwiftPackage`'s output (`exportDebugSwiftPackage`/
+ * `exportReleaseSwiftPackage`), relative to the module's project directory. Matches the Kotlin Gradle
+ * Plugin's own default for `export { swift { swiftPackageIntegration { } } }` (`outputDirectory` defaults
+ * to `projectDirectory.dir("SwiftPackage")`), used here as the fallback when `outputDirectory` isn't
+ * overridden in the build script.
+ */
+internal const val DEFAULT_SWIFT_PACKAGE_OUTPUT_DIRECTORY = "SwiftPackage"
+
+internal data class SwiftPackageIntegrationConfig(val outputDirectoryName: String)
+
 internal object SwiftExportUtils {
+
+	/**
+	 * Retrieves this project's `swiftPackageIntegration` configuration from its own `export { swift { } }`
+	 * block, if declared. Like [getOwnNewDslSwiftExportConfig], this has no public typed API to read from, so
+	 * it falls back to scanning the build script text. Unlike it, this scans the whole file rather than just
+	 * the first `swift { }` match, since `swiftPackageIntegration { outputDirectory = ... }` can be nested
+	 * past the point where a naive single-level brace match would stop.
+	 */
+	fun Project.getSwiftPackageIntegrationConfig(): SwiftPackageIntegrationConfig? {
+		return try {
+			if (!buildFile.exists()) return null
+			val text = buildFile.readText()
+			if (!Regex("""swiftPackageIntegration\s*[({]""").containsMatchIn(text)) return null
+			val outputDirectoryName = Regex("""outputDirectory\s*=\s*layout\.projectDirectory\.dir\(\s*["']([^"']+)["']\s*\)""")
+				.find(text)?.groupValues?.get(1)
+				?: DEFAULT_SWIFT_PACKAGE_OUTPUT_DIRECTORY
+			SwiftPackageIntegrationConfig(outputDirectoryName)
+		} catch (e: Exception) {
+			logger.warn("\t> Exception while parsing 'swiftPackageIntegration' config: ${e.message}")
+			null
+		}
+	}
 
 	/**
 	 * Retrieves this project's own SwiftExport configuration when declared with the replacement

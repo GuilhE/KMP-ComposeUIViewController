@@ -21,6 +21,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_IOS_DEPLOYMENT
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_KEEP_FILE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_KMP_MODULE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_SPM_MODULE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_SWIFT_PACKAGE_DIR
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_SWIFT_TOOLS_VERSION
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PARAM_TARGET
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PluginConfigurationException
@@ -29,6 +30,8 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_COPY_FILES_TO_X
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_DELETE_SPM_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_SWIFT_EXPORT_FOR_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EXPORT_DEBUG_SWIFT_PACKAGE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EXPORT_RELEASE_SWIFT_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EXPORT_TO_SPM
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_FORMAT_SWIFT_FILES
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_SETUP_SPM_PACKAGE
@@ -252,7 +255,8 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 	project: Project,
 	extensionParameters: PluginParameters,
 	tempFolder: File,
-	spmModuleName: String
+	spmModuleName: String,
+	swiftPackageIntegration: SwiftPackageIntegrationConfig?
 ) {
 	tasks.register(TASK_EXPORT_TO_SPM, Exec::class.java) { task ->
 		task.group = "composeuiviewcontroller"
@@ -260,18 +264,30 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 		task.outputs.upToDateWhen { false }
 		task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toSpmList()}") }
 		task.doFirst {
-			// Only the real embedAndSignAppleFrameworkForXcode/embedSwiftExportForXcode/syncFramework
-			// finalizer chain can race with the KMP build output it depends on — a standalone/manual/CI
-			// invocation (e.g. this task run directly) has no such race, so the script must not apply
-			// its build-output wait/fail gate in that case.
-			val isFinalizerRun = project.gradle.taskGraph.allTasks.any {
-				it.name in setOf(
+			// Only the real embedAndSignAppleFrameworkForXcode/embedSwiftExportForXcode/syncFramework/
+			// exportDebugSwiftPackage/exportReleaseSwiftPackage finalizer chain can race with the KMP build
+			// output it depends on — a standalone/manual/CI invocation (e.g. this task run directly) has no
+			// such race, so the script must not apply its build-output wait/fail gate in that case.
+			val taskNames = project.gradle.taskGraph.allTasks.map { it.name }.toSet()
+			val isFinalizerRun = taskNames.any {
+				it in setOf(
 					TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE,
 					TASK_EMBED_SWIFT_EXPORT_FOR_XCODE,
-					TASK_SYNC_FRAMEWORK
+					TASK_SYNC_FRAMEWORK,
+					TASK_EXPORT_DEBUG_SWIFT_PACKAGE,
+					TASK_EXPORT_RELEASE_SWIFT_PACKAGE
 				)
 			}
 			task.environment("XCODE_BUILD_FINALIZER_RUN", isFinalizerRun.toString())
+
+			// exportDebugSwiftPackage/exportReleaseSwiftPackage run outside an Xcode build, so there's no
+			// $CONFIGURATION env var from Xcode telling the script which output folder (SwiftPackage/Debug vs
+			// /Release) to read — the triggering task's own name already says exactly that.
+			if (TASK_EXPORT_RELEASE_SWIFT_PACKAGE in taskNames) {
+				task.environment("CONFIGURATION", "Release")
+			} else if (TASK_EXPORT_DEBUG_SWIFT_PACKAGE in taskNames) {
+				task.environment("CONFIGURATION", "Debug")
+			}
 		}
 
 		val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
@@ -289,6 +305,10 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 			.replace("${PARAM_SPM_MODULE}=\"Composables\"", "${PARAM_SPM_MODULE}=\"$spmModuleName\"")
 			.replace("${PARAM_IOS_DEPLOYMENT_TARGET}=\"26\"", "${PARAM_IOS_DEPLOYMENT_TARGET}=\"${extensionParameters.iosDeploymentTarget}\"")
 			.replace("${PARAM_SWIFT_TOOLS_VERSION}=\"6.2\"", "${PARAM_SWIFT_TOOLS_VERSION}=\"${extensionParameters.swiftToolsVersion}\"")
+			.replace(
+				"${PARAM_SWIFT_PACKAGE_DIR}=\"SwiftPackage\"",
+				"${PARAM_SWIFT_PACKAGE_DIR}=\"${swiftPackageIntegration?.outputDirectoryName ?: "SwiftPackage"}\""
+			)
 
 		val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SPM_SCRIPT_TEMP}")
 			.also { it.createNewFile() }
@@ -321,7 +341,13 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 
 internal fun Project.configureTaskToFinalizeByCopyFilesToXcode(extensionParameters: PluginParameters) {
 	val exportTask = if (extensionParameters.legacyMode) TASK_COPY_FILES_TO_XCODE else TASK_EXPORT_TO_SPM
-	val triggerTasks = listOf(TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE, TASK_EMBED_SWIFT_EXPORT_FOR_XCODE, TASK_SYNC_FRAMEWORK)
+	val triggerTasks = listOf(
+		TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE,
+		TASK_EMBED_SWIFT_EXPORT_FOR_XCODE,
+		TASK_SYNC_FRAMEWORK,
+		TASK_EXPORT_DEBUG_SWIFT_PACKAGE,
+		TASK_EXPORT_RELEASE_SWIFT_PACKAGE
+	)
 	tasks.matching { it.name in triggerTasks }.configureEach { task ->
 		if (extensionParameters.autoExport) {
 			logger.info(

@@ -8,6 +8,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.PackageResolver
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getOwnNewDslSwiftExportConfig
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getSwiftExportConfigForProject
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getSwiftPackageIntegrationConfig
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToFinalizeByCopyFilesToXcode
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterCopyFilesToXcode
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.configureTaskToRegisterCreateRepresentablesPackage
@@ -119,7 +120,8 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 							project = project,
 							extensionParameters = extension,
 							tempFolder = tempFolder,
-							spmModuleName = frameworkNames.first()
+							spmModuleName = frameworkNames.first(),
+							swiftPackageIntegration = getSwiftPackageIntegrationConfig()
 						)
 						configureCleanSpmStub(extension)
 					}

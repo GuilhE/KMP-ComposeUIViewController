@@ -30,6 +30,7 @@ import com.github.guilhe.kmp.composeuiviewcontroller.gradle.PluginParameters
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_COPY_FILES_TO_XCODE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EMBED_SWIFT_EXPORT_FOR_XCODE
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EXPORT_DEBUG_SWIFT_PACKAGE
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_EXPORT_TO_SPM
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_FORMAT_SWIFT_FILES
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.TASK_SETUP_SPM_PACKAGE
@@ -51,6 +52,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.ExportExtension
+import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
 import org.jetbrains.kotlin.konan.target.Family
 
 class PluginTest {
@@ -1020,6 +1023,48 @@ class PluginTest {
 			val embedSwiftTask = tasks.findByName(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE)
 			assertNotNull(embedSwiftTask, "KMP should register $TASK_EMBED_SWIFT_EXPORT_FOR_XCODE with swiftExport config")
 			val finalizers = embedSwiftTask.finalizedBy.getDependencies(embedSwiftTask)
+			assertEquals(1, finalizers.size)
+			assertEquals(TASK_FORMAT_SWIFT_FILES, finalizers.first().name)
+
+			val formatTask = tasks.getByName(TASK_FORMAT_SWIFT_FILES)
+			val formatFinalizers = formatTask.finalizedBy.getDependencies(formatTask)
+			assertEquals(1, formatFinalizers.size)
+			assertEquals(TASK_EXPORT_TO_SPM, formatFinalizers.first().name)
+		}
+	}
+
+	@Test
+	fun `only exportDebugSwiftPackage triggers finalization chain in SPM mode`() {
+		with(project) {
+			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
+				iosSimulatorArm64()
+
+				// The legacy extension is always present regardless of which DSL is used, and Priority 2's
+				// moduleName resolution reads it first — set here purely so afterEvaluate's framework-name
+				// resolution succeeds, independently of the replacement DSL config below (which has no
+				// buildFile to scan in this in-memory project).
+				extensions.getByType(SwiftExportExtension::class.java).moduleName.set("TestModule")
+
+				// swiftPackageIntegration() with no xcodeIntegration() activates only the Swift package
+				// pipeline, per KT-89151's isSwiftExportXcodeIntegrationActivated(): it returns the replacement
+				// DSL's own activatedXcodeIntegration (null here) once that DSL is configured at all, so
+				// embedSwiftExportForXcode is NOT registered — this is the exact scenario this test asserts.
+				@OptIn(ExperimentalSwiftExportDsl::class)
+				extensions.getByType(ExportExtension::class.java).swift {
+					swiftPackageIntegration()
+				}
+			}
+
+			val folder = File(projectDir.path, "src/commonMain/kotlin/com/test").apply { mkdirs() }
+			File(folder, "File.kt").writeText("package com.test\nclass Test()")
+
+			(this as DefaultProject).evaluate()
+
+			assertNull(tasks.findByName(TASK_EMBED_SWIFT_EXPORT_FOR_XCODE), "embedSwiftExportForXcode must not be registered without xcodeIntegration()")
+
+			val exportSwiftPackageTask = tasks.findByName(TASK_EXPORT_DEBUG_SWIFT_PACKAGE)
+			assertNotNull(exportSwiftPackageTask, "KMP should register $TASK_EXPORT_DEBUG_SWIFT_PACKAGE with swiftPackageIntegration config")
+			val finalizers = exportSwiftPackageTask.finalizedBy.getDependencies(exportSwiftPackageTask)
 			assertEquals(1, finalizers.size)
 			assertEquals(TASK_FORMAT_SWIFT_FILES, finalizers.first().name)
 

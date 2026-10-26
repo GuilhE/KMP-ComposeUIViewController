@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.5.0-1.12.2]
+- Adds support for `export { swift { swiftPackageIntegration() } }` as an alternative to `xcodeIntegration()`: the Representables SPM package now auto-regenerates as a finalizer of `exportDebugSwiftPackage`/`exportReleaseSwiftPackage` too, declaring the exported Swift package as a normal local package dependency (`.package(path:)` + `.product(name:)`) instead of the `unsafeFlags`/pre-compiled-interfaces approach used for `xcodeIntegration()`'s `embedSwiftExportForXcode`. See the new `sample-swift-export-spm` sample. Known limitation: Release builds currently fail to link (`KotlinRuntimeSupport_linkAnchor` undefined symbol) — this reproduces with Kotlin's own generated package as-is and looks like an upstream Kotlin 2.5.0-Beta2 issue with dead-code stripping, not something this plugin controls.
+
 ## [2.5.0-Beta2-1.12.2]
 - Compatible with 2.5.0-Beta2-1.12.2
 - Detects `moduleName`/`rootPackage` from the replacement `export { swift { } }` DSL too, not just the legacy `swiftExport { }` one (deprecated, scheduled for removal in Kotlin 2.7). The replacement DSL doesn't expose these values through a public API, so they're read back from the build script text — same approach already used to detect a module exported by a sibling project.
