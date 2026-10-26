@@ -1,6 +1,12 @@
 #!/bin/bash
 
 # DEFAULT VALUES
+# All but spm_module_name are genuine fallbacks (they match either a near-universal KMP convention —
+# "shared", "iosApp" — or this plugin's own PluginParameters defaults), so they're harmless if the plugin's
+# string substitution below ever fails to match. spm_module_name has no such fallback: there's no
+# convention for what to call the exported Swift module, so a plausible-looking name here would silently
+# mask a substitution bug instead of surfacing it (see the guard before its only use, in
+# generate_package_swift_dependency's call site).
 kmp_module="shared"
 iosApp_project_folder="iosApp"
 iosApp_name="iosApp"
@@ -8,7 +14,7 @@ iosApp_target_name="iosApp"
 group_name="Representables"
 ios_deployment_target="26"
 swift_tools_version="6.2"
-spm_module_name="Composables"
+spm_module_name="__SPM_MODULE_NAME__"
 swift_package_dir_name="SwiftPackage"
 #####################
 
@@ -418,6 +424,14 @@ setup_spm_package() {
   local new_content
 
   if [ -f "$KMP_SWIFT_PACKAGE_ABS/Package.swift" ]; then
+    # spm_module_name has no safe fallback (see DEFAULT VALUES) — if the plugin's string substitution
+    # didn't run, failing loudly here beats silently generating a Package.swift that references a
+    # product/package name nothing actually exports.
+    if [ "$spm_module_name" = "__SPM_MODULE_NAME__" ]; then
+      echo "  > ERROR: spm_module_name was not substituted. This is a bug in the KMP-ComposeUIViewController" >&2
+      echo "  > plugin, not your project — please report it." >&2
+      exit 1
+    fi
     # swiftPackageIntegration: depend on the exported local Swift package directly — no interfaces/
     # frameworks to symlink, the exported package is already a complete build artifact.
     echo "  > Swift Package Integration: depending on $swift_package_dir_name/$BUILD_CONFIG"

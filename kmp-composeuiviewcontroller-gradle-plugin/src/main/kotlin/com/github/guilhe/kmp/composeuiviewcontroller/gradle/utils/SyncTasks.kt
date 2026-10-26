@@ -302,9 +302,9 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 			.replace("${PARAM_APP_NAME}=\"iosApp\"", "${PARAM_APP_NAME}=\"${extensionParameters.iosAppName}\"")
 			.replace("${PARAM_TARGET}=\"iosApp\"", "${PARAM_TARGET}=\"${extensionParameters.targetName}\"")
 			.replace("${PARAM_GROUP}=\"Representables\"", "${PARAM_GROUP}=\"${extensionParameters.exportFolderName}\"")
-			.replace("${PARAM_SPM_MODULE}=\"Composables\"", "${PARAM_SPM_MODULE}=\"$spmModuleName\"")
 			.replace("${PARAM_IOS_DEPLOYMENT_TARGET}=\"26\"", "${PARAM_IOS_DEPLOYMENT_TARGET}=\"${extensionParameters.iosDeploymentTarget}\"")
 			.replace("${PARAM_SWIFT_TOOLS_VERSION}=\"6.2\"", "${PARAM_SWIFT_TOOLS_VERSION}=\"${extensionParameters.swiftToolsVersion}\"")
+			.replace("${PARAM_SPM_MODULE}=\"__SPM_MODULE_NAME__\"", "${PARAM_SPM_MODULE}=\"$spmModuleName\"")
 			.replace(
 				"${PARAM_SWIFT_PACKAGE_DIR}=\"SwiftPackage\"",
 				"${PARAM_SWIFT_PACKAGE_DIR}=\"${swiftPackageIntegration?.outputDirectoryName ?: "SwiftPackage"}\""

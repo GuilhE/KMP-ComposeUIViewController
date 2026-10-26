@@ -68,10 +68,12 @@ tasks.register("buildAllSamples") {
  			"sample-objc-export",
  			"sample-objc-export-legacy",
 			"sample-swift-export",
-			"sample-swift-export-legacy"
+			"sample-swift-export-legacy",
+			"sample-swift-export-spm"
 		)
 
 		val swiftExportSamples = setOf("sample-swift-export", "sample-swift-export-legacy")
+		val swiftPackageIntegrationSamples = setOf("sample-swift-export-spm")
 
 		fun printSection(title: String) {
 			println("\n" + "=".repeat(60))
@@ -158,7 +160,11 @@ tasks.register("buildAllSamples") {
 			if (sample in cleanFailures) continue
 
 			println("\n⚙️  [$sample] Pre-generating (outside Xcode, so Package.swift is stable before xcodebuild runs)...")
-			val embedTask = if (sample in swiftExportSamples) ":shared:embedSwiftExportForXcode" else ":shared:embedAndSignAppleFrameworkForXcode"
+			val embedTask = when {
+				sample in swiftPackageIntegrationSamples -> ":shared:exportDebugSwiftPackage"
+				sample in swiftExportSamples -> ":shared:embedSwiftExportForXcode"
+				else -> ":shared:embedAndSignAppleFrameworkForXcode"
+			}
 			val scratchDir = file("$sample/build/XcodeEmbedPrep/Debug-iphonesimulator")
 			file("$scratchDir/Gradient.app").mkdirs()
 
