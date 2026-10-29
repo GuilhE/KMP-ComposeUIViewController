@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.5.0-RC-1.12.2]
+
+- Kotlin 2.5.0-RC
+
 ## [2.5.0-Beta2-1.12.2]
 
 - Kotlin 2.5.0-Beta2
