@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.5.0-Beta2-1.12.2-1]
+- Compatible with 2.5.0-Beta2-1.12.2-1
+- Adds support for `export { swift { swiftPackageIntegration() } }` as an alternative to `xcodeIntegration()`: the Representables SPM package now auto-regenerates as a finalizer of `exportDebugSwiftPackage`/`exportReleaseSwiftPackage` too, declaring the exported Swift package as a normal local package dependency (`.package(path:)` + `.product(name:)`) instead of the `unsafeFlags`/pre-compiled-interfaces approach used for `xcodeIntegration()`'s `embedSwiftExportForXcode`. See the new `sample-swift-export-spm` sample.
+- Fixes `EmptyFrameworkBaseNameException` when a `@ComposeUIViewController` function lives in a package that only exists in `iosMain` (e.g. `com.example.shared.ios` while `commonMain` only has `com.example.shared`): the plugin now also collects packages from the iOS source sets (`iosMain`, `appleMain`, `nativeMain` and the iOS targets' main source sets), not only from `commonMain`.
+ 
 ## [2.5.0-Beta2-1.12.2]
 - Compatible with 2.5.0-Beta2-1.12.2
 - Detects `moduleName`/`rootPackage` from the replacement `export { swift { } }` DSL too, not just the legacy `swiftExport { }` one (deprecated, scheduled for removal in Kotlin 2.7). The replacement DSL doesn't expose these values through a public API, so they're read back from the build script text — same approach already used to detect a module exported by a sibling project.
