@@ -1,9 +1,9 @@
 # Changelog
 
-## [2.5.0-RC-1.12.2]
+## [2.5.0-Beta2-1.12.2-1]
 
-- Kotlin 2.5.0-RC
 - KSP 2.3.13
+- Fixes [issue 7](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/7)
 
 ## [2.5.0-Beta2-1.12.2]
 

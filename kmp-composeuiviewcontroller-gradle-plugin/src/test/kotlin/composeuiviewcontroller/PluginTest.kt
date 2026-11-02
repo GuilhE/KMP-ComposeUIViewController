@@ -187,6 +187,28 @@ class PluginTest {
 	}
 
 	@Test
+	fun `Method configureModuleJson includes packages declared only in iosMain`() {
+		with(project) {
+			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
+				jvm()
+				iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
+			}
+
+			File(projectDir.path, "src/commonMain/kotlin/com/composables/module").apply { mkdirs() }
+				.resolve("File.kt").writeText("package com.composables.module\nclass Test()")
+			File(projectDir.path, "src/iosMain/kotlin/com/composables/module/ios").apply { mkdirs() }
+				.resolve("Screen.kt").writeText("package com.composables.module.ios\nclass Screen()")
+
+			(this as DefaultProject).evaluate()
+
+			val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
+			val moduleMetadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText()).first()
+			assertTrue(moduleMetadata.packageNames.contains("com.composables.module"))
+			assertTrue(moduleMetadata.packageNames.contains("com.composables.module.ios"))
+		}
+	}
+
+	@Test
 	fun `embed and sync tasks finalize via formatSwiftFiles chain`() {
 		with(project) {
 			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {

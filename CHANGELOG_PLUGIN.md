@@ -1,8 +1,9 @@
 # Changelog
 
-## [2.5.0-RC-1.12.2]
-- Compatible with 2.5.0-RC-1.12.2
+## [2.5.0-Beta2-1.12.2-1]
+- Compatible with 2.5.0-Beta2-1.12.2-1
 - Adds support for `export { swift { swiftPackageIntegration() } }` as an alternative to `xcodeIntegration()`: the Representables SPM package now auto-regenerates as a finalizer of `exportDebugSwiftPackage`/`exportReleaseSwiftPackage` too, declaring the exported Swift package as a normal local package dependency (`.package(path:)` + `.product(name:)`) instead of the `unsafeFlags`/pre-compiled-interfaces approach used for `xcodeIntegration()`'s `embedSwiftExportForXcode`. See the new `sample-swift-export-spm` sample.
+- Fixes `EmptyFrameworkBaseNameException` when a `@ComposeUIViewController` function lives in a package that only exists in `iosMain` (e.g. `com.example.shared.ios` while `commonMain` only has `com.example.shared`): the plugin now also collects packages from the iOS source sets (`iosMain`, `appleMain`, `nativeMain` and the iOS targets' main source sets), not only from `commonMain`.
  
 ## [2.5.0-Beta2-1.12.2]
 - Compatible with 2.5.0-Beta2-1.12.2

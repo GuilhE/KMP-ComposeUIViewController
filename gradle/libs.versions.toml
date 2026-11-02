@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.5.0-RC-278"
+kotlin = "2.5.0-Beta2"
 kotlinxSerialization = "1.12.0"
 ksp = "2.3.13"
 
