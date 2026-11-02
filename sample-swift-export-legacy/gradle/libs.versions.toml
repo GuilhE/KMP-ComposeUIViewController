@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.5.0-RC-244"
+kotlin = "2.5.0-RC-278"
 composeMultiplatform = "1.12.2"
 
 composeMaterial3 = "1.9.0"
