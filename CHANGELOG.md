@@ -1,9 +1,13 @@
 # Changelog
 
+## [2.5.0-Beta2-1.12.2-2]
+
+- Fixes [issue 8](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/8): Support Gradle Configuration Cache.
+
 ## [2.5.0-Beta2-1.12.2-1]
 
 - KSP 2.3.13
-- Fixes [issue 7](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/7)
+- Fixes [issue 7](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/7): Collecting the module's packages from `commonMain` only.
 
 ## [2.5.0-Beta2-1.12.2]
 
