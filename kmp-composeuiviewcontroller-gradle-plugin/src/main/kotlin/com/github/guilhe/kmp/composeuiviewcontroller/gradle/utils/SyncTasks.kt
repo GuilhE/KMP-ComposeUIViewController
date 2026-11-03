@@ -41,50 +41,53 @@ import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.tasks.Exec
 
+/**
+ * Task actions must not capture [Project] (directly or through its implicit receiver), otherwise they can't be
+ * serialized by the Gradle Configuration Cache. Everything they need is therefore resolved here, at configuration
+ * time, into plain values.
+ *
+ * The script is written to [scriptFile] right before the task runs (instead of at configuration time) so that a
+ * configuration cache hit, which skips the configuration phase, still finds it.
+ */
+private fun Exec.configureScript(script: String, scriptFile: File) {
+	doFirst {
+		scriptFile.parentFile?.mkdirs()
+		scriptFile.writeText(script)
+		scriptFile.setExecutable(true)
+	}
+	commandLine("bash", "-c", scriptFile.absolutePath)
+}
+
+private fun readScriptResource(fileName: String): String =
+	KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$fileName")?.use { stream ->
+		stream.bufferedReader().use(BufferedReader::readText)
+	} ?: throw PluginConfigurationException("Unable to read resource file: $fileName. Ensure the plugin is correctly packaged.")
+
+private fun Project.tempScriptFile(fileName: String): File =
+	File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$fileName")
+
+private fun String.withCommonParameters(moduleName: String, extensionParameters: PluginParameters): String = this
+	.replace("${PARAM_KMP_MODULE}=\"shared\"", "${PARAM_KMP_MODULE}=\"$moduleName\"")
+	.replace("${PARAM_FOLDER}=\"iosApp\"", "${PARAM_FOLDER}=\"${extensionParameters.iosAppFolderName}\"")
+	.replace("${PARAM_APP_NAME}=\"iosApp\"", "${PARAM_APP_NAME}=\"${extensionParameters.iosAppName}\"")
+	.replace("${PARAM_TARGET}=\"iosApp\"", "${PARAM_TARGET}=\"${extensionParameters.targetName}\"")
+	.replace("${PARAM_GROUP}=\"Representables\"", "${PARAM_GROUP}=\"${extensionParameters.exportFolderName}\"")
+
 internal fun Project.configureTaskToRegisterSwiftFormat(project: Project) {
+	val moduleName = project.name
+	val workingDirectory = project.rootDir
+	val tempFile = tempScriptFile(FILE_NAME_FORMAT_SCRIPT_TEMP)
+	val script = readScriptResource(FILE_NAME_FORMAT_SCRIPT)
+		.replace("${PARAM_KMP_MODULE}=\"shared\"", "${PARAM_KMP_MODULE}=\"$moduleName\"")
+
 	tasks.register(TASK_FORMAT_SWIFT_FILES, Exec::class.java) { task ->
 		task.group = "composeuiviewcontroller"
 		task.description = "Formats generated Swift files using swiftformat"
 		task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
-		task.doFirst { logger.info("\t> Formatting Swift files for module: ${project.name}") }
-
-		val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/${FILE_NAME_FORMAT_SCRIPT}")
-		val script = inputStream?.use { stream ->
-			stream.bufferedReader().use(BufferedReader::readText)
-		}
-			?: throw PluginConfigurationException(
-				"Unable to read resource file: " +
-					"${FILE_NAME_FORMAT_SCRIPT}. Ensure the plugin is correctly packaged."
-			)
-
-		val modifiedScript = script.replace("${PARAM_KMP_MODULE}=\"shared\"", "${PARAM_KMP_MODULE}=\"${project.name}\"")
-		val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_FORMAT_SCRIPT_TEMP}")
-			.also {
-				it.parentFile?.mkdirs()
-				it.createNewFile()
-			}
-
-		if (tempFile.exists()) {
-			tempFile.writeText(modifiedScript)
-			tempFile.setExecutable(true)
-			task.workingDir = project.rootDir
-
-			try {
-				task.commandLine("bash", "-c", tempFile.absolutePath)
-				task.doLast {
-					if (tempFile.exists()) {
-						tempFile.delete()
-					}
-				}
-			} catch (e: Exception) {
-				throw PluginConfigurationException(
-					"Failed to configure script execution for task '${TASK_FORMAT_SWIFT_FILES}'. Script path: ${tempFile.absolutePath}",
-					e
-				)
-			}
-		} else {
-			throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_FORMAT_SCRIPT_TEMP at ${tempFile.absolutePath}")
-		}
+		task.doFirst { execTask -> execTask.logger.info("\t> Formatting Swift files for module: $moduleName") }
+		task.workingDir = workingDirectory
+		task.configureScript(script, tempFile)
+		task.doLast { tempFile.delete() }
 	}
 }
 
@@ -93,50 +96,22 @@ internal fun Project.configureTaskToRegisterCopyFilesToXcode(
 	extensionParameters: PluginParameters,
 	tempFolder: File
 ) {
+	val moduleName = project.name
+	val workingDirectory = project.rootDir
+	val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
+	val tempFile = tempScriptFile(FILE_NAME_COPY_SCRIPT_TEMP)
+	val script = readScriptResource(FILE_NAME_COPY_SCRIPT).withCommonParameters(moduleName, extensionParameters)
+	val parameters = extensionParameters.toList()
+
 	tasks.register(TASK_COPY_FILES_TO_XCODE, Exec::class.java) { task ->
 		task.group = "composeuiviewcontroller"
 		task.description = "Copies generated files to Xcode project"
 		task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
-		task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toList()}") }
-
-		val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
-		val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/${FILE_NAME_COPY_SCRIPT}")
-		val script = inputStream?.use { stream ->
-			stream.bufferedReader().use(BufferedReader::readText)
-		} ?: throw PluginConfigurationException("Unable to read resource file: ${FILE_NAME_COPY_SCRIPT}. Ensure the plugin is correctly packaged.")
-
-		val modifiedScript = script
-			.replace("${PARAM_KMP_MODULE}=\"shared\"", "${PARAM_KMP_MODULE}=\"${project.name}\"")
-			.replace("${PARAM_FOLDER}=\"iosApp\"", "${PARAM_FOLDER}=\"${extensionParameters.iosAppFolderName}\"")
-			.replace("${PARAM_APP_NAME}=\"iosApp\"", "${PARAM_APP_NAME}=\"${extensionParameters.iosAppName}\"")
-			.replace("${PARAM_TARGET}=\"iosApp\"", "${PARAM_TARGET}=\"${extensionParameters.targetName}\"")
-			.replace("${PARAM_GROUP}=\"Representables\"", "${PARAM_GROUP}=\"${extensionParameters.exportFolderName}\"")
-
-		val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_COPY_SCRIPT_TEMP}")
-			.also { it.createNewFile() }
-
-		if (tempFile.exists()) {
-			tempFile.writeText(modifiedScript)
-			tempFile.setExecutable(true)
-			task.workingDir = project.rootDir
-
-			try {
-				task.commandLine("bash", "-c", tempFile.absolutePath)
-				if (!keepScriptFile) {
-					task.doLast {
-						if (tempFolder.exists()) {
-							tempFolder.deleteRecursively()
-						}
-					}
-				}
-			} catch (e: Exception) {
-				throw PluginConfigurationException(
-					"Failed to configure script execution for task '${TASK_COPY_FILES_TO_XCODE}'. Script path: ${tempFile.absolutePath}",
-					e
-				)
-			}
-		} else {
-			throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_COPY_SCRIPT_TEMP at ${tempFile.absolutePath}")
+		task.doFirst { execTask -> execTask.logger.info("\t> Extension parameters: $parameters") }
+		task.workingDir = workingDirectory
+		task.configureScript(script, tempFile)
+		if (!keepScriptFile) {
+			task.doLast { tempFolder.deleteRecursively() }
 		}
 	}
 }
@@ -146,55 +121,22 @@ internal fun Project.configureTaskToRegisterCreateRepresentablesPackage(
 	extensionParameters: PluginParameters,
 	spmModuleName: String
 ) {
+	val moduleName = project.name
+	val workingDirectory = project.rootDir
+	val tempFile = tempScriptFile(FILE_NAME_SETUP_SPM_SCRIPT_TEMP)
+	val script = readScriptResource(FILE_NAME_SETUP_SPM_SCRIPT)
+		.withCommonParameters(moduleName, extensionParameters)
+		.replace("${PARAM_SPM_MODULE}=\"Composables\"", "${PARAM_SPM_MODULE}=\"$spmModuleName\"")
+		.replace("${PARAM_SWIFT_TOOLS_VERSION}=\"6.2\"", "${PARAM_SWIFT_TOOLS_VERSION}=\"${extensionParameters.swiftToolsVersion}\"")
+
 	tasks.register(TASK_SETUP_SPM_PACKAGE, Exec::class.java) { task ->
 		task.group = "composeuiviewcontroller"
 		task.description = "One-time setup: creates the local SPM package stub and adds it to the Xcode project. Re-run after ./gradlew clean."
 		task.outputs.upToDateWhen { false }
-		task.doFirst { logger.info("\t> Setting up SPM package for module: ${project.name}") }
-
-		val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/${FILE_NAME_SETUP_SPM_SCRIPT}")
-		val script = inputStream?.use { stream ->
-			stream.bufferedReader().use(BufferedReader::readText)
-		}
-			?: throw PluginConfigurationException(
-				"Unable to read resource file: ${FILE_NAME_SETUP_SPM_SCRIPT}." +
-					" Ensure the plugin is correctly packaged."
-			)
-
-		val modifiedScript = script
-			.replace("${PARAM_KMP_MODULE}=\"shared\"", "${PARAM_KMP_MODULE}=\"${project.name}\"")
-			.replace("${PARAM_FOLDER}=\"iosApp\"", "${PARAM_FOLDER}=\"${extensionParameters.iosAppFolderName}\"")
-			.replace("${PARAM_APP_NAME}=\"iosApp\"", "${PARAM_APP_NAME}=\"${extensionParameters.iosAppName}\"")
-			.replace("${PARAM_TARGET}=\"iosApp\"", "${PARAM_TARGET}=\"${extensionParameters.targetName}\"")
-			.replace("${PARAM_GROUP}=\"Representables\"", "${PARAM_GROUP}=\"${extensionParameters.exportFolderName}\"")
-			.replace("${PARAM_SPM_MODULE}=\"Composables\"", "${PARAM_SPM_MODULE}=\"$spmModuleName\"")
-			.replace("${PARAM_SWIFT_TOOLS_VERSION}=\"6.2\"", "${PARAM_SWIFT_TOOLS_VERSION}=\"${extensionParameters.swiftToolsVersion}\"")
-
-		val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SETUP_SPM_SCRIPT_TEMP}")
-			.also {
-				it.parentFile?.mkdirs()
-				it.createNewFile()
-			}
-
-		if (tempFile.exists()) {
-			tempFile.writeText(modifiedScript)
-			tempFile.setExecutable(true)
-			task.workingDir = project.rootDir
-
-			try {
-				task.commandLine("bash", "-c", tempFile.absolutePath)
-				task.doLast {
-					if (tempFile.exists()) tempFile.delete()
-				}
-			} catch (e: Exception) {
-				throw PluginConfigurationException(
-					"Failed to configure script execution for task '${TASK_SETUP_SPM_PACKAGE}'. Script path: ${tempFile.absolutePath}",
-					e
-				)
-			}
-		} else {
-			throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_SETUP_SPM_SCRIPT_TEMP at ${tempFile.absolutePath}")
-		}
+		task.doFirst { execTask -> execTask.logger.info("\t> Setting up SPM package for module: $moduleName") }
+		task.workingDir = workingDirectory
+		task.configureScript(script, tempFile)
+		task.doLast { tempFile.delete() }
 	}
 }
 
@@ -202,52 +144,20 @@ internal fun Project.configureTaskToRegisterDeleteRepresentablesPackage(
 	project: Project,
 	extensionParameters: PluginParameters
 ) {
+	val moduleName = project.name
+	val workingDirectory = project.rootDir
+	val tempFile = tempScriptFile(FILE_NAME_DELETE_SPM_SCRIPT_TEMP)
+	val script = readScriptResource(FILE_NAME_DELETE_SPM_SCRIPT).withCommonParameters(moduleName, extensionParameters)
+
 	tasks.register(TASK_DELETE_SPM_PACKAGE, Exec::class.java) { task ->
 		task.group = "composeuiviewcontroller"
 		task.description =
 			"Removes the local SPM package and its Xcode project reference. Run setupRepresentablesSpmPackage to set up again."
 		task.outputs.upToDateWhen { false }
-		task.doFirst { logger.info("\t> Deleting Representables SPM package for module: ${project.name}") }
-
-		val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_DELETE_SPM_SCRIPT")
-		val script = inputStream?.use { stream ->
-			stream.bufferedReader().use(BufferedReader::readText)
-		} ?: throw PluginConfigurationException(
-			"Unable to read resource file: $FILE_NAME_DELETE_SPM_SCRIPT. Ensure the plugin is correctly packaged."
-		)
-
-		val modifiedScript = script
-			.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
-			.replace("$PARAM_FOLDER=\"iosApp\"", "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\"")
-			.replace("$PARAM_APP_NAME=\"iosApp\"", "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\"")
-			.replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
-			.replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
-
-		val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_DELETE_SPM_SCRIPT_TEMP")
-			.also {
-				it.parentFile?.mkdirs()
-				it.createNewFile()
-			}
-
-		if (tempFile.exists()) {
-			tempFile.writeText(modifiedScript)
-			tempFile.setExecutable(true)
-			task.workingDir = project.rootDir
-
-			try {
-				task.commandLine("bash", "-c", tempFile.absolutePath)
-				task.doLast {
-					if (tempFile.exists()) tempFile.delete()
-				}
-			} catch (e: Exception) {
-				throw PluginConfigurationException(
-					"Failed to configure script execution for task '$TASK_DELETE_SPM_PACKAGE'. Script path: ${tempFile.absolutePath}",
-					e
-				)
-			}
-		} else {
-			throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_DELETE_SPM_SCRIPT_TEMP at ${tempFile.absolutePath}")
-		}
+		task.doFirst { execTask -> execTask.logger.info("\t> Deleting Representables SPM package for module: $moduleName") }
+		task.workingDir = workingDirectory
+		task.configureScript(script, tempFile)
+		task.doLast { tempFile.delete() }
 	}
 }
 
@@ -258,17 +168,36 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 	spmModuleName: String,
 	swiftPackageIntegration: SwiftPackageIntegrationConfig?
 ) {
+	val moduleName = project.name
+	val workingDirectory = project.rootDir
+	val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
+	val tempFile = tempScriptFile(FILE_NAME_SPM_SCRIPT_TEMP)
+	val parameters = extensionParameters.toSpmList()
+	val script = readScriptResource(FILE_NAME_SPM_SCRIPT)
+		.withCommonParameters(moduleName, extensionParameters)
+		.replace("${PARAM_IOS_DEPLOYMENT_TARGET}=\"26\"", "${PARAM_IOS_DEPLOYMENT_TARGET}=\"${extensionParameters.iosDeploymentTarget}\"")
+		.replace("${PARAM_SWIFT_TOOLS_VERSION}=\"6.2\"", "${PARAM_SWIFT_TOOLS_VERSION}=\"${extensionParameters.swiftToolsVersion}\"")
+		.replace("${PARAM_SPM_MODULE}=\"__SPM_MODULE_NAME__\"", "${PARAM_SPM_MODULE}=\"$spmModuleName\"")
+		.replace(
+			"${PARAM_SWIFT_PACKAGE_DIR}=\"SwiftPackage\"",
+			"${PARAM_SWIFT_PACKAGE_DIR}=\"${swiftPackageIntegration?.outputDirectoryName ?: "SwiftPackage"}\""
+		)
+
 	tasks.register(TASK_EXPORT_TO_SPM, Exec::class.java) { task ->
 		task.group = "composeuiviewcontroller"
 		task.description = "Creates and maintains a local SPM package with KSP-generated Swift Representables"
 		task.outputs.upToDateWhen { false }
-		task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toSpmList()}") }
-		task.doFirst {
+		task.doFirst { execTask -> execTask.logger.info("\t> Extension parameters: $parameters") }
+
+		// The task graph can't be queried while the task runs (Configuration Cache), so the environment is resolved
+		// as soon as the graph is ready (which is part of the cached state).
+		gradle.taskGraph.whenReady { graph ->
+			val taskNames = graph.allTasks.map { it.name }.toSet()
+
 			// Only the real embedAndSignAppleFrameworkForXcode/embedSwiftExportForXcode/syncFramework/
 			// exportDebugSwiftPackage/exportReleaseSwiftPackage finalizer chain can race with the KMP build
 			// output it depends on — a standalone/manual/CI invocation (e.g. this task run directly) has no
 			// such race, so the script must not apply its build-output wait/fail gate in that case.
-			val taskNames = project.gradle.taskGraph.allTasks.map { it.name }.toSet()
 			val isFinalizerRun = taskNames.any {
 				it in setOf(
 					TASK_EMBED_AND_SING_APPLE_FRAMEWORK_FOR_XCODE,
@@ -290,51 +219,10 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 			}
 		}
 
-		val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
-		val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/${FILE_NAME_SPM_SCRIPT}")
-		val script = inputStream?.use { stream ->
-			stream.bufferedReader().use(BufferedReader::readText)
-		} ?: throw PluginConfigurationException("Unable to read resource file: ${FILE_NAME_SPM_SCRIPT}. Ensure the plugin is correctly packaged.")
-
-		val modifiedScript = script
-			.replace("${PARAM_KMP_MODULE}=\"shared\"", "${PARAM_KMP_MODULE}=\"${project.name}\"")
-			.replace("${PARAM_FOLDER}=\"iosApp\"", "${PARAM_FOLDER}=\"${extensionParameters.iosAppFolderName}\"")
-			.replace("${PARAM_APP_NAME}=\"iosApp\"", "${PARAM_APP_NAME}=\"${extensionParameters.iosAppName}\"")
-			.replace("${PARAM_TARGET}=\"iosApp\"", "${PARAM_TARGET}=\"${extensionParameters.targetName}\"")
-			.replace("${PARAM_GROUP}=\"Representables\"", "${PARAM_GROUP}=\"${extensionParameters.exportFolderName}\"")
-			.replace("${PARAM_IOS_DEPLOYMENT_TARGET}=\"26\"", "${PARAM_IOS_DEPLOYMENT_TARGET}=\"${extensionParameters.iosDeploymentTarget}\"")
-			.replace("${PARAM_SWIFT_TOOLS_VERSION}=\"6.2\"", "${PARAM_SWIFT_TOOLS_VERSION}=\"${extensionParameters.swiftToolsVersion}\"")
-			.replace("${PARAM_SPM_MODULE}=\"__SPM_MODULE_NAME__\"", "${PARAM_SPM_MODULE}=\"$spmModuleName\"")
-			.replace(
-				"${PARAM_SWIFT_PACKAGE_DIR}=\"SwiftPackage\"",
-				"${PARAM_SWIFT_PACKAGE_DIR}=\"${swiftPackageIntegration?.outputDirectoryName ?: "SwiftPackage"}\""
-			)
-
-		val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_SPM_SCRIPT_TEMP}")
-			.also { it.createNewFile() }
-
-		if (tempFile.exists()) {
-			tempFile.writeText(modifiedScript)
-			tempFile.setExecutable(true)
-			task.workingDir = project.rootDir
-
-			try {
-				task.commandLine("bash", "-c", tempFile.absolutePath)
-				if (!keepScriptFile) {
-					task.doLast {
-						if (tempFolder.exists()) {
-							tempFolder.deleteRecursively()
-						}
-					}
-				}
-			} catch (e: Exception) {
-				throw PluginConfigurationException(
-					"Failed to configure script execution for task '${TASK_EXPORT_TO_SPM}'. Script path: ${tempFile.absolutePath}",
-					e
-				)
-			}
-		} else {
-			throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_SPM_SCRIPT_TEMP at ${tempFile.absolutePath}")
+		task.workingDir = workingDirectory
+		task.configureScript(script, tempFile)
+		if (!keepScriptFile) {
+			task.doLast { tempFolder.deleteRecursively() }
 		}
 	}
 }

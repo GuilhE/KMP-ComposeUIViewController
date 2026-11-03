@@ -1584,6 +1584,83 @@ class PluginTest {
 
 	// endregion
 
+	// region Configuration Cache
+
+	@Test
+	fun `Plugin tasks are compatible with the Configuration Cache`() {
+		val fileName = "FooRepresentable.swift"
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            ComposeUiViewController {
+                legacyMode = true
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+		File(projectDir, "build/generated/ksp/iosSimulatorArm64Main/kotlin").also { it.mkdirs() }.resolve(fileName).writeText("// generated")
+		File(projectDir, "iosApp/Representables").also { it.mkdirs() }.resolve(fileName).writeText("// generated")
+		File(projectDir, "iosApp/iosApp.xcodeproj").also { it.mkdirs() }
+			.resolve("project.pbxproj").writeText("AABB /* $fileName */ = {isa = PBXFileReference;};")
+
+		// cleanTempFilesFolder deletes the modules metadata the configuration depends on, so it can't be part of the reuse check below.
+		val withClean = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES, "cleanTempFilesFolder", "--configuration-cache"))
+		assertTrue(withClean.output.contains("Configuration cache entry stored"))
+		assertFalse(withClean.output.contains("Configuration cache problems found"))
+		assertTrue(withClean.output.contains("Validation passed"))
+
+		// The first run(s) change files the configuration depends on (e.g. the modules metadata), so the entry is only reused later.
+		val args = listOf(TASK_VALIDATE_REPRESENTABLES, "--configuration-cache")
+		Templates.runGradle(projectDir, args = args)
+		Templates.runGradle(projectDir, args = args)
+		val reused = Templates.runGradle(projectDir, args = args)
+		assertTrue(reused.output.contains("Reusing configuration cache"))
+		assertTrue(reused.output.contains("Validation passed"))
+	}
+
+	@Test
+	fun `Temp folder is deleted when the build fails with the Configuration Cache enabled`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            kotlin {
+                iosSimulatorArm64 {
+                    binaries.framework { baseName = "TestFramework" }
+                }
+            }
+            ComposeUiViewController {
+                legacyMode = true
+            }
+            """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// No KSP output, so the validation fails and with it the build.
+		val result = Templates.runGradle(projectDir, args = listOf(TASK_VALIDATE_REPRESENTABLES, "--configuration-cache"), expectFailure = true)
+		assertTrue(result.output.contains("Representables validation failed"))
+		assertFalse(result.output.contains("Configuration cache problems found"))
+		assertFalse(File(projectDir, "build/$TEMP_FILES_FOLDER").exists())
+	}
+
+	// endregion
+
 	private companion object {
 		private const val PLUGIN_ID = "io.github.guilhe.kmp.plugin-composeuiviewcontroller"
 	}
