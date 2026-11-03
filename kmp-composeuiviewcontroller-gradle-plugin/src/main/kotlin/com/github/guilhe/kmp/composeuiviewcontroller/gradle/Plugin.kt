@@ -5,6 +5,7 @@ package com.github.guilhe.kmp.composeuiviewcontroller.gradle
 import com.github.guilhe.kmp.composeuiviewcontroller.common.FILE_NAME_ARGS
 import com.github.guilhe.kmp.composeuiviewcontroller.common.ModuleMetadata
 import com.github.guilhe.kmp.composeuiviewcontroller.common.TEMP_FILES_FOLDER
+import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.BuildFailureCleanup
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.PackageResolver
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getOwnNewDslSwiftExportConfig
 import com.github.guilhe.kmp.composeuiviewcontroller.gradle.utils.SwiftExportUtils.getSwiftExportConfigForProject
@@ -23,6 +24,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.PluginInstantiationException
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
@@ -140,22 +142,26 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			task.group = "composeuiviewcontroller"
 			task.description = "Cleans up temporary files created by the plugin"
 			task.outputs.upToDateWhen { !tempFolder.exists() }
-			task.doLast {
+			task.doLast { cleanTask ->
 				if (tempFolder.exists()) {
 					val deleted = tempFolder.deleteRecursively()
-					logger.info("\n> $LOG_TAG:\n\t> Temp folder deleted: $deleted")
+					cleanTask.logger.info("\n> $LOG_TAG:\n\t> Temp folder deleted: $deleted")
 				}
 			}
 		}
 
 		tasks.named("clean").configure { it.finalizedBy(cleanupTaskProvider) }
 
-		// Note: This is deprecated but necessary until FlowProviders API is stable and available
-		@Suppress("DEPRECATION")
-		gradle.buildFinished { result ->
-			if (result.failure != null && tempFolder.exists()) {
-				val deleted = tempFolder.deleteRecursively()
-				logger.info("\n> $LOG_TAG:\n\t> Build failed - Temp folder deleted: $deleted")
+		// Gradle.buildFinished is incompatible with the Configuration Cache; the dataflow action replacing it needs Gradle 8.1+.
+		if (GradleVersion.current() >= GradleVersion.version("8.1")) {
+			objects.newInstance(BuildFailureCleanup::class.java).cleanOnFailure(tempFolder)
+		} else {
+			@Suppress("DEPRECATION")
+			gradle.buildFinished { result ->
+				if (result.failure != null && tempFolder.exists()) {
+					val deleted = tempFolder.deleteRecursively()
+					logger.info("\n> $LOG_TAG:\n\t> Build failed - Temp folder deleted: $deleted")
+				}
 			}
 		}
 	}
@@ -163,14 +169,13 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 	// Resets Package.swift to stub on clean so Xcode can open the project without resolution errors
 	// even before the next build regenerates the full package.
 	private fun Project.configureCleanSpmStub(extensionParameters: PluginParameters) {
+		val packageSwiftFile = rootDir.resolve("${extensionParameters.iosAppFolderName}/${extensionParameters.exportFolderName}/Package.swift")
+		val stub = stubPackageSwift(extensionParameters.exportFolderName)
 		tasks.named(TASK_CLEAN_TEMP_FILES_FOLDER).configure { task ->
-			task.doLast {
-				val packageSwiftFile = rootDir.resolve(
-					"${extensionParameters.iosAppFolderName}/${extensionParameters.exportFolderName}/Package.swift"
-				)
+			task.doLast { cleanTask ->
 				if (packageSwiftFile.exists()) {
-					packageSwiftFile.writeText(stubPackageSwift(extensionParameters.exportFolderName))
-					logger.info("\n> $LOG_TAG:\n\t> Package.swift reset to stub")
+					packageSwiftFile.writeText(stub)
+					cleanTask.logger.info("\n> $LOG_TAG:\n\t> Package.swift reset to stub")
 				}
 			}
 		}
@@ -364,43 +369,26 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 	 * `@ComposeUIViewController` annotations, or the expected generated files are already present.
 	 */
 	private fun Project.configureKspOutputSelfHeal() {
+		// The predicate is serialized with the task (Configuration Cache), so it can't capture the Project.
+		val projectDirectory = projectDir
 		tasks.matching { it.name.startsWith("ksp") }.configureEach { task ->
-			task.outputs.upToDateWhen {
-				if (!hasComposableAnnotationsInSource()) return@upToDateWhen true
+			task.outputs.upToDateWhen { kspTask ->
+				if (!hasComposableAnnotationsInSource(projectDirectory)) return@upToDateWhen true
 
-				val hasGeneratedOutput = task.outputs.files.any { outputRoot ->
+				val hasGeneratedOutput = kspTask.outputs.files.any { outputRoot ->
 					outputRoot.exists() && outputRoot.walkTopDown().any { it.name.endsWith(GENERATED_UI_VIEW_CONTROLLER_SUFFIX) }
 				}
 				if (hasGeneratedOutput) return@upToDateWhen true
 
-				logger.warn(
-					"\n> $LOG_TAG: Task '${task.name}' produced no *$GENERATED_UI_VIEW_CONTROLLER_SUFFIX file(s) despite " +
+				kspTask.logger.warn(
+					"\n> $LOG_TAG: Task '${kspTask.name}' produced no *$GENERATED_UI_VIEW_CONTROLLER_SUFFIX file(s) despite " +
 						"$COMPOSABLE_ANNOTATION annotations still present in source. This can happen when Gradle's " +
 						"UP-TO-DATE check gets stuck on a stale, empty result from a previous interrupted build. " +
-						"Forcing '${task.name}' to re-run."
+						"Forcing '${kspTask.name}' to re-run."
 				)
 				false
 			}
 		}
-	}
-
-	/**
-	 * Heuristic (not a real parser): ignores lines that look commented-out (a leading `//`, `*`, or the
-	 * start of a block comment) so a disabled/commented `@ComposeUIViewController` example doesn't cause
-	 * a false positive.
-	 */
-	private fun Project.hasComposableAnnotationsInSource(): Boolean {
-		val sourceRoot = File(projectDir, "src")
-		if (!sourceRoot.exists()) return false
-		return sourceRoot.walkTopDown()
-			.filter { it.isFile && it.extension == "kt" }
-			.any { file ->
-				file.readText().lineSequence().any { line ->
-					val trimmed = line.trimStart()
-					line.contains(COMPOSABLE_ANNOTATION) &&
-						!trimmed.startsWith("*") && !trimmed.startsWith("//") && !trimmed.startsWith("/*")
-				}
-			}
 	}
 
 	private fun Project.warnIfRepresentablesPackageNotSetUp(extensionParameters: PluginParameters) {
@@ -430,4 +418,25 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 	}
 
 	private fun KotlinTarget.fromIosFamily(): Boolean = this is KotlinNativeTarget && konanTarget.family == Family.IOS
+}
+
+/**
+ * Heuristic (not a real parser): ignores lines that look commented-out (a leading `//`, `*`, or the
+ * start of a block comment) so a disabled/commented `@ComposeUIViewController` example doesn't cause
+ * a false positive.
+ *
+ * Top-level (and not a [Project] extension) because it's called from a task predicate, which can't capture the Project.
+ */
+private fun hasComposableAnnotationsInSource(projectDir: File): Boolean {
+	val sourceRoot = File(projectDir, "src")
+	if (!sourceRoot.exists()) return false
+	return sourceRoot.walkTopDown()
+		.filter { it.isFile && it.extension == "kt" }
+		.any { file ->
+			file.readText().lineSequence().any { line ->
+				val trimmed = line.trimStart()
+				line.contains(COMPOSABLE_ANNOTATION) &&
+					!trimmed.startsWith("*") && !trimmed.startsWith("//") && !trimmed.startsWith("/*")
+			}
+		}
 }
