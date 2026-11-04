@@ -187,25 +187,37 @@ class PluginTest {
 	}
 
 	@Test
-	fun `Method configureModuleJson includes packages declared only in iosMain`() {
-		with(project) {
-			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
-				jvm()
-				iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
-			}
+	fun `Method configureModuleJson keeps one entry per module when nested modules share the same name`() {
+		Templates.writeBuildGradle(projectDir, "")
+		Templates.ensureSettings(projectDir, rootProjectName = "testProject", includes = listOf(":a:shared", ":b:shared"))
+		listOf("a" to "ModuleA", "b" to "ModuleB").forEach { (parent, framework) ->
+			val moduleDir = File(projectDir, "$parent/shared").apply { mkdirs() }
+			Templates.createCommonMainSource(moduleDir, packageName = "com.test.$parent")
+			Templates.writeBuildGradle(
+				moduleDir,
+				"""
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
 
-			File(projectDir.path, "src/commonMain/kotlin/com/composables/module").apply { mkdirs() }
-				.resolve("File.kt").writeText("package com.composables.module\nclass Test()")
-			File(projectDir.path, "src/iosMain/kotlin/com/composables/module/ios").apply { mkdirs() }
-				.resolve("Screen.kt").writeText("package com.composables.module.ios\nclass Screen()")
-
-			(this as DefaultProject).evaluate()
-
-			val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
-			val moduleMetadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText()).first()
-			assertTrue(moduleMetadata.packageNames.contains("com.composables.module"))
-			assertTrue(moduleMetadata.packageNames.contains("com.composables.module.ios"))
+                kotlin {
+                    iosSimulatorArm64 {
+                        binaries.framework { baseName = "$framework" }
+                    }
+                }
+                """
+			)
 		}
+
+		Templates.runGradle(projectDir, args = listOf("help"))
+
+		val file = File(projectDir, "build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS")
+		val metadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText())
+		assertEquals(2, metadata.size)
+		assertEquals(setOf("ModuleA", "ModuleB"), metadata.map { it.frameworkBaseName }.toSet())
+		assertEquals(setOf(":a:shared", ":b:shared"), metadata.map { it.name }.toSet())
 	}
 
 	@Test
@@ -319,6 +331,11 @@ class PluginTest {
 
 		val tempFile = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_COPY_SCRIPT_TEMP")
 		assertFalse(tempFile.exists())
+	}
+
+	@Test
+	fun `Task copyFilesToXcode deletes only its temp script and keeps modules metadata`() {
+		assertExportTaskKeepsModulesMetadata(TASK_COPY_FILES_TO_XCODE, FILE_NAME_COPY_SCRIPT_TEMP, legacyMode = true)
 	}
 
 	@Test
@@ -708,6 +725,28 @@ class PluginTest {
 		assertTrue(modifiedScriptContent.contains("$PARAM_GROUP=\"Composables\""))
 	}
 
+	@Test
+	fun `Method PackageResolver includes packages declared only in iosMain`() {
+		with(project) {
+			extensions.getByType(KotlinMultiplatformExtension::class.java).apply {
+				jvm()
+				iosSimulatorArm64().binaries.framework { baseName = "ComposablesFramework" }
+			}
+
+			File(projectDir.path, "src/commonMain/kotlin/com/composables/module").apply { mkdirs() }
+				.resolve("File.kt").writeText("package com.composables.module\nclass Test()")
+			File(projectDir.path, "src/iosMain/kotlin/com/composables/module/ios").apply { mkdirs() }
+				.resolve("Screen.kt").writeText("package com.composables.module.ios\nclass Screen()")
+
+			(this as DefaultProject).evaluate()
+
+			val file = rootProject.layout.buildDirectory.file("$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").get().asFile
+			val moduleMetadata = Json.decodeFromString<List<ModuleMetadata>>(file.readText()).first()
+			assertTrue(moduleMetadata.packageNames.contains("com.composables.module"))
+			assertTrue(moduleMetadata.packageNames.contains("com.composables.module.ios"))
+		}
+	}
+
 	// endregion
 
 	// region KSP cache invalidation
@@ -976,6 +1015,11 @@ class PluginTest {
 		assertTrue(content.contains("$PARAM_GROUP=\"Composables\""))
 		assertTrue(content.contains("$PARAM_IOS_DEPLOYMENT_TARGET=\"17\""))
 		assertTrue(content.contains("$PARAM_SWIFT_TOOLS_VERSION=\"5.9\""))
+	}
+
+	@Test
+	fun `Task exportToSpm deletes only its temp script and keeps modules metadata`() {
+		assertExportTaskKeepsModulesMetadata(TASK_EXPORT_TO_SPM, FILE_NAME_SPM_SCRIPT_TEMP, legacyMode = false)
 	}
 
 	@Test
@@ -1659,7 +1703,74 @@ class PluginTest {
 		assertFalse(File(projectDir, "build/$TEMP_FILES_FOLDER").exists())
 	}
 
+	@Test
+	fun `The Configuration Cache is reused when copyFilesToXcode runs on every build`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+
+            ComposeUiViewController {
+                legacyMode = true
+            }
+        """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		val args = listOf(TASK_COPY_FILES_TO_XCODE, "--configuration-cache")
+		Templates.runGradle(projectDir, args = args)
+		Templates.runGradle(projectDir, args = args)
+		val third = Templates.runGradle(projectDir, args = args)
+		assertTrue(third.output.contains("Reusing configuration cache"))
+		assertTrue(third.output.contains("BUILD SUCCESSFUL"))
+	}
+
 	// endregion
+
+	// modules.json is an input of the ksp* tasks and of the Configuration Cache, so deleting it after every export keeps invalidating the
+	// cache and, when the entry is reused anyway, makes the ksp* tasks fail because their input is missing.
+	private fun assertExportTaskKeepsModulesMetadata(task: String, scriptFileName: String, legacyMode: Boolean) {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+
+            ComposeUiViewController {
+                legacyMode = $legacyMode
+            }
+        """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		val result = Templates.runGradle(projectDir, args = listOf(task))
+		assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+		assertTrue(File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_ARGS").exists())
+		assertFalse(File("$projectDir/build/$TEMP_FILES_FOLDER/$scriptFileName").exists())
+	}
 
 	private companion object {
 		private const val PLUGIN_ID = "io.github.guilhe.kmp.plugin-composeuiviewcontroller"
