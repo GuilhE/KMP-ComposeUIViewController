@@ -2,8 +2,8 @@
 
 ## [2.3.20-1.10.3-2]
 
-- Compatible with 2.3.20-1.10.3-2
 - Adds support for Gradle configuration cache: `Gradle.buildFinished` is replaced by a dataflow action (Gradle 8.1+), and the plugin's task actions no longer capture `Project`. The temporary scripts of `formatSwiftFiles` and `copyFilesToXcode` are now written right before the tasks run, so a configuration cache hit still finds them.
+- Compatible with 2.3.20-1.10.3-1
 
 ---
 
