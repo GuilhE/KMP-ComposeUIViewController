@@ -632,6 +632,72 @@ class PluginTest {
 		)
 	}
 
+	// region Configuration Cache
+
+	@Test
+	fun `Plugin build failure will clear temp files with the Configuration Cache enabled`() {
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+                plugins {
+                    id("$PLUGIN_KMP")
+                    id("$PLUGIN_KSP")
+                    id("$PLUGIN_ID")
+                }
+                
+                kotlin {
+                    iosSimulatorArm64()
+                }
+                """
+		)
+		Templates.ensureSettings(projectDir, rootProjectName = "testProject")
+
+		val result = Templates.runGradle(projectDir, args = listOf("--configuration-cache"), expectFailure = true)
+		assertTrue(result.output.contains(ERROR_MISSING_PACKAGE))
+		assertFalse(result.output.contains("buildFinished"))
+		assertFalse(File("$projectDir/build/$TEMP_FILES_FOLDER").exists())
+	}
+
+	@Test
+	fun `Plugin tasks are compatible with the Configuration Cache`() {
+		Templates.createCommonMainSource(projectDir, packageName = "com.test")
+		Templates.writeBuildGradle(
+			projectDir,
+			"""
+            plugins {
+                id("$PLUGIN_KMP")
+                id("$PLUGIN_KSP")
+                id("$PLUGIN_ID")
+            }
+            
+            kotlin {
+                iosSimulatorArm64()
+                swiftExport {
+                    moduleName = "TestModule"
+                }
+            }
+        """
+		)
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
+
+		// The keep flag preserves the temp folder (which holds the modules metadata the configuration depends on), so the entry can be reused.
+		val args = listOf(TASK_COPY_FILES_TO_XCODE, "-P$PARAM_KEEP_FILE=true", "--configuration-cache")
+		val first = Templates.runGradle(projectDir, args = args)
+		assertTrue(first.output.contains("Configuration cache entry stored"))
+		assertFalse(first.output.contains("Configuration cache problems found"))
+
+		// The first run(s) change files the configuration depends on, so the entry is only reused later.
+		Templates.runGradle(projectDir, args = args)
+		val script = File("$projectDir/build/$TEMP_FILES_FOLDER/$FILE_NAME_COPY_SCRIPT_TEMP")
+		assertTrue(script.delete())
+		val reused = Templates.runGradle(projectDir, args = args)
+		assertTrue(reused.output.contains("Reusing configuration cache"))
+		// A cache hit skips the configuration phase, so the script has to be (re)written when the task runs.
+		assertTrue(script.exists())
+	}
+
+	// endregion
+
 	private companion object {
 		private const val PLUGIN_ID = "io.github.guilhe.kmp.plugin-composeuiviewcontroller"
 	}

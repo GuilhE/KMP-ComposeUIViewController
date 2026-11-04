@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.20-1.10.3-2]
+
+- Adds support for Gradle configuration cache (see `CHANGELOG_PLUGIN.md`).
+- Plugin-only release: `kmp-composeuiviewcontroller-annotations` and `kmp-composeuiviewcontroller-ksp` are unchanged and stay at `2.3.20-1.10.3-1`, which is what the plugin resolves.
+
+---
+
 ## [2.3.20-1.10.3-1]
 
 - Removes `frameworkBaseName`

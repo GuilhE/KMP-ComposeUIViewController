@@ -15,6 +15,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.PluginInstantiationException
 import org.gradle.api.tasks.Exec
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
@@ -81,22 +82,26 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			task.description = "Cleans up temporary files created by the plugin"
 			task.inputs.dir(tempFolder).optional()
 			task.outputs.upToDateWhen { !tempFolder.exists() }
-			task.doLast {
+			task.doLast { cleanTask ->
 				if (tempFolder.exists()) {
 					val deleted = tempFolder.deleteRecursively()
-					logger.info("\n> $LOG_TAG:\n\t> Temp folder deleted: $deleted")
+					cleanTask.logger.info("\n> $LOG_TAG:\n\t> Temp folder deleted: $deleted")
 				}
 			}
 		}
 
 		tasks.named("clean").configure { it.finalizedBy(cleanupTaskProvider) }
 
-		// Note: This is deprecated but necessary until FlowProviders API is stable and available
-		@Suppress("DEPRECATION")
-		gradle.buildFinished { result ->
-			if (result.failure != null && tempFolder.exists()) {
-				val deleted = tempFolder.deleteRecursively()
-				logger.info("\n> $LOG_TAG:\n\t> Build failed - Temp folder deleted: $deleted")
+		// Gradle.buildFinished is incompatible with the Configuration Cache; the dataflow action replacing it needs Gradle 8.1+.
+		if (GradleVersion.current() >= GradleVersion.version("8.1")) {
+			objects.newInstance(BuildFailureCleanup::class.java).cleanOnFailure(tempFolder)
+		} else {
+			@Suppress("DEPRECATION")
+			gradle.buildFinished { result ->
+				if (result.failure != null && tempFolder.exists()) {
+					val deleted = tempFolder.deleteRecursively()
+					logger.info("\n> $LOG_TAG:\n\t> Build failed - Temp folder deleted: $deleted")
+				}
 			}
 		}
 	}
@@ -273,7 +278,10 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			task.group = "composeuiviewcontroller"
 			task.description = "Formats generated Swift files using swiftformat"
 			task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
-			task.doFirst { logger.info("\t> Formatting Swift files for module: ${project.name}") }
+
+			// Task actions must not capture Project (Configuration Cache): resolve what they need into plain values.
+			val moduleName = project.name
+			task.doFirst { execTask -> execTask.logger.info("\t> Formatting Swift files for module: $moduleName") }
 
 			val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_FORMAT_SCRIPT")
 			val script = inputStream?.use { stream ->
@@ -281,34 +289,12 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			}
 				?: throw PluginConfigurationException("Unable to read resource file: $FILE_NAME_FORMAT_SCRIPT. Ensure the plugin is correctly packaged.")
 
-			val modifiedScript = script.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
+			val modifiedScript = script.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"$moduleName\"")
 			val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_FORMAT_SCRIPT_TEMP")
-				.also {
-					it.parentFile?.mkdirs()
-					it.createNewFile()
-				}
 
-			if (tempFile.exists()) {
-				tempFile.writeText(modifiedScript)
-				tempFile.setExecutable(true)
-				task.workingDir = project.rootDir
-
-				try {
-					task.commandLine("bash", "-c", tempFile.absolutePath)
-					task.doLast {
-						if (tempFile.exists()) {
-							tempFile.delete()
-						}
-					}
-				} catch (e: Exception) {
-					throw PluginConfigurationException(
-						"Failed to configure script execution for task '$TASK_FORMAT_SWIFT_FILES'. Script path: ${tempFile.absolutePath}",
-						e
-					)
-				}
-			} else {
-				throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_FORMAT_SCRIPT_TEMP at ${tempFile.absolutePath}")
-			}
+			task.workingDir = project.rootDir
+			task.configureScript(modifiedScript, tempFile)
+			task.doLast { tempFile.delete() }
 		}
 	}
 
@@ -321,7 +307,11 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			task.group = "composeuiviewcontroller"
 			task.description = "Copies generated files to Xcode project"
 			task.outputs.upToDateWhen { false } // Always execute this task - don't cache it
-			task.doFirst { logger.info("\t> Extension parameters: ${extensionParameters.toList()}") }
+
+			// Task actions must not capture Project (Configuration Cache): resolve what they need into plain values.
+			val moduleName = project.name
+			val parameters = extensionParameters.toList()
+			task.doFirst { execTask -> execTask.logger.info("\t> Extension parameters: $parameters") }
 
 			val keepScriptFile = project.hasProperty(PARAM_KEEP_FILE) && project.property(PARAM_KEEP_FILE) == "true"
 			val inputStream = KmpComposeUIViewControllerPlugin::class.java.getResourceAsStream("/$FILE_NAME_COPY_SCRIPT")
@@ -330,37 +320,18 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			} ?: throw PluginConfigurationException("Unable to read resource file: $FILE_NAME_COPY_SCRIPT. Ensure the plugin is correctly packaged.")
 
 			val modifiedScript = script
-				.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"${project.name}\"")
+				.replace("$PARAM_KMP_MODULE=\"shared\"", "$PARAM_KMP_MODULE=\"$moduleName\"")
 				.replace("$PARAM_FOLDER=\"iosApp\"", "$PARAM_FOLDER=\"${extensionParameters.iosAppFolderName}\"")
 				.replace("$PARAM_APP_NAME=\"iosApp\"", "$PARAM_APP_NAME=\"${extensionParameters.iosAppName}\"")
 				.replace("$PARAM_TARGET=\"iosApp\"", "$PARAM_TARGET=\"${extensionParameters.targetName}\"")
 				.replace("$PARAM_GROUP=\"Representables\"", "$PARAM_GROUP=\"${extensionParameters.exportFolderName}\"")
 
-			val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/${FILE_NAME_COPY_SCRIPT_TEMP}")
-				.also { it.createNewFile() }
+			val tempFile = File("${rootProject.layout.buildDirectory.asFile.get().path}/$TEMP_FILES_FOLDER/$FILE_NAME_COPY_SCRIPT_TEMP")
 
-			if (tempFile.exists()) {
-				tempFile.writeText(modifiedScript)
-				tempFile.setExecutable(true)
-				task.workingDir = project.rootDir
-
-				try {
-					task.commandLine("bash", "-c", tempFile.absolutePath)
-					if (!keepScriptFile) {
-						task.doLast {
-							if (tempFolder.exists()) {
-								tempFolder.deleteRecursively()
-							}
-						}
-					}
-				} catch (e: Exception) {
-					throw PluginConfigurationException(
-						"Failed to configure script execution for task '$TASK_COPY_FILES_TO_XCODE'. Script path: ${tempFile.absolutePath}",
-						e
-					)
-				}
-			} else {
-				throw PluginConfigurationException("Failed to create temporary script file: $FILE_NAME_COPY_SCRIPT_TEMP at ${tempFile.absolutePath}")
+			task.workingDir = project.rootDir
+			task.configureScript(modifiedScript, tempFile)
+			if (!keepScriptFile) {
+				task.doLast { tempFolder.deleteRecursively() }
 			}
 		}
 	}
@@ -425,4 +396,17 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			"SwiftExport is NOT configured, will use all iOS targets' framework baseName as frameworkBaseName:"
 		internal const val INFO_MODULE_NAME_BY_SWIFT_EXPORT = "SwiftExport is configured, will use its moduleName:"
 	}
+}
+
+/**
+ * The script is written to [scriptFile] right before the task runs (instead of at configuration time) so that a
+ * Configuration Cache hit, which skips the configuration phase, still finds it.
+ */
+private fun Exec.configureScript(script: String, scriptFile: File) {
+	doFirst {
+		scriptFile.parentFile?.mkdirs()
+		scriptFile.writeText(script)
+		scriptFile.setExecutable(true)
+	}
+	commandLine("bash", "-c", scriptFile.absolutePath)
 }
