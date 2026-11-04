@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.5.0-Beta2-1.12.2-3]
+
+- Fixes nested modules with the same project name replacing each other's entry in `modules.json` (`EmptyFrameworkBaseNameException`).
+- Fixes the Gradle Configuration Cache being invalidated on every Xcode build ([issue 8](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/8)): the export tasks no longer delete `modules.json`.
+
 ## [2.5.0-Beta2-1.12.2-2]
 
 - Fixes [issue 8](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/8): Support Gradle Configuration Cache.

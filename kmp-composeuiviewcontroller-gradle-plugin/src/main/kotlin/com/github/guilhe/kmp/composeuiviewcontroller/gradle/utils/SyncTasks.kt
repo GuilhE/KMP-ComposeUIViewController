@@ -93,8 +93,7 @@ internal fun Project.configureTaskToRegisterSwiftFormat(project: Project) {
 
 internal fun Project.configureTaskToRegisterCopyFilesToXcode(
 	project: Project,
-	extensionParameters: PluginParameters,
-	tempFolder: File
+	extensionParameters: PluginParameters
 ) {
 	val moduleName = project.name
 	val workingDirectory = project.rootDir
@@ -111,7 +110,8 @@ internal fun Project.configureTaskToRegisterCopyFilesToXcode(
 		task.workingDir = workingDirectory
 		task.configureScript(script, tempFile)
 		if (!keepScriptFile) {
-			task.doLast { tempFolder.deleteRecursively() }
+			// Only the script: modules.json, in the same folder, is an input of the ksp* tasks and of the Configuration Cache
+			task.doLast { tempFile.delete() }
 		}
 	}
 }
@@ -164,7 +164,6 @@ internal fun Project.configureTaskToRegisterDeleteRepresentablesPackage(
 internal fun Project.configureTaskToRegisterExportToSpm(
 	project: Project,
 	extensionParameters: PluginParameters,
-	tempFolder: File,
 	spmModuleName: String,
 	swiftPackageIntegration: SwiftPackageIntegrationConfig?
 ) {
@@ -222,7 +221,8 @@ internal fun Project.configureTaskToRegisterExportToSpm(
 		task.workingDir = workingDirectory
 		task.configureScript(script, tempFile)
 		if (!keepScriptFile) {
-			task.doLast { tempFolder.deleteRecursively() }
+			// Only the script: modules.json, in the same folder, is an input of the ksp* tasks and of the Configuration Cache
+			task.doLast { tempFile.delete() }
 		}
 	}
 }

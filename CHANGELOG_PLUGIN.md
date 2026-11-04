@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.5.0-Beta2-1.12.2-3]
+- Compatible with 2.5.0-Beta2-1.12.2-3
+- Fixes nested modules with the same project name (e.g. `:a:shared` and `:b:shared`) replacing each other's entry in `modules.json`: entries are now keyed by project path.
+- Fixes `copyFilesToXcode` and `exportToSpm` deleting the whole temp folder, including `modules.json`, at the end of every build: they now delete only their own temp script, so the Configuration Cache is no longer invalidated on every Xcode build.
+
 ## [2.5.0-Beta2-1.12.2-2]
 - Compatible with 2.5.0-Beta2-1.12.2-2
 - Adds support to Gradle configuration cache

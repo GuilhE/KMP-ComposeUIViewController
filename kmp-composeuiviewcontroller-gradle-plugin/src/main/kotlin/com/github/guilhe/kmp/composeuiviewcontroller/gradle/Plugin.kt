@@ -106,7 +106,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 					configureKspOutputSelfHeal()
 
 					if (extension.legacyMode) {
-						configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = extension, tempFolder = tempFolder)
+						configureTaskToRegisterCopyFilesToXcode(project = project, extensionParameters = extension)
 					} else {
 						configureTaskToRegisterCreateRepresentablesPackage(
 							project = project,
@@ -121,7 +121,6 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 						configureTaskToRegisterExportToSpm(
 							project = project,
 							extensionParameters = extension,
-							tempFolder = tempFolder,
 							spmModuleName = frameworkNames.first(),
 							swiftPackageIntegration = getSwiftPackageIntegrationConfig()
 						)
@@ -297,7 +296,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 
 		val newMetadata = args.map { (key, value) ->
 			ModuleMetadata(
-				name = name,
+				name = path,
 				packageNames = value,
 				frameworkBaseName = key,
 				swiftExportEnabled = swiftExportEnabled,
@@ -305,7 +304,7 @@ public class KmpComposeUIViewControllerPlugin : Plugin<Project> {
 			)
 		}
 
-		moduleMetadata.removeIf { it.name == name }
+		moduleMetadata.removeIf { it.name == path || it.name == name }
 		val changed = moduleMetadata.addAll(newMetadata)
 		if (changed || !file.exists()) {
 			file.writeText(Json.encodeToString(moduleMetadata))
