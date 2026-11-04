@@ -68,6 +68,8 @@ class ProcessorTest {
 		tempFolder.deleteRecursively()
 	}
 
+	// region Generated files
+
 	@Test
 	fun `Not using @ComposeUIViewController will not generate any file`() {
 		val code = CodeTemplates.screenWithoutAnnotations()
@@ -76,57 +78,6 @@ class ProcessorTest {
 		val result = compilation.compile()
 		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 		assertTrue(TestFileUtils.hasNoGeneratedFiles(compilation))
-	}
-
-	@Test
-	fun `When frameworkBaseName is provided via ModulesJson it is used in generated Swift file`() {
-		tempArgs.writeText(ModuleConfigs.singleModule())
-		val code = CodeTemplates.screenWithFrameworkOverride()
-		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-		val result = compilation.compile()
-		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-
-		val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
-		assertContains(generatedSwiftFiles.first().readText(), "import ComposablesFramework")
-	}
-
-	@Test
-	fun `Empty frameworkBaseName in ModulesJson entry throws EmptyFrameworkBaseNameException`() {
-		tempArgs.writeText(ModuleConfigs.singleModule(framework = ""))
-		val code = CodeTemplates.basicScreenWithState()
-		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-		val result = compilation.compile()
-		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-		assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
-	}
-
-	@Test
-	fun `Empty ModulesJson throws EmptyFrameworkBaseNameException`() {
-		val code = CodeTemplates.screenWithEmptyFramework()
-		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-		val result = compilation.compile()
-		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-		assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
-	}
-
-	@Test
-	fun `When opaque is set to false it generates UIViewController with opaque configuration disabled`() {
-		tempArgs.writeText(ModuleConfigs.singleModule())
-		val code = CodeTemplates.screenWithOpaqueDisabled()
-		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-		val result = compilation.compile()
-		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-
-		val generatedKotlinFiles = TestFileUtils.findGeneratedKotlinFile(compilation, "ScreenUIViewController.kt")
-		assertTrue(generatedKotlinFiles.isNotEmpty())
-
-		val generatedKotlinFile = generatedKotlinFiles.first().readText()
-		assertEquals(ExpectedOutputs.kotlinUIViewControllerWithOpaqueDisabled(), generatedKotlinFile)
-		assertContains(generatedKotlinFile, "opaque = false")
 	}
 
 	@Test
@@ -177,27 +128,6 @@ class ProcessorTest {
 
 		val generatedSwiftFile = generatedSwiftFiles.first().readText()
 		assertEquals(ExpectedOutputs.swiftFormatTemplate1(), generatedSwiftFile)
-	}
-
-	@Test
-	fun `Only 1 @ComposeUIViewControllerState is allowed`() {
-		tempArgs.writeText(ModuleConfigs.singleModule())
-		val code = CodeTemplates.screenWithMultipleStateAnnotations()
-		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-		val result = compilation.compile()
-		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-	}
-
-	@Test
-	fun `@Composable functions are not allowed as parameter`() {
-		tempArgs.writeText(ModuleConfigs.singleModule())
-		val code = CodeTemplates.screenWithComposableParameter()
-		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-		val result = compilation.compile()
-		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-		assertContains(result.messages, InvalidParametersException().message!!)
 	}
 
 	@Test
@@ -272,6 +202,48 @@ class ProcessorTest {
 	}
 
 	@Test
+	fun `When opaque is set to false it generates UIViewController with opaque configuration disabled`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
+		val code = CodeTemplates.screenWithOpaqueDisabled()
+		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+		val result = compilation.compile()
+		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+		val generatedKotlinFiles = TestFileUtils.findGeneratedKotlinFile(compilation, "ScreenUIViewController.kt")
+		assertTrue(generatedKotlinFiles.isNotEmpty())
+
+		val generatedKotlinFile = generatedKotlinFiles.first().readText()
+		assertEquals(ExpectedOutputs.kotlinUIViewControllerWithOpaqueDisabled(), generatedKotlinFile)
+		assertContains(generatedKotlinFile, "opaque = false")
+	}
+
+	// endregion
+
+	// region Annotation validation
+
+	@Test
+	fun `Only 1 @ComposeUIViewControllerState is allowed`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
+		val code = CodeTemplates.screenWithMultipleStateAnnotations()
+		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+		val result = compilation.compile()
+		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+	}
+
+	@Test
+	fun `@Composable functions are not allowed as parameter`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
+		val code = CodeTemplates.screenWithComposableParameter()
+		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+		val result = compilation.compile()
+		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+		assertContains(result.messages, InvalidParametersException().message!!)
+	}
+
+	@Test
 	fun `Collection or Map parameters without type specification will throw TypeResolutionError`() {
 		val testCases = listOf("List", "MutableList", "Set", "Map", "MutableMap")
 
@@ -289,6 +261,48 @@ class ProcessorTest {
 		val resultReturn = compilationReturn.compile()
 		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, resultReturn.exitCode)
 	}
+
+	// endregion
+
+	// region frameworkBaseName (ModulesJson)
+
+	@Test
+	fun `When frameworkBaseName is provided via ModulesJson it is used in generated Swift file`() {
+		tempArgs.writeText(ModuleConfigs.singleModule())
+		val code = CodeTemplates.screenWithFrameworkOverride()
+		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+		val result = compilation.compile()
+		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+		val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+		assertContains(generatedSwiftFiles.first().readText(), "import ComposablesFramework")
+	}
+
+	@Test
+	fun `Empty frameworkBaseName in ModulesJson entry throws EmptyFrameworkBaseNameException`() {
+		tempArgs.writeText(ModuleConfigs.singleModule(framework = ""))
+		val code = CodeTemplates.basicScreenWithState()
+		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+		val result = compilation.compile()
+		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+		assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
+	}
+
+	@Test
+	fun `Empty ModulesJson throws EmptyFrameworkBaseNameException`() {
+		val code = CodeTemplates.screenWithEmptyFramework()
+		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+		val result = compilation.compile()
+		assertEquals(if (usesKsp2) KotlinCompilation.ExitCode.INTERNAL_ERROR else KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+		assertContains(result.messages, EmptyFrameworkBaseNameException().message!!)
+	}
+
+	// endregion
+
+	// region Generic parameter types
 
 	@Test
 	fun `Processor handles generic types in parameters`() {
@@ -322,6 +336,10 @@ class ProcessorTest {
 		assertContains(swiftContent, "Dictionary<String, Array<Dictionary<String, KotlinInt>>>")
 		assertContains(swiftContent, "Array<Dictionary<String, String>>")
 	}
+
+	// endregion
+
+	// region External modules and type aliases
 
 	@Test
 	fun `Types imported from different KMP modules will not produce Swift files by default`() {
@@ -464,6 +482,10 @@ class ProcessorTest {
 		assertEquals(expectedTypeAliasSwiftOutput, generatedSwiftFiles.first().readText())
 	}
 
+	// endregion
+
+	// region ObjC export type mapping
+
 	@Test
 	fun `Function parameters with Kotlin types will map to ObjC-Swift export types`() {
 		tempArgs.writeText(ModuleConfigs.singleModule())
@@ -477,22 +499,6 @@ class ProcessorTest {
 		assertTrue(generatedSwiftFiles.isNotEmpty())
 
 		val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithObjCTypes()
-		assertEquals(expectedSwiftOutput, generatedSwiftFiles.first().readText())
-	}
-
-	@Test
-	fun `Function parameters with Kotlin types will map to Swift export types`() {
-		tempArgs.writeText(ModuleConfigs.singleModule(swiftExportEnabled = true))
-		val code = CodeTemplates.screenWithKotlinTypes()
-		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
-
-		val result = compilation.compile()
-		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-
-		val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
-		assertTrue(generatedSwiftFiles.isNotEmpty())
-
-		val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithSwiftExportTypes()
 		assertEquals(expectedSwiftOutput, generatedSwiftFiles.first().readText())
 	}
 
@@ -636,6 +642,26 @@ class ProcessorTest {
 		assertContains(swiftContent, "let charCallback: (Any) -> Void")
 	}
 
+	// endregion
+
+	// region Swift export type mapping
+
+	@Test
+	fun `Function parameters with Kotlin types will map to Swift export types`() {
+		tempArgs.writeText(ModuleConfigs.singleModule(swiftExportEnabled = true))
+		val code = CodeTemplates.screenWithKotlinTypes()
+		val compilation = prepareCompilation(kotlin("Screen.kt", code), *klibSourceFiles().toTypedArray())
+
+		val result = compilation.compile()
+		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+
+		val generatedSwiftFiles = findGeneratedSwiftFile(compilation, "ScreenUIViewControllerRepresentable.swift")
+		assertTrue(generatedSwiftFiles.isNotEmpty())
+
+		val expectedSwiftOutput = ExpectedOutputs.swiftRepresentableWithSwiftExportTypes()
+		assertEquals(expectedSwiftOutput, generatedSwiftFiles.first().readText())
+	}
+
 	@Test
 	fun `Direct primitive parameters use native Swift types in Swift export`() {
 		tempArgs.writeText(ModuleConfigs.singleModule(swiftExportEnabled = true))
@@ -696,4 +722,6 @@ class ProcessorTest {
 		assertContains(swiftContent, "let mutableBoolSet: Set<Bool>")
 		assertContains(swiftContent, "let mutableStringMap: Dictionary<String, Int32>")
 	}
+
+	// endregion
 }
