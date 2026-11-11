@@ -173,12 +173,12 @@ class ProcessorTest {
 		val result = compilation.compile()
 		assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 		assertEquals(
+			4,
 			TestFileUtils.countGeneratedFiles(
 				compilation,
 				"ScreenAUIViewController.kt", "ScreenAUIViewControllerRepresentable.swift",
 				"ScreenBUIViewController.kt", "ScreenBUIViewControllerRepresentable.swift"
-			),
-			4
+			)
 		)
 	}
 
@@ -414,7 +414,7 @@ class ProcessorTest {
 		assertTrue(generatedSwiftFiles.isNotEmpty())
 
 		val expectedTypeAliasSwiftOutput = ExpectedOutputs.swiftTypeAliasForExternalDependencies()
-		assertEquals(generatedSwiftFiles.first().readText(), expectedTypeAliasSwiftOutput)
+		assertEquals(expectedTypeAliasSwiftOutput, generatedSwiftFiles.first().readText())
 	}
 
 	@Test

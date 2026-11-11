@@ -27,7 +27,7 @@ dependencies {
 	testImplementation(libs.test.kotlin)
 }
 
-version = "2.5.0-1.12.2"
+version = "2.5.0-RC-1.12.2"
 group = "io.github.guilhe.kmp"
 
 gradlePlugin {
