@@ -101,13 +101,21 @@ tasks.register("buildAllSamples") {
 			val output = proc.inputStream.bufferedReader().readText()
 			proc.waitFor()
 
-			val iosSection = Regex("""-- iOS ([\d.]+) --\n((?:.*\n)*?)(?=--|\z)""").findAll(output)
-				.maxByOrNull { match ->
-					val parts = match.groupValues[1].split(".").map { it.toIntOrNull() ?: 0 }
-					parts.getOrElse(0) { 0 } * 10_000 + parts.getOrElse(1) { 0 } * 100 + parts.getOrElse(2) { 0 }
-				}
-				?.groupValues?.get(2)
+			fun versionKey(version: String): Int {
+				val parts = version.split(".").map { it.toIntOrNull() ?: 0 }
+				return parts.getOrElse(0) { 0 } * 10_000 + parts.getOrElse(1) { 0 } * 100 + parts.getOrElse(2) { 0 }
+			}
+
+			val sections = Regex("""-- iOS ([\d.]+) --\n((?:.*\n)*?)(?=--|\z)""").findAll(output).toList()
+			val maxVersionKey = sections.maxOfOrNull { versionKey(it.groupValues[1]) }
 				?: throw GradleException("No iOS Simulator runtime found. Install an iOS simulator runtime in Xcode.")
+			// Xcode can register more than one runtime under the same displayed version (e.g. two distinct
+			// "-- iOS 27.2 --" headers, one of them empty) — merge every section tied for the max version
+			// instead of trusting the first one found, or a genuinely populated section can be skipped for an
+			// earlier, empty same-version one.
+			val iosSection = sections
+				.filter { versionKey(it.groupValues[1]) == maxVersionKey }
+				.joinToString("\n") { it.groupValues[2] }
 
 			val udidPattern = Regex("""[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}""")
 			iosSection.lineSequence()
