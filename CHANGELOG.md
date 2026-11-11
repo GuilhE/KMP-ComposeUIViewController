@@ -1,7 +1,9 @@
 # Changelog
 
-## [2.5.0-Beta2-1.12.2-3]
+## ["2.5.0-RC-1.12.2"]
+- Kotlin 2.5.0-RC
 
+## [2.5.0-Beta2-1.12.2-3]
 - Fixes nested modules with the same project name replacing each other's entry in `modules.json` (`EmptyFrameworkBaseNameException`).
 - Fixes the Gradle Configuration Cache being invalidated on every Xcode build ([issue 8](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/8)): the export tasks no longer delete `modules.json`.
 
@@ -10,19 +12,16 @@
 - Fixes [issue 8](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/8): Support Gradle Configuration Cache.
 
 ## [2.5.0-Beta2-1.12.2-1]
-
 - KSP 2.3.13
 - Fixes [issue 7](https://github.com/GuilhE/KMP-ComposeUIViewController/issues/7): Collecting the module's packages from `commonMain` only.
 
 ## [2.5.0-Beta2-1.12.2]
-
 - Kotlin 2.5.0-Beta2
 - KSP 2.3.12
 - CMP 1.12.2
 - KSerialization 1.12.0
 
 ## [2.4.20-1.12.0]
-
 - Kotlin 2.4.20
 - KSP 2.3.11
 - CMP 1.12.0
@@ -34,7 +33,6 @@
   - The `prepare` step retries once (with `--info` diagnostics on the retry) if the embed task still doesn't produce output.
 
 ## [2.4.10-1.11.1]
-
 - Kotlin 2.4.10
 - KSP 2.3.10
 
@@ -56,35 +54,28 @@
 > `sample-objc-export-legacy`, and the same pattern for `sample-swift-export*`.
 
 ## [2.4.0-1.11.1-5]
-
 - Fixes silent framework corruption when a `ksp*` task's Gradle UP-TO-DATE check gets stuck on a stale, empty result (e.g. after an interrupted build): since nothing about the task's declared inputs changed since then, Gradle would otherwise keep skipping it forever, silently producing a framework missing the expected `UIViewController` symbols.
 - Adds `configureKspOutputSelfHeal`: whenever a `ksp*` task's declared output has no `*UIViewController.kt` file despite `@ComposeUIViewController` annotations still being present in the module's Kotlin source, its `outputs.upToDateWhen` is overridden to force a real re-execution within the same build, logging a warning when it does. A no-op otherwise, so the normal KSP incremental cache is left untouched.
 - `copyFilesToXcode` and `exportToSpm` perform the same annotation-vs-output check as a fallback safety net: if KSP output is still empty after the self-heal above (e.g. the underlying KSP run is itself non-deterministic), the build now fails immediately with an actionable message pointing to `./gradlew :<module>:kspKotlin<Target> --rerun-tasks`, instead of silently preserving stale Representables. The previous behavior (warn + preserve destination) is kept for the case where no annotations remain in source, which still indicates an intentional removal.
 
 ## [2.4.0-1.11.1-4]
-
 - Fixes intermittent `Undefined symbols for architecture arm64` linker errors when using `experimentalSpmExport = true` with ObjC Export. The generated `Package.swift` now includes `linkerSettings: [.unsafeFlags(["-F", "...", "-framework", "<FrameworkName>"])]` alongside the existing `swiftSettings`, making the linker flag explicit instead of relying on Swift auto-linking (which is fragile in SPM static-library contexts).
 
 ## [2.4.0-1.11.1-3]
-
 - Fixes `createRepresentablesPackage` and `exportToSpm` scripts crashing with `undefined method 'add_build_file'` — the `PBXBuildFile` entry is now omitted from the script since Xcode adds it automatically when it resolves the package on first build.
 
 ## [2.4.0-1.11.1-2]
-
 - Fixes `deleteRepresentablesPackage`, `createRepresentablesPackage`, and `exportToSpm` scripts to detect and remove orphaned `XCSwiftPackageProductDependency` entries (entries without a `package` pointer left behind by previous manual or tool-assisted additions). These orphaned entries caused intermittent build failures — Xcode could resolve them from DerivedData cache, but failed with "cannot find type in scope" errors after a clean build or cache reset.
 
 ## [2.4.0-1.11.1-1]
-
 - Adds `composeuiviewcontroller.metadataPath` to pass the absolute path passed by the Gradle plugin. This is always correct regardless of the 
   working directory at KSP execution time.
 
 ## [2.4.0-1.11.1]
-
 - Kotlin 2.4.0 🥳
 - Adds Gradle task `buildAllSamples` to test building all samples with a single command (`./gradlew buildAllSamples`)
 
 ## [2.4.0-RC2-1.11.1]
-
 - CMP 1.11.0
 
 ### Experimental SPM export mode
@@ -123,7 +114,6 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
 - Fixes `cleanTempFilesFolder` task failing with `--no-build-cache` under Gradle 9.5: removed `task.inputs.dir(tempFolder).optional()` which was causing a validation error when the temp folder does not exist yet
 
 ## [2.4.0-RC2-1.11.0-1]
-
 - Fixes `modules.json` stale entries: module metadata is now replaced (not accumulated) on each
   configuration phase, preventing the KSP processor from picking up outdated `frameworkBaseName`
   or `packageNames` entries when module structure changes between builds
@@ -140,28 +130,23 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
   suggests `./gradlew clean` instead of silently exiting
 
 ## [2.4.0-RC2-1.11.0]
-
 - Kotlin 2.4.0-RC2
 - KSP 2.3.8
 
 ## [2.4.0-RC-1.11.0]
-
 - Kotlin 2.4.0-RC
 - CMP 1.11.0
 
 ## [2.4.0-Beta2-1.11.0-rc01]
-
 - Kotlin 2.4.0-Beta2
 - KSP 2.3.7
 - CMP 1.11.0-rc01
 - Serialization 1.11.0
 
 ## [2.3.20-1.10.3-1]
-
 - Removes `frameworkBaseName`
 
 ## [2.3.20-1.10.3]
-
 - CMP 1.10.3
 - Deprecates `frameworkBaseName`
 - Fixes false KSP UP-TO-DATE cache hits: `modules.json` is now declared as a Gradle task input
@@ -169,66 +154,50 @@ Generated Swift `UIViewControllerRepresentable` structs now expose a fully publi
   both the Gradle-level and KSP-internal incremental caches whenever module metadata changes.
 
 ## [2.4.0-Beta1-1.11.0-beta01-1]
-
 - Fixes false KSP UP-TO-DATE cache hits: `modules.json` is now declared as a Gradle task input
   for all `ksp*` tasks, and its content hash is passed as a KSP processor argument — busting
   both the Gradle-level and KSP-internal incremental caches whenever module metadata changes.
 
 ## [2.4.0-Beta1-1.11.0-beta01]
-
 - Kotlin 2.4.0-Beta1
 - CMP 1.11.0-beta01
 
 ## [2.3.20-1.11.0-alpha04]
-
 - CMP 1.11.0-alpha04
 
 ## [2.3.20-1.10.1]
-
 - Kotlin 2.3.20
 
 ## [2.3.20-RC2-1.10.1]
-
 - Kotlin 2.3.20-RC2
 
 ## [2.3.20-RC-1.10.1]
-
 - Kotlin 2.3.20-RC
 - KSP 2.3.6
 
 ## [2.3.20-Beta2-1.10.1]
-
 - CMP 1.10.1
 - Adds swiftFormat Task to format generated .swift files with `swiftformat` default rules. This task is executed after the KSP code generation.
-
-## [2.3.20-Beta2-1.10.0-1]
-
 - Fixed: Import generation now correctly handles external types nested in generic collections (List<Data>, Map<String, CustomType>, etc.)
 
 ## [2.3.20-Beta2-1.10.0]
-
 - Kotlin 2.3.20-Beta2
 - KSP 2.3.5
 - Serialization 1.10.0
 
 ## [2.3.20-Beta1-1.10.0]
-
 - CMP 1.10.0
 
 ## [2.3.20-Beta1-1.10.0-rc02]
-
 - Kotlin 2.3.20-Beta1
 
 ## [2.3.0-1.10.0-rc02-6]
-
 - Fixes `Processor` bug when fetching annotations parameters
 
 ## [2.3.0-1.10.0-rc02-5]
-
 - Adds `opaque` property to `@ComposeUIViewController` to activate `ComposeUIViewController` `opaque` configuration.
 
 ## [2.3.0-1.10.0-rc02-4]
-
 - Improves Processor `importsParsed` logic
 - Adds new Sample with 3 cases:
   - `GradientScreenCompose`: 100% Compose UI with state managed by iOS

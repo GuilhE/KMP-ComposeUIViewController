@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
 	group = "com.github.guilhe.kmp"
-	version = "2.5.0-Beta2-1.12.2-3"
+	version = "2.5.0-RC-1.12.2"
 }
 
 dependencies {
@@ -65,10 +65,10 @@ tasks.register("buildAllSamples") {
 	description = "Cleans (--no-build-cache), pre-generates KMP frameworks/Swift export packages, then builds all samples via xcodebuild"
 	doLast {
 		val samples = listOf(
- 			"sample-objc-export",
- 			"sample-objc-export-legacy",
-			"sample-swift-export",
+			"sample-objc-export-legacy",
+			"sample-objc-export",
 			"sample-swift-export-legacy",
+			"sample-swift-export",
 			"sample-swift-export-spm"
 		)
 
@@ -101,13 +101,21 @@ tasks.register("buildAllSamples") {
 			val output = proc.inputStream.bufferedReader().readText()
 			proc.waitFor()
 
-			val iosSection = Regex("""-- iOS ([\d.]+) --\n((?:.*\n)*?)(?=--|\z)""").findAll(output)
-				.maxByOrNull { match ->
-					val parts = match.groupValues[1].split(".").map { it.toIntOrNull() ?: 0 }
-					parts.getOrElse(0) { 0 } * 10_000 + parts.getOrElse(1) { 0 } * 100 + parts.getOrElse(2) { 0 }
-				}
-				?.groupValues?.get(2)
+			fun versionKey(version: String): Int {
+				val parts = version.split(".").map { it.toIntOrNull() ?: 0 }
+				return parts.getOrElse(0) { 0 } * 10_000 + parts.getOrElse(1) { 0 } * 100 + parts.getOrElse(2) { 0 }
+			}
+
+			val sections = Regex("""-- iOS ([\d.]+) --\n((?:.*\n)*?)(?=--|\z)""").findAll(output).toList()
+			val maxVersionKey = sections.maxOfOrNull { versionKey(it.groupValues[1]) }
 				?: throw GradleException("No iOS Simulator runtime found. Install an iOS simulator runtime in Xcode.")
+			// Xcode can register more than one runtime under the same displayed version (e.g. two distinct
+			// "-- iOS 27.2 --" headers, one of them empty) — merge every section tied for the max version
+			// instead of trusting the first one found, or a genuinely populated section can be skipped for an
+			// earlier, empty same-version one.
+			val iosSection = sections
+				.filter { versionKey(it.groupValues[1]) == maxVersionKey }
+				.joinToString("\n") { it.groupValues[2] }
 
 			val udidPattern = Regex("""[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}""")
 			iosSection.lineSequence()
@@ -160,9 +168,9 @@ tasks.register("buildAllSamples") {
 			if (sample in cleanFailures) continue
 
 			println("\n⚙️  [$sample] Pre-generating (outside Xcode, so Package.swift is stable before xcodebuild runs)...")
-			val embedTask = when {
-				sample in swiftPackageIntegrationSamples -> ":shared:exportDebugSwiftPackage"
-				sample in swiftExportSamples -> ":shared:embedSwiftExportForXcode"
+			val embedTask = when (sample) {
+				in swiftPackageIntegrationSamples -> ":shared:exportDebugSwiftPackage"
+				in swiftExportSamples -> ":shared:embedSwiftExportForXcode"
 				else -> ":shared:embedAndSignAppleFrameworkForXcode"
 			}
 			val scratchDir = file("$sample/build/XcodeEmbedPrep/Debug-iphonesimulator")
@@ -228,55 +236,64 @@ tasks.register("buildAllSamples") {
 		for (sample in samples) {
 			if (sample in cleanFailures || sample in prepareFailures) continue
 
-			println("\n🔨 [$sample] Starting build...")
+			// swiftPackageIntegration's exported package is a prebuilt XCFramework that only gets linked into
+			// the final app binary at Xcode's own link step, with Release's extra optimization/dead-code
+			// stripping taking a materially different path through that linking than Debug's — building both
+			// configurations here is a regression test for exactly that.
+			val configurations = if (sample in swiftPackageIntegrationSamples) listOf("Debug", "Release") else listOf("Debug")
 
-			val args = mutableListOf(
-				"xcodebuild",
-				"-project", file("$sample/iosApp/Gradient.xcodeproj").absolutePath,
-				"-scheme", "Gradient",
-				"-configuration", "Debug",
-				"-derivedDataPath", file("$sample/build/DerivedData").absolutePath,
-				"ARCHS=arm64",
-				"CODE_SIGNING_ALLOWED=NO",
-				"build"
-			)
-			if (sample in swiftExportSamples) {
-				args.addAll(listOf("-destination", "id=$simulatorUDID"))
-			} else {
-				args.addAll(listOf("-sdk", "iphonesimulator"))
-			}
+			for (configuration in configurations) {
+				val resultLabel = if (configurations.size > 1) "$sample ($configuration)" else sample
+				println("\n🔨 [$resultLabel] Starting build...")
 
-			try {
-				val pb = ProcessBuilder(args)
-					.directory(file(sample))
-					.redirectErrorStream(true)
-					.withSanitizedEnvironment()
-
-				val process = pb.start()
-				val outputLines = mutableListOf<String>()
-				val reader = Thread {
-					process.inputStream.bufferedReader().forEachLine { line ->
-						println("[$sample] $line")
-						outputLines.add(line)
-					}
-				}
-				reader.start()
-				val exitCode = process.waitFor()
-				reader.join()
-
-				if (exitCode != 0) {
-					val errorLine = outputLines.lastOrNull { it.contains("error:", ignoreCase = true) }
-						?: outputLines.lastOrNull { it.isNotBlank() }
-						?: "exit code $exitCode"
-					println("❌ [$sample] Build failed — continuing to next sample.")
-					results.add(BuildResult(sample, false, errorLine.trim()))
+				val args = mutableListOf(
+					"xcodebuild",
+					"-project", file("$sample/iosApp/Gradient.xcodeproj").absolutePath,
+					"-scheme", "Gradient",
+					"-configuration", configuration,
+					"-derivedDataPath", file("$sample/build/DerivedData").absolutePath,
+					"ARCHS=arm64",
+					"CODE_SIGNING_ALLOWED=NO",
+					"build"
+				)
+				if (sample in swiftExportSamples) {
+					args.addAll(listOf("-destination", "id=$simulatorUDID"))
 				} else {
-					println("✅ [$sample] Done!")
-					results.add(BuildResult(sample, true))
+					args.addAll(listOf("-sdk", "iphonesimulator"))
 				}
-			} catch (e: Exception) {
-				println("❌ [$sample] Exception during build — continuing to next sample.")
-				results.add(BuildResult(sample, false, e.message ?: "Unknown exception"))
+
+				try {
+					val pb = ProcessBuilder(args)
+						.directory(file(sample))
+						.redirectErrorStream(true)
+						.withSanitizedEnvironment()
+
+					val process = pb.start()
+					val outputLines = mutableListOf<String>()
+					val reader = Thread {
+						process.inputStream.bufferedReader().forEachLine { line ->
+							println("[$resultLabel] $line")
+							outputLines.add(line)
+						}
+					}
+					reader.start()
+					val exitCode = process.waitFor()
+					reader.join()
+
+					if (exitCode != 0) {
+						val errorLine = outputLines.lastOrNull { it.contains("error:", ignoreCase = true) }
+							?: outputLines.lastOrNull { it.isNotBlank() }
+							?: "exit code $exitCode"
+						println("❌ [$resultLabel] Build failed — continuing.")
+						results.add(BuildResult(resultLabel, false, errorLine.trim()))
+					} else {
+						println("✅ [$resultLabel] Done!")
+						results.add(BuildResult(resultLabel, true))
+					}
+				} catch (e: Exception) {
+					println("❌ [$resultLabel] Exception during build — continuing.")
+					results.add(BuildResult(resultLabel, false, e.message ?: "Unknown exception"))
+				}
 			}
 		}
 

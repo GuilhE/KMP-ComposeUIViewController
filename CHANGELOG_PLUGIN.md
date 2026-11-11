@@ -1,5 +1,8 @@
 # Changelog
 
+## ["2.5.0-RC-1.12.2"]
+- Compatible with "2.5.0-RC-1.12.2"
+
 ## [2.5.0-Beta2-1.12.2-3]
 - Compatible with 2.5.0-Beta2-1.12.2-3
 - Fixes nested modules with the same project name (e.g. `:a:shared` and `:b:shared`) replacing each other's entry in `modules.json`: entries are now keyed by project path.

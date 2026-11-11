@@ -12,7 +12,7 @@ let package = Package(
         .library(name: "Representables", targets: ["Representables"])
     ],
     dependencies: [
-        .package(path: "../../shared/SwiftPackage/Debug")
+        .package(path: "../../shared/SwiftPackage/Release")
     ],
     targets: [
         .target(
@@ -20,7 +20,7 @@ let package = Package(
             dependencies: [
                 // SwiftPM identifies a local path dependency by its directory's last path component
                 // (e.g. "Debug"), not by the name declared in its own manifest.
-                .product(name: "ComposablesLibrary", package: "Debug")
+                .product(name: "ComposablesLibrary", package: "Release")
             ],
             path: "Sources/Representables"
         )
