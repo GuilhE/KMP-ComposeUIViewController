@@ -5,5 +5,5 @@ plugins {
 }
 
 tasks.register("exportFrameworkForXcode") {
-    dependsOn(":shared:embedAndSignAppleFrameworkForXcode")
+    dependsOn(":shared:embedSwiftExportForXcode")
 }

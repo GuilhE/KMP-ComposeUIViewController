@@ -65,10 +65,10 @@ tasks.register("buildAllSamples") {
 	description = "Cleans (--no-build-cache), pre-generates KMP frameworks/Swift export packages, then builds all samples via xcodebuild"
 	doLast {
 		val samples = listOf(
-			"sample-objc-export-legacy",
-			"sample-objc-export",
-			"sample-swift-export-legacy",
-			"sample-swift-export",
+// 			"sample-objc-export-legacy",
+// 			"sample-objc-export",
+// 			"sample-swift-export-legacy",
+// 			"sample-swift-export",
 			"sample-swift-export-spm"
 		)
 

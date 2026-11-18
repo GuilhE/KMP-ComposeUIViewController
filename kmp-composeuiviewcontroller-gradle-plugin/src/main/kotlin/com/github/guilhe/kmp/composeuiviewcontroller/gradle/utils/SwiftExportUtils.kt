@@ -58,8 +58,9 @@ internal object SwiftExportUtils {
 		return try {
 			if (!buildFile.exists()) return null
 			val swiftBlock = Regex("""swift\s*\{([\s\S]*?)\}""").find(buildFile.readText())?.groupValues?.get(1) ?: return null
-			val moduleName = Regex("""moduleName\s*=\s*["']([^"']+)["']""").find(swiftBlock)?.groupValues?.get(1) ?: return null
-			val rootPackage = Regex("""rootPackage\s*=\s*["']([^"']+)["']""").find(swiftBlock)?.groupValues?.get(1)
+			val text = buildFile.readText()
+			val moduleName = swiftBlock.resolveStringProperty("moduleName", text) ?: return null
+			val rootPackage = swiftBlock.resolveStringProperty("rootPackage", text)
 			SwiftExportConfig(moduleName, rootPackage)
 		} catch (e: Exception) {
 			logger.warn("\t> Exception while parsing 'export { swift { } }' config: ${e.message}")
@@ -141,13 +142,8 @@ internal object SwiftExportUtils {
 					val projectName = projectNameWithAccessors.ifEmpty { projectNameDirect.removePrefix(":") }
 
 					if (isProjectNameMatch(projectName, targetProject.name)) {
-						val moduleNamePattern = Regex("""moduleName\s*=\s*["']([^"']+)["']""")
-						val moduleNameMatch = moduleNamePattern.find(configBlock)
-						val moduleName = moduleNameMatch?.groupValues?.get(1) ?: continue
-
-						val packageValuePattern = Regex("""$packageProperty\s*=\s*["']([^"']+)["']""")
-						val packageValueMatch = packageValuePattern.find(configBlock)
-						val packageValue = packageValueMatch?.groupValues?.get(1)
+						val moduleName = configBlock.resolveStringProperty("moduleName", buildFileContent) ?: continue
+						val packageValue = configBlock.resolveStringProperty(packageProperty, buildFileContent)
 
 						return SwiftExportConfig(moduleName, packageValue)
 					}
@@ -157,6 +153,16 @@ internal object SwiftExportUtils {
 		} catch (_: Exception) {
 			null
 		}
+	}
+
+	/**
+	 * Resolves `property = "literal"` or `property = someVariable` inside this block, where the variable is a
+	 * `val`/`var` string literal declared anywhere in [scriptText] (e.g. `private val frameworkName = "Composables"`).
+	 */
+	private fun String.resolveStringProperty(property: String, scriptText: String): String? {
+		Regex("""\b$property\s*=\s*["']([^"']+)["']""").find(this)?.let { return it.groupValues[1] }
+		val identifier = Regex("""\b$property\s*=\s*\$?\{?([A-Za-z_][A-Za-z0-9_]*)\}?""").find(this)?.groupValues?.get(1) ?: return null
+		return Regex("""\b(?:val|var)\s+$identifier\s*(?::\s*String\s*)?=\s*["']([^"'$]+)["']""").find(scriptText)?.groupValues?.get(1)
 	}
 
 	/**

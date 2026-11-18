@@ -199,7 +199,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew \":shared:export${CONFIGURATION}SwiftPackage\"\n";
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew exportFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

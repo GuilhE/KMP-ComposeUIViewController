@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.5.0-RC"
-composeMultiplatform = "1.12.2"
+composeMultiplatform = "1.13.0-beta02"
 
 composeMaterial3 = "1.9.0"
 kotlinxCollections = "0.5.2"
