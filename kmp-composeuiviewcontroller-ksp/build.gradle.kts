@@ -12,6 +12,10 @@ dependencies {
 	testImplementation(libs.test.kotlin)
 	testImplementation(libs.test.compile.core)
 	testImplementation(libs.test.compile.ksp)
+	// kctfork bundles an older KSP implementation; keep it in sync with ksp-api to avoid NoSuchMethodError at runtime
+	testImplementation(libs.ksp.impl)
+	testImplementation(libs.ksp.commonDeps)
+	testImplementation(libs.ksp.aaEmbeddable)
 	testImplementation(projects.kmpComposeuiviewcontrollerAnnotations)
 }
 

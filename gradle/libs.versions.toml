@@ -22,6 +22,9 @@ gradle-ksp = { group = "com.google.devtools.ksp", name = "symbol-processing-grad
 gradle-vanniktech = { group = "com.vanniktech", name = "gradle-maven-publish-plugin", version.ref = "mavenPublish" }
 
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
+ksp-impl = { group = "com.google.devtools.ksp", name = "symbol-processing", version.ref = "ksp" }
+ksp-commonDeps = { group = "com.google.devtools.ksp", name = "symbol-processing-common-deps", version.ref = "ksp" }
+ksp-aaEmbeddable = { group = "com.google.devtools.ksp", name = "symbol-processing-aa-embeddable", version.ref = "ksp" }
 
 kotlinx-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 

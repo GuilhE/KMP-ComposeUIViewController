@@ -85,6 +85,8 @@ class PluginTest {
 
 	@Test
 	fun `Plugin throws exception if Kotlin Multiplatform plugin is not applied`() {
+		// Gradle 9.9+ rejects a project nested under another build unless it has its own settings file
+		Templates.writeSettingsGradle(projectDir, rootProjectName = "testProject")
 		Templates.writeBuildGradle(
 			projectDir,
 			"""
