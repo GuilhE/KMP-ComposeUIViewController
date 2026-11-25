@@ -33,3 +33,12 @@ kotlin {
 		}
 	}
 }
+
+// Xcode exposes CONFIGURATION (Debug/Release) to build phases.
+private val xcodeConfiguration = providers.environmentVariable("CONFIGURATION").orElse("Debug").get()
+require(xcodeConfiguration in listOf("Debug", "Release")) { "Unsupported CONFIGURATION: $xcodeConfiguration" }
+
+tasks.register("exportFrameworkForXcode") {
+	description = "Exports the Swift package for Xcode (Debug/Release from CONFIGURATION, defaults to Debug)"
+	dependsOn("export${xcodeConfiguration}SwiftPackage")
+}

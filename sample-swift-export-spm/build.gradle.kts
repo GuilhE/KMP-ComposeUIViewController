@@ -3,7 +3,3 @@ plugins {
     alias(local.plugins.compose.multiplatform) apply false
     alias(local.plugins.compose.compiler) apply false
 }
-
-tasks.register("exportFrameworkForXcode") {
-    dependsOn(":shared:embedSwiftExportForXcode")
-}

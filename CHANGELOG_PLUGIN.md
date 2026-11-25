@@ -1,5 +1,8 @@
 # Changelog
 
+## ["2.5.0-RC2-1.13.0-rc01"]
+- Compatible with "2.5.0-RC2-1.13.0-rc01"
+
 ## ["2.5.0-RC-1.12.2"]
 - Compatible with "2.5.0-RC-1.12.2"
 

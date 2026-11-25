@@ -24,7 +24,7 @@ let package = Package(
 )
 """.trimIndent()
 
-internal const val VERSION_LIBRARY = "2.5.0-RC-1.12.2"
+internal const val VERSION_LIBRARY = "2.5.0-RC2-1.13.0-rc01"
 internal const val LOG_TAG = "KmpComposeUIViewControllerPlugin"
 internal const val PLUGIN_KMP = "org.jetbrains.kotlin.multiplatform"
 internal const val PLUGIN_KSP = "com.google.devtools.ksp"
