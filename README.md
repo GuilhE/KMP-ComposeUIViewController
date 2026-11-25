@@ -76,9 +76,9 @@ Xcode build:
 
 The plugin warns you automatically (during any Gradle sync or build) if this hasn't been run yet.
 
-#### Swift Export
+#### Swift export
   
-To enable Swift Export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).
+To enable Swift export support, just follow the official [documentation](https://kotlinlang.org/docs/native-swift-export.html).
 
 When using dependencies from other modules:
 ```kotlin
@@ -227,7 +227,7 @@ struct SomeView: View {
 ## Under the Hood (exporting to iOS)
 
 ### SPM export
-This is the default export mode (see [Legacy mode](#legacy-mode) for the previous `xcodeproj`-gem-based approach). It works with both **Swift Export** and **ObjC Export**, generating a local Swift Package with the generated `UIViewControllerRepresentable` files — nothing to enable, just configure the usual parameters:
+This is the default export mode (see [Legacy mode](#legacy-mode) for the previous `xcodeproj`-gem-based approach). It works with both **Swift export** and **ObjC export**, generating a local Swift Package with the generated `UIViewControllerRepresentable` files — nothing to enable, just configure the usual parameters:
 
 ```kotlin
 ComposeUiViewController {
@@ -266,11 +266,11 @@ is in the project, Xcode handles everything. The xcodeproj gem is only needed on
 
 On every Xcode build, the plugin hooks into `embedAndSignAppleFrameworkForXcode` or `embedSwiftExportForXcode` and runs the `exportToSpm` task, which adapts automatically to the export mode in use:
 
-**Swift Export** (`export { swift { moduleName = "..." }}`):
+**Swift export** (`export { swift { moduleName = "..." }}`):
 1. Creates a stable symlink `build/SPMBuild/SwiftInterfaces → {arch}/{config}/dd-interfaces`.
 2. Updates `Package.swift` with `unsafeFlags(["-I", "SwiftInterfaces"])` pointing to pre-compiled Swift module interfaces. This avoids Xcode recompiling the KMP source package with a mismatched deployment target.
 
-**ObjC Export** (`binaries.framework { baseName = "..." }`):
+**ObjC export** (`binaries.framework { baseName = "..." }`):
 1. Creates a stable symlink `build/xcode-frameworks/current → {config}/{platform}`.
 2. Updates `Package.swift` with both `swiftSettings: [.unsafeFlags(["-F", "xcode-frameworks/current"])]` and `linkerSettings: [.unsafeFlags(["-F", "xcode-frameworks/current", "-framework", "{frameworkName}"])]`. The `swiftSettings` flag lets Swift resolve `import {frameworkName}` from the pre-compiled framework; the explicit `linkerSettings` flag avoids intermittent `Undefined symbols for architecture` linker errors caused by Swift auto-linking being fragile in SPM static-library contexts.
 
@@ -334,7 +334,7 @@ When building the project, you should see output similar to this:
   > Summary: 0 unchanged, 4 copied, 0 removed
   > Done
 ```
-Or, when using ObjC Export:
+Or, when using ObjC export:
 ```bash
   > Task :shared:exportToSpm
   > Arch: iosSimulatorArm64, Config: Debug
@@ -415,9 +415,8 @@ When building the project, you should see output similar to this:
 </details>
 
 ## Samples
-For working samples check [sample-objc-export](sample-objc-export), [sample-objc-export-legacy](sample-objc-export-legacy), [sample-swift-export](sample-swift-export) or [sample-swift-export-legacy](sample-swift-export-legacy). 
-Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `Gradient` in run 
-configurations.
+For working samples with **Swift export** check [sample-swift-export](sample-swift-export), [sample-swift-export-spm](sample-swift-export-spm) or [sample-swift-export-legacy](sample-swift-export-legacy). With **ObjC export**, check [sample-objc-export](sample-objc-export) or [sample-objc-export-legacy](sample-objc-export-legacy).  
+Open `iosApp/Gradient.xcodeproj` in Xcode and run standard configuration or use KMP plugin for Android Studio and choose `Gradient` in run configurations.
 
 You'll find different use cases:
 - `GradientScreenCompose`: A screen rendered entirely in Compose (UI+state) and embedded in iOS;
