@@ -69,7 +69,7 @@ tasks.register("buildAllSamples") {
  			"sample-objc-export",
  			"sample-swift-export-legacy",
  			"sample-swift-export",
-			"sample-swift-export-spm"
+ 			"sample-swift-export-spm"
 		)
 
 		val swiftExportSamples = setOf("sample-swift-export", "sample-swift-export-legacy")
